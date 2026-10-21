@@ -4,6 +4,8 @@ export interface ChildEnvInput {
   proxyUrl: string;
   caPath: string;
   bundlePath: string;
+  /** JKS truststore with the CA and the normal roots; enables the JVM settings when given. */
+  javaTrustPath?: string;
   /** Opt-out variables to set (compare's second run, or run --opt-out). */
   optOut?: Record<string, string>;
   /** Variables to remove so a "default" run really is default (compare's first run). */
@@ -47,6 +49,29 @@ export function buildChildEnv(input: ChildEnvInput): ChildEnv {
   env.REQUESTS_CA_BUNDLE = input.bundlePath;
   env.CURL_CA_BUNDLE = input.bundlePath;
   env.GIT_SSL_CAINFO = input.bundlePath;
+  if (input.javaTrustPath) env.JAVA_TOOL_OPTIONS = javaToolOptions(input.base.JAVA_TOOL_OPTIONS, input.proxyUrl, input.javaTrustPath);
   Object.assign(env, input.optOut ?? {}, input.extra ?? {});
   return { env, removed };
+}
+
+/**
+ * The JVM ignores HTTP(S)_PROXY. JAVA_TOOL_OPTIONS is read by every JVM at startup, so
+ * the proxy and truststore system properties reach Java apps (and the JVMs they start)
+ * without changing their command line. Read by HttpClient, HttpURLConnection, OkHttp and
+ * anything else using the default ProxySelector. Existing options are kept, after ours,
+ * so the user's own settings still win. The JVM prints "Picked up JAVA_TOOL_OPTIONS".
+ */
+export function javaToolOptions(existing: string | undefined, proxyUrl: string, trustStore: string): string {
+  const { hostname, port } = new URL(proxyUrl);
+  const q = (v: string): string => (/\s/.test(v) ? `"${v}"` : v);
+  const ours = [
+    `-Dhttp.proxyHost=${hostname}`,
+    `-Dhttp.proxyPort=${port}`,
+    `-Dhttps.proxyHost=${hostname}`,
+    `-Dhttps.proxyPort=${port}`,
+    `-Djavax.net.ssl.trustStore=${q(trustStore)}`,
+    '-Djavax.net.ssl.trustStoreType=JKS',
+    '-Djavax.net.ssl.trustStorePassword=changeit',
+  ].join(' ');
+  return existing?.trim() ? `${ours} ${existing.trim()}` : ours;
 }

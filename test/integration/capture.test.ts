@@ -1,4 +1,6 @@
 import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import net from 'node:net';
 import os from 'node:os';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -85,6 +87,15 @@ describe('captureSession (offline, real child processes)', () => {
     expect(har.log.entries[0]?.request).toMatchObject({ url: 'https://upstream.test/py', postData: { text: '{"py":1}' } });
   });
 
+  it.skipIf(!hasJava())('records Java HttpClient (JAVA_TOOL_OPTIONS proxy and JKS truststore)', async () => {
+    const dir = mkdtempSync(join(os.tmpdir(), 'wl-java-'));
+    const src = join(dir, 'J.java');
+    writeFileSync(src, 'public class J { public static void main(String[] a) throws Exception { var c = java.net.http.HttpClient.newHttpClient(); var r = c.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://upstream.test/java")).POST(java.net.http.HttpRequest.BodyPublishers.ofString("{\\"jvm\\":1}")).build(), java.net.http.HttpResponse.BodyHandlers.ofString()); System.exit(r.statusCode() == 200 ? 0 : 7); } }');
+    const { har, launch } = await session('java', [src]);
+    expect(launch.exitCode).toBe(0);
+    expect(har.log.entries[0]?.request).toMatchObject({ url: 'https://upstream.test/java', postData: { text: '{"jvm":1}' } });
+  });
+
   it('names a host whose client refuses the certificate, without its contents', async () => {
     // A client that pins its own trust store, like an app with certificate pinning.
     const child = "require('node:https').get('https://upstream.test/secret', { ca: require('node:tls').rootCertificates }, () => process.exit(0)).on('error', () => process.exit(4))";
@@ -163,6 +174,16 @@ function usablePython(): boolean {
   try {
     const v = execFileSync('python3', ['-c', 'import ssl; print(ssl.OPENSSL_VERSION)'], { encoding: 'utf8' });
     return !/LibreSSL 2\./.test(v);
+  } catch {
+    return false;
+  }
+}
+
+/** A real JDK (macOS has a /usr/bin/java stub that only offers to install one). */
+function hasJava(): boolean {
+  try {
+    execFileSync('java', ['-version'], { stdio: 'ignore' });
+    return true;
   } catch {
     return false;
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildChildEnv } from '../src/capture/env.js';
+import { buildChildEnv, javaToolOptions } from '../src/capture/env.js';
 
 describe('buildChildEnv', () => {
   const base = { PATH: '/bin', NO_PROXY: 'localhost', no_proxy: 'x', DO_NOT_TRACK: '1', HOME: '/h' };
@@ -35,5 +35,14 @@ describe('buildChildEnv', () => {
     expect(env.PATH).toBe('/bin');
     // The parent environment is not modified.
     expect(base.NO_PROXY).toBe('localhost');
+  });
+
+  it('points the JVM at the proxy and the JKS truststore, keeping the user\'s own options last', () => {
+    expect(env.JAVA_TOOL_OPTIONS).toBeUndefined();
+    const withJava = buildChildEnv({ base: { JAVA_TOOL_OPTIONS: '-Xmx1g' }, proxyUrl: 'http://127.0.0.1:9', caPath: '/c', bundlePath: '/b', javaTrustPath: '/tmp/x y/t.jks' });
+    expect(withJava.env.JAVA_TOOL_OPTIONS).toBe(
+      '-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Djavax.net.ssl.trustStore="/tmp/x y/t.jks" -Djavax.net.ssl.trustStoreType=JKS -Djavax.net.ssl.trustStorePassword=changeit -Xmx1g',
+    );
+    expect(javaToolOptions(undefined, 'http://127.0.0.1:1', '/t.jks')).not.toMatch(/ $/);
   });
 });

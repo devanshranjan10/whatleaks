@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import tls from 'node:tls';
 import { generateCACertificate } from 'mockttp';
+import { jksTrustStore } from './jks.js';
 
 export interface SessionCA {
   key: string;
@@ -13,6 +14,8 @@ export interface SessionCA {
   caPath: string;
   /** The CA plus the normal roots (for variables that *replace* the trust store). */
   bundlePath: string;
+  /** The same bundle as a JKS truststore, for the JVM. */
+  javaTrustPath: string;
   cleanup(): Promise<void>;
 }
 
@@ -42,7 +45,10 @@ export async function createSessionCA(): Promise<SessionCA> {
   const dir = await mkdtemp(join(tmpdir(), 'whatleaks-'));
   const caPath = join(dir, 'ca.pem');
   const bundlePath = join(dir, 'bundle.pem');
+  const javaTrustPath = join(dir, 'java-trust.jks');
+  const roots = rootCertificates().map((c) => c.trim());
   await writeFile(caPath, cert, { mode: 0o600 });
-  await writeFile(bundlePath, [cert.trim(), ...rootCertificates().map((c) => c.trim())].join('\n') + '\n', { mode: 0o600 });
-  return { key, cert, dir, caPath, bundlePath, cleanup: () => rm(dir, { recursive: true, force: true }) };
+  await writeFile(bundlePath, [cert.trim(), ...roots].join('\n') + '\n', { mode: 0o600 });
+  await writeFile(javaTrustPath, jksTrustStore([cert, ...roots]), { mode: 0o600 });
+  return { key, cert, dir, caPath, bundlePath, javaTrustPath, cleanup: () => rm(dir, { recursive: true, force: true }) };
 }

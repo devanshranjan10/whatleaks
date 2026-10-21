@@ -136,6 +136,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         proxyUrl: proxy.url,
         caPath: ca.caPath,
         bundlePath: ca.bundlePath,
+        javaTrustPath: ca.javaTrustPath,
         ...(opts.optOut ? { optOut: opts.optOut } : {}),
         ...(opts.removeEnv ? { remove: opts.removeEnv } : {}),
         ...(opts.extraEnv ? { extra: opts.extraEnv } : {}),
