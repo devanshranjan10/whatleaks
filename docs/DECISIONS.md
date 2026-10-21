@@ -273,3 +273,27 @@ one-datagram sockets in the lab (30 %). Measured on the dev Mac:
 - a 20 s run costs 5.6 s of CPU (6.4 s for the build before the benchmark work);
 - resets after 50 ms or more were all caught;
 - resets after 10 ms were caught in 1 of 10 runs, which is the floor of sampling.
+
+**D-31 — Python and Ruby hooks, and one `--no-preload` flag.** The HTTP Toolkit baseline
+read three clients whatleaks could only name:
+- Apple's `/usr/bin/python3` and the macOS system Ruby, which ignore `SSL_CERT_FILE`;
+- aiohttp, which ignores proxy variables unless a session has `trust_env=True`.
+
+whatleaks now loads a hook into each runtime, written from scratch rather than adapted
+from HTTP Toolkit's AGPL code, and scoped to the app's process tree as the Node preload
+is (D-25):
+- **Python** (`PYTHONPATH`): a `sitecustomize.py`. It chains to any `sitecustomize` it
+  shadows. When `ssl` or aiohttp is first imported, it patches it:
+  - default contexts also trust the run's CA;
+  - aiohttp's `trust_env` defaults to True.
+- **Ruby** (`RUBYOPT=-rwhatleaks_hook`): adds the run's CA to OpenSSL's default
+  certificate store and to `Store#set_default_paths`.
+
+What stays untouched:
+- Contexts given their own `cafile`, `capath` or `cadata`, and Ruby clients given their
+  own `ca_file` or `cert_store`, keep their pinning (D-04).
+- An explicit `trust_env=False` is kept.
+- Nothing system-wide changes.
+
+`--no-node-preload` becomes `--no-preload` and turns all three hooks off. Nothing had
+been published, so no alias is kept.

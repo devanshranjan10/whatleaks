@@ -79,11 +79,13 @@ export const SCENARIOS: Scenario[] = [
   { id: 'py-httpx', group: 'proxy-aware', title: 'Python httpx', argv: [RUNTIMES.venvPython, C('py-client.py'), 'httpx'], repeat: 3, expect: 'payload', missing: need(RUNTIMES.venvPython) },
   {
     id: 'py-apple', group: 'proxy-aware', title: 'Apple /usr/bin/python3 urllib (LibreSSL)', argv: [RUNTIMES.applePython, C('py-client.py'), 'urllib'], repeat: 3,
-    expect: 'host', why: 'ignores SSL_CERT_FILE; refuses the CA (D-04: no system trust changes)', missing: macOnly,
+    // Ignores SSL_CERT_FILE; whatleaks' Python hook adds the run's CA to its default contexts (D-31).
+    expect: 'payload', missing: macOnly,
   },
   {
     id: 'ruby-system', group: 'proxy-aware', title: 'Ruby 2.6 Net::HTTP (macOS system)', argv: [RUNTIMES.ruby, C('ruby-client.rb')], repeat: 3,
-    expect: 'host', why: 'refuses the CA (system Ruby uses its own trust store)', missing: macOnly,
+    // Ignores SSL_CERT_FILE; whatleaks' Ruby hook adds the run's CA to its default store (D-31).
+    expect: 'payload', missing: macOnly,
   },
   {
     id: 'go', group: 'proxy-aware', title: 'Go 1.26 net/http', argv: [RUNTIMES.goClient], repeat: 3,
@@ -103,8 +105,9 @@ export const SCENARIOS: Scenario[] = [
   // --- Clients that ignore proxy variables: at best named as a direct connection ----
   { id: 'node-http2', group: 'proxy-ignoring', title: 'Node http2 module', argv: node(RUNTIMES.node26, 'http2'), repeat: 10, expect: 'host', why: 'ignores proxy variables' },
   {
-    id: 'py-aiohttp', group: 'proxy-ignoring', title: 'Python aiohttp (trust_env=False)', argv: [RUNTIMES.venvPython, C('py-client.py'), 'aiohttp'], repeat: 10,
-    expect: 'host', why: 'ignores proxy variables by default', missing: need(RUNTIMES.venvPython),
+    // Ignores proxy variables by default; whatleaks' Python hook makes trust_env default to True (D-31).
+    id: 'py-aiohttp', group: 'proxy-ignoring', title: 'Python aiohttp (ignores proxy variables by default)', argv: [RUNTIMES.venvPython, C('py-client.py'), 'aiohttp'], repeat: 10,
+    expect: 'payload', missing: need(RUNTIMES.venvPython),
   },
   { id: 'tcp-10ms', group: 'proxy-ignoring', title: 'raw TCP held 10 ms', argv: node(RUNTIMES.node26, 'tcp', '10'), repeat: 10, expect: 'host', why: 'not HTTP' },
   { id: 'tcp-100ms', group: 'proxy-ignoring', title: 'raw TCP held 100 ms', argv: node(RUNTIMES.node26, 'tcp', '100'), repeat: 10, expect: 'host', why: 'not HTTP' },

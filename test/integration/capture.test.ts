@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import net from 'node:net';
 import os from 'node:os';
@@ -87,6 +87,20 @@ describe('captureSession (offline, real child processes)', () => {
     expect(har.log.entries[0]?.request).toMatchObject({ url: 'https://upstream.test/py', postData: { text: '{"py":1}' } });
   });
 
+  it.skipIf(!existsSync('/usr/bin/python3') || process.platform !== 'darwin')("records Apple's /usr/bin/python3, which ignores SSL_CERT_FILE (Python hook)", async () => {
+    const script = "import urllib.request; urllib.request.urlopen(urllib.request.Request('https://upstream.test/apple-py', data=b'{\"apple\":1}', method='POST')).read()";
+    const { har, launch } = await session('/usr/bin/python3', ['-c', script]);
+    expect(launch.exitCode).toBe(0);
+    expect(har.log.entries[0]?.request).toMatchObject({ url: 'https://upstream.test/apple-py', postData: { text: '{"apple":1}' } });
+  });
+
+  it.skipIf(!existsSync('/usr/bin/ruby'))('records the system Ruby, which ignores SSL_CERT_FILE (Ruby hook)', async () => {
+    const script = "require 'net/http'; u = URI('https://upstream.test/ruby'); Net::HTTP.start(u.host, u.port, use_ssl: true) { |h| exit(h.post(u.path, '{\"ruby\":1}').code == '200' ? 0 : 7) }";
+    const { har, launch } = await session('/usr/bin/ruby', ['-e', script]);
+    expect(launch.exitCode).toBe(0);
+    expect(har.log.entries[0]?.request).toMatchObject({ url: 'https://upstream.test/ruby', postData: { text: '{"ruby":1}' } });
+  });
+
   it.skipIf(!hasJava())('records Java HttpClient (JAVA_TOOL_OPTIONS proxy and JKS truststore)', async () => {
     const dir = mkdtempSync(join(os.tmpdir(), 'wl-java-'));
     const src = join(dir, 'J.java');
@@ -152,8 +166,8 @@ describe('captureSession (offline, real child processes)', () => {
     expect(har.log.entries.map((e) => e.request.url)).toEqual(['https://upstream.test/kept']);
   });
 
-  it('does not load the preload with nodePreload: false', async () => {
-    const { har } = await session(process.execPath, ['-e', "process.stdout.write(process.env.NODE_OPTIONS ?? ''); fetch('https://upstream.test/x').finally(() => process.exit(0))"], { nodePreload: false });
+  it('does not load the preload with preload: false', async () => {
+    const { har } = await session(process.execPath, ['-e', "process.stdout.write(process.env.NODE_OPTIONS ?? ''); fetch('https://upstream.test/x').finally(() => process.exit(0))"], { preload: false });
     expect(har.log.entries).toHaveLength(1);
   });
 

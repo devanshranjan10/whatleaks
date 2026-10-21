@@ -26,7 +26,7 @@ interface CaptureCliOptions {
   env: string[];
   passthrough: string[];
   watch: boolean;
-  nodePreload: boolean;
+  preload: boolean;
   samples: number;
   raw: boolean;
   color: boolean;
@@ -42,7 +42,7 @@ function captureOptions(cmd: Command, output = 'report'): Command {
     .option('-e, --env <KEY=VALUE>', 'extra environment variable for the app (repeatable)', collect, [])
     .option('--passthrough <host>', 'tunnel this host without reading it, e.g. *.mybank.com (repeatable)', collect, [])
     .option('--no-watch', 'do not look for connections that bypass the proxy')
-    .option('--no-node-preload', 'do not add the Node preload (NODE_OPTIONS) that proxies Node < 22.21 and agents an app creates itself')
+    .option('--no-preload', 'do not load runtime hooks into the app: the Node preload (NODE_OPTIONS) for old Node and app-made agents, and the Python and Ruby hooks (PYTHONPATH, RUBYOPT) for builds that ignore SSL_CERT_FILE and for aiohttp')
     .option('--md <file>', `also write the ${output} as Markdown`)
     .option('--json <file>', `also write the ${output} as JSON`)
     .option('--samples <n>', 'payload samples per endpoint', nonNegativeInt, 2)
@@ -58,7 +58,7 @@ function captureFlags(o: CaptureCliOptions) {
     env: o.env,
     noDecrypt: o.passthrough,
     watch: o.watch,
-    nodePreload: o.nodePreload,
+    preload: o.preload,
     samples: o.samples,
     raw: o.raw,
     color: o.color && wantsColor(process.stdout),

@@ -39,5 +39,5 @@ export async function nodeWarning(env: NodeJS.ProcessEnv, cwd: string, preload =
   }
   return support === 'fetch-only'
     ? `The node on PATH is ${v}: its http/https modules ignore NODE_USE_ENV_PROXY (fixed in 24.5), so some Node requests may have bypassed whatleaks.`
-    : `The node on PATH is ${v}, which ignores NODE_USE_ENV_PROXY (needs Node ≥ 22.21 or ≥ 24.5), and the preload was turned off (--no-node-preload), so Node programs may have bypassed whatleaks; only their destinations can show up, under "not visible".`;
+    : `The node on PATH is ${v}, which ignores NODE_USE_ENV_PROXY (needs Node ≥ 22.21 or ≥ 24.5), and the preload was turned off (--no-preload), so Node programs may have bypassed whatleaks; only their destinations can show up, under "not visible".`;
 }

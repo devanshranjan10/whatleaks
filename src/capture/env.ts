@@ -1,4 +1,5 @@
-import { withPreload } from './preload.js';
+import { delimiter } from 'node:path';
+import { type RuntimeHooks, withPreload } from './preload.js';
 
 export interface ChildEnvInput {
   base: NodeJS.ProcessEnv;
@@ -8,8 +9,8 @@ export interface ChildEnvInput {
   bundlePath: string;
   /** JKS truststore with the CA and the normal roots; enables the JVM settings when given. */
   javaTrustPath?: string;
-  /** Node preload for versions that ignore NODE_USE_ENV_PROXY (added to NODE_OPTIONS). */
-  nodePreload?: string;
+  /** Runtime hooks to load into the app (Node preload, Python and Ruby hooks). */
+  hooks?: RuntimeHooks;
   /** Opt-out variables to set (compare's second run, or run --opt-out). */
   optOut?: Record<string, string>;
   /** Variables to remove so a "default" run really is default (compare's first run). */
@@ -53,9 +54,18 @@ export function buildChildEnv(input: ChildEnvInput): ChildEnv {
   env.REQUESTS_CA_BUNDLE = input.bundlePath;
   env.CURL_CA_BUNDLE = input.bundlePath;
   env.GIT_SSL_CAINFO = input.bundlePath;
-  if (input.nodePreload) {
-    env.NODE_OPTIONS = withPreload(input.base.NODE_OPTIONS, input.nodePreload);
+  const hooks = input.hooks ?? {};
+  if (hooks.node) {
+    env.NODE_OPTIONS = withPreload(input.base.NODE_OPTIONS, hooks.node);
     env.WHATLEAKS_PRELOAD = '1';
+  }
+  // Python and Ruby builds that ignore SSL_CERT_FILE get the CA from their hook.
+  if (hooks.python || hooks.ruby) env.WHATLEAKS_CA = input.caPath;
+  const prepend = (dir: string, existing: string | undefined): string => (existing ? `${dir}${delimiter}${existing}` : dir);
+  if (hooks.python) env.PYTHONPATH = prepend(hooks.python, input.base.PYTHONPATH);
+  if (hooks.ruby) {
+    env.RUBYLIB = prepend(hooks.ruby, input.base.RUBYLIB);
+    env.RUBYOPT = input.base.RUBYOPT?.trim() ? `-rwhatleaks_hook ${input.base.RUBYOPT.trim()}` : '-rwhatleaks_hook';
   }
   if (input.javaTrustPath) env.JAVA_TOOL_OPTIONS = javaToolOptions(input.base.JAVA_TOOL_OPTIONS, input.proxyUrl, input.javaTrustPath);
   Object.assign(env, input.optOut ?? {}, input.extra ?? {});
