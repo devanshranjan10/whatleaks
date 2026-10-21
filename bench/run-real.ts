@@ -21,7 +21,7 @@ import { type RealTool, TOOLS } from './real/tools.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { values: flags } = parseArgs({
-  options: { only: { type: 'string' }, tag: { type: 'string', default: 'run' }, cli: { type: 'string' }, skip: { type: 'string', default: '' }, repeat: { type: 'string', default: '2' } },
+  options: { only: { type: 'string' }, tag: { type: 'string', default: 'run' }, cli: { type: 'string' }, skip: { type: 'string', default: '' }, repeat: { type: 'string', default: '2' }, 'mitm-set': { type: 'string' } },
 });
 const CLI = resolve(flags.cli ?? join(root, 'dist/cli.js'));
 const PHONEHOME = join(WLB, 'baseline-phonehome/phonehome.py');
@@ -105,7 +105,8 @@ async function mitmRun(tool: RealTool, dir: string): Promise<Observed> {
   const har = join(dir, `${tool.id}-mitm.har`);
   rmSync(har, { force: true });
   // Upstream: the real internet, verified against mitmproxy's default roots (no lab CA here).
-  const mitm = await startMitm(undefined, har);
+  // --mitm-set connection_strategy=lazy: the setting an expert would reach for with clients that exit fast.
+  const mitm = await startMitm(undefined, har, [], flags['mitm-set'] ? flags['mitm-set'].split(',') : []);
   const { caPath, bundlePath } = mitmBundle(mitm.confdir);
   const { env } = buildChildEnv({ base: baseEnv(tool), proxyUrl: `http://127.0.0.1:${mitm.port}`, caPath, bundlePath });
   const t0 = Date.now();

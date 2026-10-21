@@ -74,6 +74,13 @@ const modes = {
   async https() {
     for (let i = 0; i < 3; i++) await postHttps(SEQ0 + i, bodyFor(SEQ0 + i));
   },
+  // The app's own keep-alive agent (axios and got setups do this). Node's built-in proxy
+  // support covers only the global agent.
+  async agent() {
+    const agent = new https.Agent({ keepAlive: true, maxSockets: 1 });
+    for (let i = 0; i < 3; i++) await postHttps(SEQ0 + i, bodyFor(SEQ0 + i), {}, undefined, { agent });
+    agent.destroy();
+  },
   // A 9 MiB upload: above whatleaks' buffering cap, so the best outcome is "request" (counted, marked cut).
   async upload() {
     const body = Buffer.alloc(9 * 1024 * 1024, 120);

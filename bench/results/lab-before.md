@@ -4,7 +4,7 @@ Run 2026-10-21T06:06:32.865Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/t
 
 ## whatleaks
 
-Attempts 516: payload 36 %, request 12 %, host only 8 %, **silently missed 44 %** (225).
+Attempts 546: payload 34 %, request 12 %, host only 8 %, **silently missed 47 %** (255).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -35,6 +35,9 @@ Attempts 516: payload 36 %, request 12 %, host only 8 %, **silently missed 44 %*
 | raw TCP held 100 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 2 | 8 | 20 % (6–51) | – |
 | raw TCP held 2 s | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
+| raw TCP reset by the client after 10 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| raw TCP reset by the client after 50 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| raw TCP reset by the client after 200 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP, server closes first (100 ms) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
@@ -49,7 +52,7 @@ Attempts 516: payload 36 %, request 12 %, host only 8 %, **silently missed 44 %*
 
 ## mitmproxy
 
-Attempts 516: payload 66 %, request 0 %, host only 6 %, **silently missed 28 %** (147).
+Attempts 546: payload 62 %, request 0 %, host only 5 %, **silently missed 32 %** (177).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -80,6 +83,9 @@ Attempts 516: payload 66 %, request 0 %, host only 6 %, **silently missed 28 %**
 | raw TCP held 100 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 2 s | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| raw TCP reset by the client after 10 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| raw TCP reset by the client after 50 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| raw TCP reset by the client after 200 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP, server closes first (100 ms) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |

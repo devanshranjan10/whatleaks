@@ -117,6 +117,24 @@ describe('captureSession (offline, real child processes)', () => {
     ]);
   });
 
+  it('records agents the app makes itself on Node with built-in proxy support (class, old-style and plain)', async () => {
+    const child = `
+      const https = require('node:https');
+      const get = (agent, p) => new Promise((res, rej) => https.get('https://upstream.test/' + p, { agent }, (r) => { r.resume(); r.on('end', res); }).on('error', rej));
+      class Sub extends https.Agent { constructor() { super({ keepAlive: true }); } }
+      function Old(o) { https.Agent.call(this, o); }
+      Object.setPrototypeOf(Old.prototype, https.Agent.prototype);
+      (async () => {
+        await get(new https.Agent({ keepAlive: true }), 'own');
+        await get(new Sub(), 'sub');
+        await get(new Old({}), 'old');
+        process.exit(new Sub() instanceof https.Agent ? 0 : 8);
+      })().catch((e) => { console.error(e); process.exit(9); });`;
+    const { har, launch } = await session(process.execPath, ['-e', child]);
+    expect(launch.exitCode).toBe(0);
+    expect(har.log.entries.map((e) => e.request.url)).toEqual(['https://upstream.test/own', 'https://upstream.test/sub', 'https://upstream.test/old']);
+  });
+
   it('the Node preload honours NO_PROXY and leaves createConnection without a callback alone', async () => {
     const child = `
       const https = await import('node:https');

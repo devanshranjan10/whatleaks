@@ -31,6 +31,15 @@
           "bun-fetch"
         ],
         "why": "harness fix"
+      },
+      {
+        "date": "2026-10-21T10:58:59.476Z",
+        "scenarios": [
+          "tcp-rst-10ms",
+          "tcp-rst-50ms",
+          "tcp-rst-200ms"
+        ],
+        "why": "harness fix"
       }
     ]
   },
@@ -5832,6 +5841,1188 @@
         {
           "run": 10,
           "wallMs": 2122,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
+      "id": "tcp-rst-10ms",
+      "group": "proxy-ignoring",
+      "title": "raw TCP reset by the client after 10 ms",
+      "expect": "host",
+      "why": "not HTTP",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3202,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3337,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3270,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 4,
+          "wallMs": 3259,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 5,
+          "wallMs": 3223,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 6,
+          "wallMs": 3445,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 7,
+          "wallMs": 3372,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 8,
+          "wallMs": 3858,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 9,
+          "wallMs": 3383,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 10,
+          "wallMs": 3308,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
+      "id": "tcp-rst-10ms",
+      "group": "proxy-ignoring",
+      "title": "raw TCP reset by the client after 10 ms",
+      "expect": "host",
+      "why": "not HTTP",
+      "tool": "mitmproxy",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 118,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 2,
+          "wallMs": 110,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 3,
+          "wallMs": 111,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 4,
+          "wallMs": 111,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 5,
+          "wallMs": 109,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 6,
+          "wallMs": 110,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 7,
+          "wallMs": 110,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 8,
+          "wallMs": 111,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 9,
+          "wallMs": 110,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 10,
+          "wallMs": 114,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
+      "id": "tcp-rst-50ms",
+      "group": "proxy-ignoring",
+      "title": "raw TCP reset by the client after 50 ms",
+      "expect": "host",
+      "why": "not HTTP",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3552,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3195,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3173,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 4,
+          "wallMs": 3266,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 5,
+          "wallMs": 3128,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 6,
+          "wallMs": 3232,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 7,
+          "wallMs": 3213,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 8,
+          "wallMs": 3323,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 9,
+          "wallMs": 3288,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 10,
+          "wallMs": 3251,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
+      "id": "tcp-rst-50ms",
+      "group": "proxy-ignoring",
+      "title": "raw TCP reset by the client after 50 ms",
+      "expect": "host",
+      "why": "not HTTP",
+      "tool": "mitmproxy",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 161,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 2,
+          "wallMs": 157,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 3,
+          "wallMs": 158,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 4,
+          "wallMs": 157,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 5,
+          "wallMs": 160,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 6,
+          "wallMs": 158,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 7,
+          "wallMs": 157,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 8,
+          "wallMs": 155,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 9,
+          "wallMs": 156,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 10,
+          "wallMs": 156,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
+      "id": "tcp-rst-200ms",
+      "group": "proxy-ignoring",
+      "title": "raw TCP reset by the client after 200 ms",
+      "expect": "host",
+      "why": "not HTTP",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 4054,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3339,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3299,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 4,
+          "wallMs": 3349,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 5,
+          "wallMs": 3269,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 6,
+          "wallMs": 3314,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 7,
+          "wallMs": 3362,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 8,
+          "wallMs": 3331,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 9,
+          "wallMs": 3745,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 10,
+          "wallMs": 3445,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
+      "id": "tcp-rst-200ms",
+      "group": "proxy-ignoring",
+      "title": "raw TCP reset by the client after 200 ms",
+      "expect": "host",
+      "why": "not HTTP",
+      "tool": "mitmproxy",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 318,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 2,
+          "wallMs": 307,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 3,
+          "wallMs": 308,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 4,
+          "wallMs": 331,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 5,
+          "wallMs": 301,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 6,
+          "wallMs": 303,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 7,
+          "wallMs": 304,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 8,
+          "wallMs": 308,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 9,
+          "wallMs": 469,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "tcp:0=missed"
+          ]
+        },
+        {
+          "run": 10,
+          "wallMs": 594,
           "exit": 0,
           "tally": {
             "attempted": 1,

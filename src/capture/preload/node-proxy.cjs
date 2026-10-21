@@ -15,12 +15,13 @@ function install() {
   const force = env.WHATLEAKS_PRELOAD === 'force'; // tests: exercise the tunnel on any Node
   const fetchNative = !force && (major >= 24 || (major === 22 && minor >= 21));
   const httpNative = !force && (major >= 25 || (major === 24 && minor >= 5) || (major === 22 && minor >= 21));
+  const http = require('node:http');
+  const https = require('node:https');
+  if (httpNative && env.NODE_USE_ENV_PROXY) useEnvProxyInAppAgents(http, https);
   if (fetchNative && httpNative) return;
 
   const net = require('node:net');
   const tls = require('node:tls');
-  const http = require('node:http');
-  const https = require('node:https');
   let proxyHost;
   let proxyPort;
   try {
@@ -166,6 +167,27 @@ function install() {
     } catch {
       // never break the app: fetch then simply bypasses the proxy, as it would without whatleaks
     }
+  }
+}
+
+/**
+ * NODE_USE_ENV_PROXY covers only the global agents. Agents an app makes itself (keep-alive
+ * agents, axios and got setups) ignore the proxy unless created with `proxyEnv`, so make
+ * that the default. Written as a plain function so both `class extends https.Agent` and
+ * old-style `https.Agent.call(this, opts)` subclasses keep working.
+ */
+function useEnvProxyInAppAgents(http, https) {
+  for (const mod of [http, https]) {
+    const Orig = mod.Agent;
+    const Agent = function Agent(options) {
+      const o = options && options.proxyEnv !== undefined ? options : { ...options, proxyEnv: process.env };
+      if (new.target) return Reflect.construct(Orig, [o], new.target);
+      if (this instanceof Orig) return Orig.call(this, o);
+      return new Agent(options);
+    };
+    Agent.prototype = Orig.prototype;
+    Object.setPrototypeOf(Agent, Orig);
+    mod.Agent = Agent;
   }
 }
 

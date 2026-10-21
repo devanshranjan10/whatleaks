@@ -41,12 +41,12 @@ export interface Mitm {
  * trusting the lab CA upstream. `prefix` wraps the command (e.g. /usr/bin/time -l).
  */
 /** `labCa`: the upstream CA to trust (the lab's); undefined for the real internet (mitmproxy's own default roots). */
-export async function startMitm(labCa: string | undefined, harPath?: string, prefix: string[] = []): Promise<Mitm> {
+export async function startMitm(labCa: string | undefined, harPath?: string, prefix: string[] = [], sets: string[] = []): Promise<Mitm> {
   const confdir = join(WLB, 'mitmconf');
   mkdirSync(confdir, { recursive: true, mode: 0o700 });
   const port = 18000 + Math.floor(Math.random() * 2000);
   const args = ['uvx', '--from', 'mitmproxy==12.*', 'mitmdump', '--listen-host', '127.0.0.1', '--listen-port', String(port), '--set', `confdir=${confdir}`,
-    ...(harPath ? ['--set', `hardump=${harPath}`] : []), ...(labCa ? ['--set', `ssl_verify_upstream_trusted_ca=${labCa}`] : [])];
+    ...(harPath ? ['--set', `hardump=${harPath}`] : []), ...(labCa ? ['--set', `ssl_verify_upstream_trusted_ca=${labCa}`] : []), ...sets.flatMap((x) => ['--set', x])];
   const [cmd, ...rest] = [...prefix, ...args];
   const proc = spawn(cmd!, rest, { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PYTHONUNBUFFERED: '1' } });
   let log = '';

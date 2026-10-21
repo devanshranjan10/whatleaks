@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "tag": "mitm-lazy",
+    "date": "2026-10-21T11:49:20.820Z",
+    "machine": "Darwin 25.6.0 arm64",
+    "cli": "/tmp/wlb/after/dist/cli.js",
+    "phonehome": "zyralab/phonehome@946f42d",
+    "mitmproxy": "mitmproxy 12 (uvx)"
+  },
+  "results": [
+    {
+      "id": "turbo",
+      "title": "Turborepo 2.11 `turbo run build`",
+      "groundTruthEvents": 17,
+      "debugSource": "https://turborepo.dev/docs/telemetry",
+      "whatleaks": {
+        "defaults": [
+          {
+            "telemetryRequests": 1,
+            "events": 10,
+            "hostsNamed": [
+              "telemetry.vercel.com"
+            ],
+            "catalogClassified": true,
+            "findings": [],
+            "exit": 0,
+            "wallMs": 3165,
+            "notes": []
+          }
+        ],
+        "dnt": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 2786,
+          "notes": []
+        },
+        "optout": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 3066,
+          "notes": []
+        }
+      },
+      "verdicts": {
+        "sendsByDefault": true,
+        "optOutStops": true,
+        "dntStops": true,
+        "dntDocumented": "honoured",
+        "dntMatchesDocs": true
+      },
+      "optOut": {
+        "TURBO_TELEMETRY_DISABLED": "1"
+      },
+      "optOutSource": "https://turborepo.dev/docs/telemetry",
+      "dntSource": "https://turborepo.dev/docs/telemetry",
+      "mitmproxy": {
+        "telemetryRequests": 0,
+        "events": 0,
+        "hostsNamed": [
+          "telemetry.vercel.com (refused)"
+        ],
+        "exit": 0,
+        "wallMs": 140
+      }
+    },
+    {
+      "id": "astro",
+      "title": "Astro 7.4 `astro build`",
+      "groundTruthEvents": 0,
+      "debugSource": "@astrojs/telemetry dist/index.js: with DEBUG=astro:telemetry the events are printed and not sent",
+      "whatleaks": {
+        "defaults": [
+          {
+            "telemetryRequests": 1,
+            "events": 1,
+            "hostsNamed": [
+              "telemetry.astro.build"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "project-path"
+            ],
+            "exit": 0,
+            "wallMs": 3918,
+            "notes": []
+          }
+        ],
+        "dnt": {
+          "telemetryRequests": 1,
+          "events": 1,
+          "hostsNamed": [
+            "telemetry.astro.build"
+          ],
+          "catalogClassified": true,
+          "findings": [
+            "project-path"
+          ],
+          "exit": 0,
+          "wallMs": 3764,
+          "notes": []
+        },
+        "optout": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 3905,
+          "notes": []
+        }
+      },
+      "verdicts": {
+        "sendsByDefault": true,
+        "optOutStops": true,
+        "dntStops": false,
+        "dntDocumented": "not honoured",
+        "dntMatchesDocs": true
+      },
+      "optOut": {
+        "ASTRO_TELEMETRY_DISABLED": "1"
+      },
+      "optOutSource": "https://astro.build/telemetry/",
+      "dntSource": "@astrojs/telemetry 7.4 dist/index.js reads ASTRO_TELEMETRY_DISABLED and TELEMETRY_DISABLED only",
+      "mitmproxy": {
+        "telemetryRequests": 1,
+        "events": 1,
+        "hostsNamed": [
+          "telemetry.astro.build"
+        ],
+        "exit": 0,
+        "wallMs": 1013
+      }
+    }
+  ]
+}

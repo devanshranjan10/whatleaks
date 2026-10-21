@@ -1,0 +1,475 @@
+{
+  "meta": {
+    "tag": "after",
+    "date": "2026-10-21T11:47:52.577Z",
+    "machine": "Darwin 25.6.0 arm64",
+    "cli": "/tmp/wlb/after/dist/cli.js",
+    "phonehome": "zyralab/phonehome@946f42d",
+    "mitmproxy": "mitmproxy 12 (uvx)"
+  },
+  "results": [
+    {
+      "id": "next-node22",
+      "title": "Next.js 16.4.2 `next build` (Node 22.23)",
+      "groundTruthEvents": 22,
+      "debugSource": "https://nextjs.org/telemetry (debug mode prints events and sends nothing)",
+      "whatleaks": {
+        "defaults": [
+          {
+            "telemetryRequests": 8,
+            "events": 22,
+            "hostsNamed": [
+              "registry.npmjs.org",
+              "telemetry.nextjs.org"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "stable-id"
+            ],
+            "exit": 0,
+            "wallMs": 5006,
+            "notes": []
+          },
+          {
+            "telemetryRequests": 8,
+            "events": 22,
+            "hostsNamed": [
+              "registry.npmjs.org",
+              "telemetry.nextjs.org"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "stable-id"
+            ],
+            "exit": 0,
+            "wallMs": 4520,
+            "notes": []
+          }
+        ],
+        "dnt": {
+          "telemetryRequests": 8,
+          "events": 22,
+          "hostsNamed": [
+            "registry.npmjs.org",
+            "telemetry.nextjs.org"
+          ],
+          "catalogClassified": true,
+          "findings": [
+            "stable-id"
+          ],
+          "exit": 0,
+          "wallMs": 4798,
+          "notes": []
+        },
+        "optout": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [
+            "registry.npmjs.org"
+          ],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 4409,
+          "notes": []
+        }
+      },
+      "verdicts": {
+        "sendsByDefault": true,
+        "optOutStops": true,
+        "dntStops": false,
+        "dntDocumented": "not honoured",
+        "dntMatchesDocs": true
+      },
+      "optOut": {
+        "NEXT_TELEMETRY_DISABLED": "1"
+      },
+      "optOutSource": "https://nextjs.org/telemetry",
+      "dntSource": "https://nextjs.org/telemetry (names NEXT_TELEMETRY_DISABLED only)",
+      "mitmproxy": {
+        "telemetryRequests": 8,
+        "events": 22,
+        "hostsNamed": [
+          "registry.npmjs.org",
+          "telemetry.nextjs.org"
+        ],
+        "exit": 0,
+        "wallMs": 1507
+      },
+      "phonehome": {
+        "telemetryDestinationSeen": false,
+        "labelledTelemetry": false,
+        "rows": 26,
+        "rowsFromTool": 1,
+        "rowsOther": 25,
+        "wallMs": 1827
+      }
+    },
+    {
+      "id": "next-node20",
+      "title": "Next.js 16.4.2 `next build` (Node 20.20, ignores NODE_USE_ENV_PROXY)",
+      "groundTruthEvents": 22,
+      "debugSource": "https://nextjs.org/telemetry (debug mode prints events and sends nothing)",
+      "whatleaks": {
+        "defaults": [
+          {
+            "telemetryRequests": 8,
+            "events": 22,
+            "hostsNamed": [
+              "registry.npmjs.org",
+              "telemetry.nextjs.org"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "stable-id"
+            ],
+            "exit": 0,
+            "wallMs": 4302,
+            "notes": [
+              "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
+            ]
+          },
+          {
+            "telemetryRequests": 8,
+            "events": 22,
+            "hostsNamed": [
+              "registry.npmjs.org",
+              "telemetry.nextjs.org"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "stable-id"
+            ],
+            "exit": 0,
+            "wallMs": 4465,
+            "notes": [
+              "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
+            ]
+          }
+        ],
+        "dnt": {
+          "telemetryRequests": 8,
+          "events": 22,
+          "hostsNamed": [
+            "registry.npmjs.org",
+            "telemetry.nextjs.org"
+          ],
+          "catalogClassified": true,
+          "findings": [
+            "stable-id"
+          ],
+          "exit": 0,
+          "wallMs": 4525,
+          "notes": [
+            "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
+          ]
+        },
+        "optout": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [
+            "registry.npmjs.org"
+          ],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 4365,
+          "notes": [
+            "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
+          ]
+        }
+      },
+      "verdicts": {
+        "sendsByDefault": true,
+        "optOutStops": true,
+        "dntStops": false,
+        "dntDocumented": "not honoured",
+        "dntMatchesDocs": true
+      },
+      "optOut": {
+        "NEXT_TELEMETRY_DISABLED": "1"
+      },
+      "optOutSource": "https://nextjs.org/telemetry",
+      "dntSource": "https://nextjs.org/telemetry (names NEXT_TELEMETRY_DISABLED only)",
+      "mitmproxy": {
+        "telemetryRequests": 0,
+        "events": 0,
+        "hostsNamed": [],
+        "exit": 0,
+        "wallMs": 1497
+      },
+      "phonehome": {
+        "telemetryDestinationSeen": false,
+        "labelledTelemetry": false,
+        "rows": 26,
+        "rowsFromTool": 2,
+        "rowsOther": 24,
+        "wallMs": 1878
+      }
+    },
+    {
+      "id": "turbo",
+      "title": "Turborepo 2.11 `turbo run build`",
+      "groundTruthEvents": 17,
+      "debugSource": "https://turborepo.dev/docs/telemetry",
+      "whatleaks": {
+        "defaults": [
+          {
+            "telemetryRequests": 1,
+            "events": 10,
+            "hostsNamed": [
+              "telemetry.vercel.com"
+            ],
+            "catalogClassified": true,
+            "findings": [],
+            "exit": 0,
+            "wallMs": 3090,
+            "notes": []
+          },
+          {
+            "telemetryRequests": 1,
+            "events": 10,
+            "hostsNamed": [
+              "telemetry.vercel.com"
+            ],
+            "catalogClassified": true,
+            "findings": [],
+            "exit": 0,
+            "wallMs": 3019,
+            "notes": []
+          }
+        ],
+        "dnt": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 3049,
+          "notes": []
+        },
+        "optout": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 3724,
+          "notes": []
+        }
+      },
+      "verdicts": {
+        "sendsByDefault": true,
+        "optOutStops": true,
+        "dntStops": true,
+        "dntDocumented": "honoured",
+        "dntMatchesDocs": true
+      },
+      "optOut": {
+        "TURBO_TELEMETRY_DISABLED": "1"
+      },
+      "optOutSource": "https://turborepo.dev/docs/telemetry",
+      "dntSource": "https://turborepo.dev/docs/telemetry",
+      "mitmproxy": {
+        "telemetryRequests": 0,
+        "events": 0,
+        "hostsNamed": [],
+        "exit": 0,
+        "wallMs": 142
+      },
+      "phonehome": {
+        "telemetryDestinationSeen": false,
+        "labelledTelemetry": false,
+        "rows": 21,
+        "rowsFromTool": 0,
+        "rowsOther": 21,
+        "wallMs": 227
+      }
+    },
+    {
+      "id": "astro",
+      "title": "Astro 7.4 `astro build`",
+      "groundTruthEvents": 0,
+      "debugSource": "@astrojs/telemetry dist/index.js: with DEBUG=astro:telemetry the events are printed and not sent",
+      "whatleaks": {
+        "defaults": [
+          {
+            "telemetryRequests": 1,
+            "events": 1,
+            "hostsNamed": [
+              "telemetry.astro.build"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "project-path"
+            ],
+            "exit": 0,
+            "wallMs": 3710,
+            "notes": []
+          },
+          {
+            "telemetryRequests": 1,
+            "events": 1,
+            "hostsNamed": [
+              "telemetry.astro.build"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "project-path"
+            ],
+            "exit": 0,
+            "wallMs": 3478,
+            "notes": []
+          }
+        ],
+        "dnt": {
+          "telemetryRequests": 1,
+          "events": 1,
+          "hostsNamed": [
+            "telemetry.astro.build"
+          ],
+          "catalogClassified": true,
+          "findings": [
+            "project-path"
+          ],
+          "exit": 0,
+          "wallMs": 3646,
+          "notes": []
+        },
+        "optout": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 3365,
+          "notes": []
+        }
+      },
+      "verdicts": {
+        "sendsByDefault": true,
+        "optOutStops": true,
+        "dntStops": false,
+        "dntDocumented": "not honoured",
+        "dntMatchesDocs": true
+      },
+      "optOut": {
+        "ASTRO_TELEMETRY_DISABLED": "1"
+      },
+      "optOutSource": "https://astro.build/telemetry/",
+      "dntSource": "@astrojs/telemetry 7.4 dist/index.js reads ASTRO_TELEMETRY_DISABLED and TELEMETRY_DISABLED only",
+      "mitmproxy": {
+        "telemetryRequests": 0,
+        "events": 0,
+        "hostsNamed": [],
+        "exit": 0,
+        "wallMs": 600
+      },
+      "phonehome": {
+        "telemetryDestinationSeen": false,
+        "labelledTelemetry": false,
+        "rows": 21,
+        "rowsFromTool": 0,
+        "rowsOther": 21,
+        "wallMs": 1343
+      }
+    },
+    {
+      "id": "wrangler",
+      "title": "Wrangler 4.151 `wrangler whoami` (not logged in)",
+      "groundTruthEvents": 3,
+      "debugSource": "wrangler-dist/cli.js dispatch(): logs \"Posting data\" before each POST",
+      "whatleaks": {
+        "defaults": [
+          {
+            "telemetryRequests": 3,
+            "events": 3,
+            "hostsNamed": [
+              "api.cloudflare.com",
+              "sparrow.cloudflare.com"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "stable-id"
+            ],
+            "exit": 0,
+            "wallMs": 6990,
+            "notes": []
+          },
+          {
+            "telemetryRequests": 3,
+            "events": 3,
+            "hostsNamed": [
+              "api.cloudflare.com",
+              "sparrow.cloudflare.com"
+            ],
+            "catalogClassified": true,
+            "findings": [
+              "stable-id"
+            ],
+            "exit": 0,
+            "wallMs": 6947,
+            "notes": []
+          }
+        ],
+        "dnt": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [
+            "api.cloudflare.com"
+          ],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 6159,
+          "notes": []
+        },
+        "optout": {
+          "telemetryRequests": 0,
+          "events": 0,
+          "hostsNamed": [
+            "api.cloudflare.com"
+          ],
+          "catalogClassified": false,
+          "findings": [],
+          "exit": 0,
+          "wallMs": 5630,
+          "notes": []
+        }
+      },
+      "verdicts": {
+        "sendsByDefault": true,
+        "optOutStops": true,
+        "dntStops": true,
+        "dntDocumented": "honoured",
+        "dntMatchesDocs": true
+      },
+      "optOut": {
+        "WRANGLER_SEND_METRICS": "false"
+      },
+      "optOutSource": "https://github.com/cloudflare/workers-sdk/blob/main/packages/wrangler/telemetry.md",
+      "dntSource": "wrangler 4.151 wrangler-dist/cli.js resolveTelemetryStatus(): DO_NOT_TRACK first",
+      "mitmproxy": {
+        "telemetryRequests": 3,
+        "events": 3,
+        "hostsNamed": [
+          "api.cloudflare.com",
+          "sparrow.cloudflare.com"
+        ],
+        "exit": 0,
+        "wallMs": 3192
+      },
+      "phonehome": {
+        "telemetryDestinationSeen": true,
+        "labelledTelemetry": false,
+        "rows": 27,
+        "rowsFromTool": 3,
+        "rowsOther": 24,
+        "wallMs": 3340
+      }
+    }
+  ]
+}

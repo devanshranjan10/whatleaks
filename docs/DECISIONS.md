@@ -253,3 +253,22 @@ an inode not seen before. Start times come from `/proc/uptime`, not `btime`; `bt
 whole seconds and drifts after a VM sleeps, which rejected helpers as "started before
 the run". Checked in `node:22-slim` (`bench/linux/check.mjs`): a 10 ms raw TCP connection
 was named in 20 of 20 runs.
+
+**D-29 — Agents the app makes itself get `proxyEnv` by default.** `NODE_USE_ENV_PROXY`
+covers only Node's global agents. An app that creates its own `http.Agent` or
+`https.Agent` (keep-alive agents, many axios and got setups) bypassed whatleaks entirely
+on Node 22.21+ and 24.5+. In a check, 3 of 4 requests went direct. The preload
+replaces `http.Agent` and `https.Agent` with a plain-function wrapper that adds
+`proxyEnv: process.env` unless the app passed its own. The wrapper shares the original
+prototype, so `instanceof`, `class extends` and old-style `Agent.call(this)` subclasses
+all keep working. An app's explicit `proxyEnv` wins. Not covered: the `undici` package's own
+dispatchers.
+
+**D-30 — Socket polling adapts to activity.** Connections that are reset, or that the
+server closes, leave no TIME_WAIT, so only a live poll sees them. Polling runs every
+20 ms while the app is busy (its first 3 s, and 3 s after any new socket or process of
+its own), and every 100 ms otherwise. The process tree is listed every 100 ms while busy
+and every 500 ms otherwise. UDP is read on every 4th poll. Measured on the dev Mac:
+- a 20 s run costs 5.6 s of CPU (6.4 s for the build before the benchmark work);
+- resets after 50 ms or more were all caught;
+- resets after 10 ms were caught in 1 of 10 runs, which is the floor of sampling.

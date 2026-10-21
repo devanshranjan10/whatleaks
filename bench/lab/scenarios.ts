@@ -55,6 +55,8 @@ export const SCENARIOS: Scenario[] = [
   // --- Clients that honour proxy variables ---------------------------------------
   { id: 'node26-fetch', group: 'proxy-aware', title: 'Node 26 fetch', argv: node(RUNTIMES.node26, 'fetch'), repeat: 3, expect: 'payload' },
   { id: 'node26-https', group: 'proxy-aware', title: 'Node 26 https.request', argv: node(RUNTIMES.node26, 'https'), repeat: 3, expect: 'payload' },
+  { id: 'node26-agent', group: 'proxy-aware', title: 'Node 26 https.request with its own keep-alive Agent', argv: node(RUNTIMES.node26, 'agent'), repeat: 3, expect: 'payload' },
+  { id: 'node22-agent', group: 'proxy-aware', title: 'Node 22.23 https.request with its own keep-alive Agent', argv: node(RUNTIMES.node22, 'agent'), repeat: 3, expect: 'payload', missing: need(RUNTIMES.node22) },
   { id: 'node26-encodings', group: 'proxy-aware', title: 'Node 26 gzip, brotli, zstd bodies', argv: node(RUNTIMES.node26, 'encodings'), repeat: 3, expect: 'payload' },
   { id: 'node22-fetch', group: 'proxy-aware', title: 'Node 22.23 fetch', argv: node(RUNTIMES.node22, 'fetch'), repeat: 3, expect: 'payload', missing: need(RUNTIMES.node22) },
   { id: 'node22-https', group: 'proxy-aware', title: 'Node 22.23 https.request', argv: node(RUNTIMES.node22, 'https'), repeat: 3, expect: 'payload', missing: need(RUNTIMES.node22) },

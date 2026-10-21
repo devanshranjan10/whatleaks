@@ -6,7 +6,7 @@
  * Writes bench/results/perf-<tag>.{json,md}.
  */
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -91,6 +91,7 @@ async function runWhatleaks(lab: Lab, w: Workload, out: string): Promise<Measure
   let err = '';
   child.stderr.on('data', (d: Buffer) => (err += d.toString()));
   await waitExit(child, 300_000);
+  if (!existsSync(out)) throw new Error(`${w.id}: the client wrote no result under whatleaks:\n${err.slice(-2000)}`);
   return summarise('whatleaks', w, JSON.parse(readFileSync(out, 'utf8')) as ClientResult, parseTimeL(err));
 }
 
@@ -136,6 +137,7 @@ async function main(): Promise<void> {
   for (const w of WORKLOADS) {
     for (const tool of ['direct', 'whatleaks', 'mitmproxy'] as Tool[]) {
       const out = join(WLB, 'perf', `${w.id}-${tool}.json`);
+      rmSync(out, { force: true });
       const m = tool === 'direct' ? await runDirect(lab, w, out) : tool === 'whatleaks' ? await runWhatleaks(lab, w, out) : await runMitm(lab, w, out);
       results.push(m);
       console.error(`${w.id.padEnd(10)} ${tool.padEnd(10)} p50 ${f(m.p50)} ms  p95 ${f(m.p95)} ms  ${m.mbPerSec ? `${f(m.mbPerSec)} MiB/s  ` : ''}rss ${f(m.maxRssMiB, 0)} MiB  cpu ${f(m.cpuSec, 2)} s`);

@@ -10,10 +10,14 @@ const [mode, nArg = '200', opt = 'keepalive'] = process.argv.slice(2);
 const n = Number(nArg);
 const url = (i) => `https://${E.LAB_HOST}:${E.LAB_PORT}/perf/${mode}/${i}`;
 
-function post(agent, i, body) {
+// The global agent (keep-alive by default since Node 19) for every tool: mitmproxy and older
+// whatleaks builds rely on NODE_USE_ENV_PROXY, which covers only the global agent.
+// "fresh" asks for a new connection per request with Connection: close.
+function post(fresh, i, body) {
   return new Promise((resolve, reject) => {
     const t0 = process.hrtime.bigint();
-    const req = https.request(url(i), { method: 'POST', agent, headers: { 'content-type': 'application/octet-stream', 'content-length': body.length } }, (res) => {
+    const headers = { 'content-type': 'application/octet-stream', 'content-length': body.length, ...(fresh ? { connection: 'close' } : {}) };
+    const req = https.request(url(i), { method: 'POST', headers }, (res) => {
       res.resume();
       res.on('end', () => resolve(Number(process.hrtime.bigint() - t0) / 1e6));
     });
@@ -25,16 +29,13 @@ function post(agent, i, body) {
 const out = { mode, n, opt, ms: [], wallMs: 0 };
 const t0 = Date.now();
 if (mode === 'latency') {
-  const agent = opt === 'keepalive' ? new https.Agent({ keepAlive: true, maxSockets: 1 }) : new https.Agent({ keepAlive: false });
   const body = Buffer.alloc(1024, 97);
-  for (let i = 0; i < n; i++) out.ms.push(await post(agent, i, body));
-  agent.destroy();
+  for (let i = 0; i < n; i++) out.ms.push(await post(opt === 'fresh', i, body));
 } else if (mode === 'upload') {
-  const agent = new https.Agent({ keepAlive: true, maxSockets: 1 });
   const body = Buffer.alloc(Number(opt) * 1024 * 1024, 98);
-  for (let i = 0; i < n; i++) out.ms.push(await post(agent, i, body));
+  for (let i = 0; i < n; i++) out.ms.push(await post(false, i, body));
   out.bytes = body.length * n;
-  agent.destroy();
 }
+https.globalAgent.destroy();
 out.wallMs = Date.now() - t0;
 writeFileSync(E.PERF_OUT, JSON.stringify(out));
