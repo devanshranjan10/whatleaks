@@ -14,7 +14,7 @@ import { TELEMETRY_CATEGORIES } from '../model.js';
 import { type DecodedBody, decodeBody } from './body.js';
 import { categoryRank, classify } from './classify.js';
 import { FieldAccumulator, flatten, isIdLike, type Leaf } from './fields.js';
-import { IDENTITY_TITLES, type Matcher, findEmails, findPaths, fingerprint, maskId, scanIdentity } from './identity.js';
+import { IDENTITY_TITLES, type Matcher, findEmails, findPaths, fingerprint, scanIdentity } from './identity.js';
 import { type Redactor, isSecretName, makeRedactor } from './redact.js';
 import { queryParamNames, templatePath } from './url.js';
 
@@ -25,6 +25,8 @@ export interface ReportOptions {
   /** Turn redaction off. */
   raw?: boolean;
   rules?: readonly HostRule[];
+  /** Label when the capture has no whatleaks metadata (e.g. the HAR file name). */
+  label?: string;
 }
 
 const SAMPLE_CHARS = 4000;
@@ -300,7 +302,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
     .filter(([, e]) => e.requests.size >= 2)
     .map(([value, e]) => ({
       fingerprint: fingerprint(value),
-      display: opts.raw ? value : maskId(value),
+      display: redactor.leaf('id', value),
       requests: e.requests.size,
       endpoints: [...e.endpoints].sort(),
       locations: [...e.locations].slice(0, MAX_LOCATIONS),
@@ -360,7 +362,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
   return {
     schema: 'whatleaks/report@1',
     capture: {
-      label: meta?.label ?? 'capture',
+      label: meta?.label ?? opts.label ?? 'capture',
       command: meta?.command ?? [],
       startedAt: new Date(capture.startedAt).toISOString(),
       durationMs,

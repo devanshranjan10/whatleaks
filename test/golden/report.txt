@@ -1,0 +1,100 @@
+whatleaks · fake-tool build · 1m 00s · exit 0
+9 requests to 6 destinations · ≈2.3 KB sent · 7 to telemetry endpoints
+activity |▅█▅▃   ▃            | over 1m 00s
+
+WHAT IT SENT ABOUT YOU
+  ● A MAC address of this machine as sha256 — 3 requests to api.segment.io
+      in batch[].context.device.id
+  ● Your home directory path — 3 requests to api.segment.io
+      in batch[].properties.cwd
+  ● Your OS username as md5 and plain — 2 requests to flags.example.com, telemetry.example-tool.dev
+      in [].user, user.key
+  ● Your computer's hostname — 1 request to o123.ingest.sentry.io
+      in body
+  ● This machine's hardware/OS ID — 1 request to telemetry.example-tool.dev
+      in url
+  ● Your git email address — 1 request to telemetry.example-tool.dev
+      in [].email
+  ● An email address — 1 request to telemetry.example-tool.dev
+      in [].contact
+  ● Your git user name — 1 request to collector.example.net
+      in body:strings
+  ○ Repeated identifiers: 2 ids reused across requests (0f8f…950e ×3, ‹sha256(mac)› ×3)
+      in batch[].anonymousId, batch[].context.device.id
+
+WHERE IT WENT
+  DESTINATION                 CATEGORY             REQUESTS     SENT
+  api.segment.io              analytics · Segment         3  ≈1.4 KB
+  collector.example.net       analytics?                  1   ≈155 B
+  telemetry.example-tool.dev  analytics?                  1   ≈265 B
+  o123.ingest.sentry.io       errors · Sentry             1   ≈172 B
+  flags.example.com           flags?                      1   ≈165 B
+  registry.npmjs.org          other                       2   ≈156 B
+  "?" = guessed from the URL, not from the known-host catalog
+
+ENDPOINTS
+  POST api.segment.io/v1/batch  analytics · Segment
+      3 requests · first +1.0s · every ~10.0 s · 3/min · ≈1.4 KB · status 200×3
+      fields: batch[].anonymousId (id, same every time), batch[].context.device.id (id, same every time), batch[].context.os.name (same every time), batch[].event (same every time), batch[].properties.cwd (same every time), batch[].properties.durationMs, batch[].type (same every time), header:authorization (same every time)
+      sample (+1.0s):
+        {
+          "batch": [
+            {
+              "type": "track",
+              "event": "Build Completed",
+              "anonymousId": "0f8f…950e",
+              "context": {
+                "os": {
+                  "name": "macOS"
+                },
+                "device": {
+                  "id": "‹sha256(mac)›"
+                }
+              },
+        … 7 more lines (see --md)
+  POST collector.example.net/v1/traces  analytics?
+      1 request · first +7.0s · 1/min · ≈155 B · status 200
+      fields: body:strings
+      sample (+7.0s):
+        ‹binary, 31 bytes›
+        printable strings: ‹git-name› | service.name=fake
+  POST telemetry.example-tool.dev/v1/events  analytics?
+      1 request · first +5.0s · 1/min · ≈265 B · status 200
+      fields: ?machine (id), [].contact, [].email, [].event, [].user
+      sample (+5.0s):
+        [
+          {
+            "user": "‹username›",
+            "email": "‹git-email›"
+          },
+          {
+            "event": "exit",
+            "contact": "‹email›"
+          }
+        ]
+  POST o123.ingest.sentry.io/api/:id/envelope/  errors · Sentry
+      1 request · first +2.0s · 1/min · ≈172 B · status 200
+      fields: body
+      sample (+2.0s):
+        event from host ‹hostname› crashed
+  POST flags.example.com/sdk/evalx/abc  flags?
+      1 request · first +6.0s · 1/min · ≈165 B · status 200
+      fields: user.key (id)
+      sample (+6.0s):
+        {
+          "user": {
+            "key": "‹md5(username)›"
+          }
+        }
+  GET registry.npmjs.org/left-pad  other
+      2 requests · first +3.0s · every ~1.0 s · 2/min · ≈156 B · status 200×2
+
+NOT VISIBLE TO WHATLEAKS
+  ✗ pinned.example — 3 connections did not accept the whatleaks certificate (cert-rejected); contents unknown
+  ↷ bank.example:443 — 1 connection tunnelled without decrypting (--no-decrypt)
+  ↷ 140.82.112.3:443 (lb-140-82-112-3-iad.github.com) TCP — direct connection by git, bypassed the proxy
+
+NOTES
+  • 3 connections to 1 host did not accept the whatleaks certificate, so their contents are not in this report.
+
+Redacted: ‹labels› replace local identifiers and secrets; ids are masked. Use --raw to see everything.

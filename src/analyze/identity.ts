@@ -10,6 +10,7 @@ export const IDENTITY_TITLES: Record<IdentityKind, string> = {
   username: 'Your OS username',
   hostname: "Your computer's hostname",
   home: 'Your home directory path',
+  'project-path': "The project's folder path",
   mac: 'A MAC address of this machine',
   'machine-id': "This machine's hardware/OS ID",
   'git-email': 'Your git email address',
@@ -38,7 +39,7 @@ const HEXCH = /[0-9A-Fa-f]/;
 const hash = (algo: string, s: string): string => createHash(algo).update(s, 'utf8').digest('hex');
 
 /** Scanning order matters: longer, more specific identifiers are blanked out first. */
-const ORDER: IdentityKind[] = ['home', 'git-email', 'machine-id', 'mac', 'hostname', 'git-name', 'username'];
+const ORDER: IdentityKind[] = ['project-path', 'home', 'git-email', 'machine-id', 'mac', 'hostname', 'git-name', 'username'];
 
 function usable(id: Identity): boolean {
   const v = id.value.trim();
@@ -46,7 +47,7 @@ function usable(id: Identity): boolean {
   if ((id.kind === 'username' || id.kind === 'hostname' || id.kind === 'git-name') && GENERIC_NAMES.has(v.toLowerCase())) {
     return false;
   }
-  if (id.kind === 'home' && v.split(/[\\/]/).filter(Boolean).length < 2) return false;
+  if ((id.kind === 'home' || id.kind === 'project-path') && v.split(/[\\/]/).filter(Boolean).length < 2) return false;
   if (id.kind === 'mac' && /^(00[:-]?){5}00$/.test(v)) return false;
   return true;
 }
@@ -74,7 +75,7 @@ export function buildMatchers(identities: Identity[]): Matcher[] {
       add(kind, 'raw', parts.join('-'), HEXCH);
       add(kind, 'no-separators', parts.join(''), HEXCH);
       for (const s of [colon, colon.toUpperCase(), parts.join(''), parts.join('-')]) hashSources.add(s);
-    } else if (kind === 'home') {
+    } else if (kind === 'home' || kind === 'project-path') {
       add(kind, 'raw', v, null);
       add(kind, 'json-escaped', v.replaceAll('/', '\\/'), null);
       add(kind, 'url-encoded', encodeURIComponent(v), null);

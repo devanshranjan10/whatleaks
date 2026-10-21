@@ -70,7 +70,15 @@ export interface Destination {
   endpoints: string[];
 }
 
-export type IdentityKind = 'username' | 'hostname' | 'home' | 'mac' | 'machine-id' | 'git-email' | 'git-name';
+export type IdentityKind =
+  | 'username'
+  | 'hostname'
+  | 'home'
+  | 'project-path'
+  | 'mac'
+  | 'machine-id'
+  | 'git-email'
+  | 'git-name';
 export type FindingKind = IdentityKind | 'email' | 'file-path' | 'stable-id';
 
 export interface Finding {
