@@ -77,6 +77,20 @@ whatleaks compare --out-dir … -- ./node_modules/.bin/next build
 Output: [`next-build-all-opt-outs.txt`](next-build-all-opt-outs.txt) and
 [`next-build-all-opt-outs.md`](next-build-all-opt-outs.md).
 
+### `compare` with only `NEXT_TELEMETRY_DISABLED=1`
+
+This was run later, on the final build, to check the README's claim about this one
+variable on its own:
+
+```
+whatleaks compare --no-known-opt-outs --off-env NEXT_TELEMETRY_DISABLED=1 --strict -- ./node_modules/.bin/next build
+```
+
+Telemetry requests went **8 → 0**, and `--strict` exited 0.
+
+Output: [`next-build-next-telemetry-disabled.txt`](next-build-next-telemetry-disabled.txt)
+and [`next-build-next-telemetry-disabled.md`](next-build-next-telemetry-disabled.md).
+
 ### `compare` with only `DO_NOT_TRACK=1`
 
 ```

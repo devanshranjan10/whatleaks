@@ -108,7 +108,7 @@ Useful options:
 |---|---|
 | `--md <file>`, `--json <file>` | Write the report (or, for `compare` and `diff`, the diff) as Markdown or JSON. The Markdown has every field and full payload samples. |
 | `--samples <n>` | Payload samples per endpoint (default 2). |
-| `--duration <s>` | Stop the app after this many seconds. whatleaks stops every process the app started. |
+| `--duration <s>` | Stop the app after this many seconds, together with the processes whatleaks tracked for it. |
 | `--linger <s>` | After the app exits, wait up to this long for processes it left running (default 10 s). Some tools send telemetry from a detached helper after they exit. |
 | `--grace <s>` | After the app exits, keep recording at least this long (default 1 s), for helpers that start sending a moment later. |
 | `--passthrough <host>` | Tunnel a host without decrypting it, e.g. `*.mybank.com`. It is still counted. |
@@ -270,7 +270,13 @@ The full write-up is in [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
 - **Node 22 prints a warning.** On Node 22, the app prints an `UNDICI-EHPA`
   experimental warning when it starts. That is Node's built-in proxy support, which
   whatleaks turns on.
-- **Not tested:** WebSockets, HTTP/2-only clients and HTTP/3 (QUIC).
+- **Not tested:**
+  - WebSockets
+  - HTTP/2-only clients
+  - HTTP/3 (QUIC)
+  - forwarding through a proxy you already use. If `HTTPS_PROXY`, `HTTP_PROXY` or
+    `ALL_PROXY` is set, whatleaks sends its upstream traffic through it and honours
+    `NO_PROXY`.
 - **`compare` runs defaults first.** Events a tool sends only on first use can make a
   "stopped" result look better than it is. A "still sending" result is always a direct
   observation. Repeat a comparison before trusting a stop.
