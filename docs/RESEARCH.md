@@ -97,3 +97,36 @@ and Bun 1.3.11.
 | HAR 1.2: `postData.text` and `params` are mutually exclusive, and `postData` has no `encoding` field. Custom fields must start with `_`. | softwareishard.com/blog/har-12-spec | Use `_encoding: "base64"` for binary request bodies (already in the types). |
 | `lsof -F` output: `p` pid, `c` command, `f` fd, `t` type, `P` protocol, `n` `local->remote`, `T` `ST=…`. Without `-a`, selections are ORed. On macOS, users can see their own processes. | lsof.readthedocs.io (manpage, "Output for other programs") | `lsof -a -p <pids> -i -n -P -F pcPnT`. Linux availability is not guaranteed; fail soft. |
 | Next.js: `NEXT_TELEMETRY_DISABLED=1` opts out. With `NEXT_TELEMETRY_DEBUG=1`, data "will **not be sent**" and is printed instead. | nextjs.org/telemetry | Ground truth needs a separate debug run. |
+
+## 6. Telemetry catalogue (agent run, 2026-10-21)
+
+The agent unpacked current npm and PyPI packages and read source and official docs.
+None of the downloaded code was run. The full tables, with a URL per row, are encoded in
+`src/catalog/hosts.ts` and `src/catalog/optouts.ts`.
+
+**Findings that shape the product**
+
+- **Next.js `next build` is the live demo.**
+  - It sends through Node's global `fetch`, which `NODE_USE_ENV_PROXY` routes through
+    whatleaks. It waits for `telemetry.flush()` before exiting.
+  - `NEXT_TELEMETRY_DEBUG=1` prints events and **does not send them**, which gives
+    ground truth.
+  - Next.js does **not** honour `DO_NOT_TRACK`; `NEXT_TELEMETRY_DISABLED=1` stops it.
+    This is documented behaviour, not a bug.
+- **Astro** sends an *unsalted* SHA-256 of the project path when the project is not
+  in git. This is why whatleaks matches the captured run's cwd, and its hashes, as
+  `project-path` (D-16).
+- **Homebrew** sends analytics from a detached `curl`, and the **.NET CLI** uploads on
+  a *later* run. That is why whatleaks lingers for stragglers and why compare caveats
+  exist.
+- **Not visible by design:**
+  - **Streamlit** sends from the browser tab, not the CLI process.
+  - **Turborepo** is a Rust binary using rustls-platform-verifier, so on macOS it
+    refuses the CA and shows up as "not inspectable".
+- **Opt-outs and `DO_NOT_TRACK`:**
+  - **Gradio** ignores `DO_NOT_TRACK`, although Hugging Face's docs say it covers
+    Gradio. Seen in source, not run.
+  - In the **GitHub CLI**, any `GH_TELEMETRY` value overrides `DO_NOT_TRACK`.
+  - **consoledonottrack.com**, the original `DO_NOT_TRACK` convention site, now serves
+    an unrelated dog-care blog (fetched 2026-10-21). The opt-out catalogue therefore
+    cites tool docs instead.

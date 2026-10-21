@@ -115,3 +115,17 @@ sha256 hex, plus base64 for the longer ones. Telemetry SDKs commonly send
 `sha256(MAC)` as a "machine id". Short or generic names (`root`, `admin`, anything
 under 4 characters) are skipped to avoid noise. Matches are blanked as they are found,
 so a username inside a matched home path counts once, as the home path.
+
+**D-16 — The run's working directory is an identifier (`project-path`).** Astro's
+telemetry sends an unsalted SHA-256 of the project path when the project is not a git
+repo (research §6). That hash can be reversed by guessing likely paths. whatleaks
+matches the captured run's cwd, its JSON-escaped and URL-encoded forms, and its
+md5/sha1/sha256 hashes. The cwd is skipped when it is the home directory itself.
+
+**D-17 — The catalogs carry sources and support path scopes.** The host catalog has
+69 entries, and path-specific rules beat host-only ones. Hosts that also serve ordinary
+content (storybook.js.org, huggingface.co, chatgpt.com) match only on their telemetry
+path. The opt-out catalog has 32 environment variables, each with a source. Tools
+whose only opt-out is a config file or a command (VS Code, Gemini CLI, Codex CLI,
+Firebase CLI) are left out of `--opt-out`; the README tells users to do a manual
+before/after with `whatleaks diff` for those.

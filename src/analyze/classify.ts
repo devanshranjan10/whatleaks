@@ -8,10 +8,17 @@ export function hostMatches(host: string, pattern: string): boolean {
   return h === p || h.endsWith(`.${p}`);
 }
 
-function catalogMatch(host: string, rules: readonly HostRule[]): HostRule | undefined {
+/** Path-specific rules beat host-only rules; longer patterns beat shorter ones. */
+function specificity(rule: HostRule): number {
+  return rule.host.length + (rule.path ? 1000 + rule.path.length : 0);
+}
+
+function catalogMatch(host: string, path: string, rules: readonly HostRule[]): HostRule | undefined {
   let best: HostRule | undefined;
   for (const rule of rules) {
-    if (hostMatches(host, rule.host) && (!best || rule.host.length > best.host.length)) best = rule;
+    if (!hostMatches(host, rule.host)) continue;
+    if (rule.path && !path.startsWith(rule.path)) continue;
+    if (!best || specificity(rule) > specificity(best)) best = rule;
   }
   return best;
 }
@@ -33,6 +40,11 @@ const HEURISTICS: Heuristic[] = [
     category: 'flags',
     path: /\/(feature-?flags?|flags|experiments?|evalx|get_config|toggles?|decide)(\/|$)/i,
     host: /(^|[.-])(statsig|featuregates|launchdarkly|flags?|experiments?)([.-]|$)/i,
+  },
+  {
+    // Self-hosted collectors are recognised by their path (Snowplow, OTLP over HTTP).
+    category: 'analytics',
+    path: /\/(com\.snowplowanalytics\.snowplow)\//i,
   },
   {
     category: 'analytics',
@@ -61,9 +73,9 @@ function heuristicMatch(host: string, path: string): Classification | undefined 
  * heuristic, and the basis is always recorded so a guess never reads as a fact.
  */
 export function classify(host: string, path: string, rules: readonly HostRule[] = HOST_RULES): Classification {
-  const rule = catalogMatch(host, rules);
+  const rule = catalogMatch(host, path, rules);
   if (rule) {
-    return { category: rule.category, basis: 'catalog', reason: `${rule.vendor} (${rule.host})`, vendor: rule.vendor };
+    return { category: rule.category, basis: 'catalog', reason: `${rule.vendor} (${rule.host}${rule.path ?? ''})`, vendor: rule.vendor };
   }
   return heuristicMatch(host, path) ?? { category: 'other', basis: 'none', reason: 'no catalog entry or keyword match' };
 }
