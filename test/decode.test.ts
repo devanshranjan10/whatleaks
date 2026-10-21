@@ -1,7 +1,7 @@
-import { gzipSync } from 'node:zlib';
+import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { decodeBody } from '../src/analyze/body.js';
-import { decodeContent } from '../src/capture/decode.js';
+import { decodeContent, decodePrefix } from '../src/capture/decode.js';
 import { MAX_RESPONSE_TEXT, Recorder } from '../src/capture/recorder.js';
 
 describe('compression bombs', () => {
@@ -33,5 +33,23 @@ describe('Recorder memory', () => {
     const e = r.entries()[0]!;
     expect(e.response.content.text).toBeUndefined();
     expect(e.response.content.size).toBe(MAX_RESPONSE_TEXT + 1);
+  });
+});
+
+describe('decodePrefix', () => {
+  const text = JSON.stringify({ events: Array.from({ length: 2000 }, (_, i) => ({ i, name: `event-${i}` })) });
+
+  it('decodes the start of a cut gzip or brotli body', () => {
+    for (const [enc, packed] of [['gzip', gzipSync(text)], ['br', brotliCompressSync(text)]] as const) {
+      const out = decodePrefix(packed.subarray(0, Math.floor(packed.length / 2)), enc)?.toString() ?? '';
+      expect(out.length).toBeGreaterThan(100);
+      expect(text.startsWith(out)).toBe(true);
+    }
+  });
+
+  it('keeps the bomb cap and refuses layered or unknown encodings', () => {
+    expect(decodePrefix(gzipSync(Buffer.alloc(8 * 1024 * 1024)).subarray(0, 4000), 'gzip', 1024)).toBeUndefined();
+    expect(decodePrefix(gzipSync(text), 'gzip, br')).toBeUndefined();
+    expect(decodePrefix(Buffer.from('x'), 'zstd')).toBeUndefined();
   });
 });

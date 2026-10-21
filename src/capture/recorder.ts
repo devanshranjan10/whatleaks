@@ -110,6 +110,13 @@ export class Recorder {
     if (p) p.res = res.body && res.body.length > MAX_RESPONSE_TEXT ? { ...res, body: undefined } : res;
   }
 
+  /** The start of a body whose upload never completed; only used if no full body arrived. */
+  partialBody(id: string, body: Uint8Array, wireBodySize: number, decodedFrom?: string): void {
+    const p = this.pending.get(id);
+    if (!p?.bodyPending) return;
+    p.req = { ...p.req, body: body.subarray(0, MAX_REQUEST_BODY), wireBodySize, truncated: true, ...(decodedFrom ? { decodedFrom } : {}) };
+  }
+
   abort(id: string, reason: string): void {
     const p = this.pending.get(id);
     if (p && !p.res) p.aborted = reason;

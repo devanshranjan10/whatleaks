@@ -136,8 +136,22 @@ describe('captureSession (offline, real child processes)', () => {
     const { har } = await session(process.execPath, ['-e', child]);
     const e = har.log.entries.find((x) => x.request.url === 'https://upstream.test/upload');
     expect(e?._whatleaks).toMatchObject({ truncated: true, wireBodySize: 9 * 1024 * 1024 });
-    expect(e?.request.postData).toBeUndefined();
+    // The first MiB is kept from the stream so the start of the body can still be read.
+    expect(e?.request.postData?.text).toBe('x'.repeat(1024 * 1024));
     expect(e?.response.status).toBe(200);
+  });
+
+  it('keeps the start of an upload the client abandoned, decoded', async () => {
+    const child = `
+      const body = require('node:zlib').gzipSync(JSON.stringify({ crash: 'x'.repeat(200000), user: 'tester' }));
+      const req = require('node:https').request('https://upstream.test/abandoned', { method: 'POST', headers: { 'content-encoding': 'gzip', 'content-length': body.length + 5000 } });
+      req.on('error', () => {});
+      req.write(body.subarray(0, 120));
+      setTimeout(() => { req.destroy(); setTimeout(() => process.exit(0), 300); }, 400);`;
+    const { har } = await session(process.execPath, ['-e', child]);
+    const e = har.log.entries.find((x) => x.request.url === 'https://upstream.test/abandoned');
+    expect(e?._whatleaks).toMatchObject({ truncated: true, decoded: 'gzip', aborted: expect.any(String) as string });
+    expect(e?.request.postData?.text).toMatch(/^\{"crash":"xxx/);
   });
 
   it('stops the app after --duration and reports it', async () => {

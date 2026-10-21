@@ -41,3 +41,36 @@ export function decodeContent(raw: Uint8Array, encoding: string, max = MAX_DECOD
   }
   return Buffer.from(out);
 }
+
+/**
+ * Decode the start of a compressed body whose end never arrived (a prefix kept from an
+ * upload too large to buffer, or one the client abandoned). gzip, deflate and brotli
+ * can be flushed mid-stream; other encodings return undefined.
+ */
+export function decodePrefix(raw: Uint8Array, encoding: string, max = MAX_DECODED): Buffer | undefined {
+  const layers = encoding
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e && e !== 'identity');
+  if (layers.length !== 1) return undefined;
+  const sync = { finishFlush: zlib.constants.Z_SYNC_FLUSH, maxOutputLength: max };
+  try {
+    switch (layers[0]) {
+      case 'gzip':
+      case 'x-gzip':
+        return zlib.gunzipSync(raw, sync);
+      case 'deflate':
+        try {
+          return zlib.inflateSync(raw, sync);
+        } catch {
+          return zlib.inflateRawSync(raw, sync);
+        }
+      case 'br':
+        return zlib.brotliDecompressSync(raw, { finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH, maxOutputLength: max });
+      default:
+        return undefined;
+    }
+  } catch {
+    return undefined;
+  }
+}

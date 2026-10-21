@@ -1,8 +1,8 @@
 import net from 'node:net';
 import os from 'node:os';
 import { getLocal, type CompletedRequest, type CompletedResponse, type Mockttp } from 'mockttp';
-import { decodeContent } from './decode.js';
-import { MAX_RESPONSE_TEXT, type Recorder } from './recorder.js';
+import { decodeContent, decodePrefix } from './decode.js';
+import { MAX_REQUEST_BODY, MAX_RESPONSE_TEXT, type Recorder } from './recorder.js';
 
 /** Bodies above this are not buffered by the proxy at all (they are counted, not kept). */
 export const MAX_BUFFERED_BODY = 8 * 1024 * 1024;
@@ -129,6 +129,21 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
   const work = new Set<Promise<void>>();
   /** Request body bytes seen on the wire, counted even when the body is too large to buffer. */
   const wireBytes = new Map<string, number>();
+  /**
+   * The first MAX_REQUEST_BODY bytes of each request body as it streams in. Used when the
+   * whole body never reaches us: over the buffering cap, or abandoned by the client.
+   */
+  const prefixes = new Map<string, { chunks: Buffer[]; size: number }>();
+  const prefixOf = (id: string): Buffer | undefined => {
+    const p = prefixes.get(id);
+    prefixes.delete(id);
+    return p && p.size > 0 ? Buffer.concat(p.chunks).subarray(0, MAX_REQUEST_BODY) : undefined;
+  };
+  const decodedPrefix = (raw: Buffer, encoding: unknown): { body: Uint8Array; decodedFrom?: string } => {
+    if (typeof encoding !== 'string' || encoding === 'identity') return { body: raw };
+    const d = decodePrefix(raw, encoding);
+    return d ? { body: d, decodedFrom: encoding } : { body: raw };
+  };
   let last = Date.now();
   const track = (p: Promise<void>): void => {
     work.add(p);
@@ -148,12 +163,16 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
         const declared = Number(req.headers['content-length'] ?? 0) || 0;
         const onWire = Math.max(wireBytes.get(req.id) ?? 0, raw.length, declared);
         wireBytes.delete(req.id);
-        // Over MAX_BUFFERED_BODY, mockttp hands us an empty body: count it, mark it cut.
+        const prefix = prefixOf(req.id);
+        // Over MAX_BUFFERED_BODY, mockttp hands us an empty body: keep the prefix we
+        // collected while it streamed, count the rest, mark it cut.
         const dropped = raw.length === 0 && onWire > 0;
         let body: Uint8Array = raw;
         let decodedFrom: string | undefined;
         const encoding = req.headers['content-encoding'];
-        if (raw.length > 0 && typeof encoding === 'string' && encoding !== 'identity') {
+        if (dropped && prefix) {
+          ({ body, decodedFrom } = decodedPrefix(prefix, encoding));
+        } else if (raw.length > 0 && typeof encoding === 'string' && encoding !== 'identity') {
           const decoded = decodeContent(raw, encoding);
           if (decoded) {
             body = decoded;
@@ -206,12 +225,25 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
     server.on('request-body-data', (d) => {
       touch();
       wireBytes.set(d.id, (wireBytes.get(d.id) ?? 0) + d.content.length);
+      let p = prefixes.get(d.id);
+      if (!p) prefixes.set(d.id, (p = { chunks: [], size: 0 }));
+      if (p.size < MAX_REQUEST_BODY && d.content.length > 0) {
+        p.chunks.push(Buffer.from(d.content));
+        p.size += d.content.length;
+      }
     }),
     server.on('request', (r) => onRequest(r, false)),
     server.on('websocket-request', (r) => onRequest(r, true)),
     server.on('response', onResponse),
     server.on('abort', (r) => {
       touch();
+      // An upload the client abandoned: keep what arrived of its body.
+      const prefix = prefixOf(r.id);
+      if (prefix) {
+        const { body, decodedFrom } = decodedPrefix(prefix, r.headers['content-encoding']);
+        rec.partialBody(r.id, body, wireBytes.get(r.id) ?? prefix.length, decodedFrom);
+      }
+      wireBytes.delete(r.id);
       rec.abort(r.id, r.error?.code ?? r.error?.message ?? 'aborted');
     }),
     // From mockttp's point of view, "received" messages are the ones the app sent.
