@@ -121,8 +121,10 @@ None of the downloaded code was run. The full tables, with a URL per row, are en
   exist.
 - **Not visible by design:**
   - **Streamlit** sends from the browser tab, not the CLI process.
-  - **Turborepo** is a Rust binary using rustls-platform-verifier, so on macOS it
-    refuses the CA and shows up as "not inspectable".
+  - **Turborepo** was expected to refuse the CA on macOS, as a Rust binary using
+    rustls-platform-verifier. **Corrected by the e2e run (docs/e2e §2):** Turborepo
+    2.11.10 accepted the CA and its payload was fully readable, most likely through
+    `SSL_CERT_FILE`, which rustls-native-certs reads.
 - **Opt-outs and `DO_NOT_TRACK`:**
   - **Gradio** ignores `DO_NOT_TRACK`, although Hugging Face's docs say it covers
     Gradio. Seen in source, not run.

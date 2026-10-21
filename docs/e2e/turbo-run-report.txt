@@ -1,0 +1,36 @@
+whatleaks · ./node_modules/.bin/turbo run build · 1.7 s · exit 0
+1 request to 1 destination · ≈1.7 KB sent · 1 to telemetry endpoints
+activity |   █                | over 1.7 s
+
+WHAT IT SENT ABOUT YOU
+  ✓ No local identifiers, emails or file paths found in the visible traffic.
+
+WHERE IT WENT
+  DESTINATION           CATEGORY                                              REQUESTS     SENT
+  telemetry.vercel.com  analytics · Vercel telemetry (Turborepo, Vercel CLI)         1  ≈1.7 KB
+
+ENDPOINTS
+  POST telemetry.vercel.com/api/turborepo/v1/events  analytics · Vercel telemetry (Turborepo, Vercel CLI)
+      1 request · first +0.3s · ≈1.7 KB · status aborted
+      fields: [].command.id (id), [].command.parent_id (id), [].generic.id (id), [].generic.parent_id (id), header:x-turbo-session-id (id), header:x-turbo-telemetry-id (id), [].command.command, [].command.key …+4
+      sample (+0.3s):
+        [
+          {
+            "generic": {
+              "id": "2f26…61c3",
+              "key": "execution",
+              "value": "started",
+              "parent_id": null
+            }
+          },
+          {
+            "generic": {
+              "id": "2f26…61c3",
+              "key": "platform",
+              "value": "darwin-arm64",
+        … 70 more lines (see --md)
+
+NOTES
+  • 1 request did not complete (aborted, or still in flight when capture stopped).
+
+Redacted: ‹labels› replace local identifiers and secrets; ids are masked. Use --raw to see everything.
