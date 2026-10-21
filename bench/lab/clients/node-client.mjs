@@ -151,11 +151,18 @@ const modes = {
       });
     });
   },
-  // One UDP datagram (what an HTTP/3 or a custom UDP beacon looks like from outside).
+  // One UDP datagram. "connected" (the default) is how QUIC clients send; "unconnected"
+  // uses sendto() and leaves no remote address on the socket for any watcher to see.
   async udp() {
+    const unconnected = args[1] === 'unconnected';
     ledger({ seq: SEQ0, kind: 'udp', path: path(SEQ0), port: Number(E.LAB_UDP_PORT), direct: true });
     const s = dgram.createSocket('udp4');
-    await new Promise((r) => s.send(`${path(SEQ0)}\n`, Number(E.LAB_UDP_PORT), E.LAB_IP, r));
+    if (unconnected) {
+      await new Promise((r) => s.send(`${path(SEQ0)}\n`, Number(E.LAB_UDP_PORT), E.LAB_IP, r));
+    } else {
+      await new Promise((r) => s.connect(Number(E.LAB_UDP_PORT), E.LAB_IP, r));
+      await new Promise((r) => s.send(`${path(SEQ0)}\n`, r));
+    }
     await sleep(Number(args[0] ?? 50));
     s.close();
   },

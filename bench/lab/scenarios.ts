@@ -105,7 +105,11 @@ export const SCENARIOS: Scenario[] = [
     id: 'tcp-server-closes', group: 'proxy-ignoring', title: 'raw TCP, server closes first (100 ms)', argv: node(RUNTIMES.node26, 'tcp', '100', 'server-closes'), repeat: 10,
     expect: 'host', why: 'not HTTP',
   },
-  { id: 'udp', group: 'proxy-ignoring', title: 'one UDP datagram', argv: node(RUNTIMES.node26, 'udp', '50'), repeat: 10, expect: 'host', why: 'UDP is never proxied' },
+  { id: 'udp', group: 'proxy-ignoring', title: 'one UDP datagram, connected socket (like QUIC)', argv: node(RUNTIMES.node26, 'udp', '50'), repeat: 10, expect: 'host', why: 'UDP is never proxied' },
+  {
+    id: 'udp-unconnected', group: 'proxy-ignoring', title: 'one UDP datagram, unconnected socket (sendto)', argv: node(RUNTIMES.node26, 'udp', '50', 'unconnected'), repeat: 10,
+    expect: 'host', why: 'UDP is never proxied',
+  },
 
   // --- Process lifecycle ------------------------------------------------------------
   { id: 'helper-0.2s', group: 'lifecycle', title: 'detached helper sends 0.2 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '200'), repeat: 10, expect: 'payload' },

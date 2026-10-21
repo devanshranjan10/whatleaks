@@ -71,6 +71,16 @@ describe('process tree and linger', () => {
     ]);
   });
 
+  it('waits for a detached helper that first sends 2 s after its parent exited at once', async () => {
+    // No process listing ever sees the helper as the app's child: it is re-parented to
+    // launchd at once. It is waited for because it started during the run in the app's folder.
+    const helper = "setTimeout(() => fetch('https://upstream.test/late-helper', { method: 'POST', body: 'late' }).finally(() => process.exit(0)), 2000)";
+    const app = `require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(helper)}], { detached: true, stdio: 'ignore' }).unref(); process.exit(0);`;
+    const { har } = await session(app, { lingerMs: 8000 });
+    expect(har.log.entries.map((e) => [e.request.url, e.request.postData?.text])).toEqual([['https://upstream.test/late-helper', 'late']]);
+    expect(har.log._whatleaks?.notes.join(' ')).not.toContain('left alone');
+  });
+
   it('stops the whole process tree on --duration', async () => {
     const dir = await mkdtemp(join(os.tmpdir(), 'wl-tree-'));
     const pidFile = join(dir, 'pid');

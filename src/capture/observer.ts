@@ -1,6 +1,7 @@
 import { DirectWatcher, type Reverse, type RunLsof, type RunLsofPort, isLoopback, parseLsof, proxyClients, runLsof, runLsofPort } from './direct.js';
 import { NetstatWatcher, type RunNetstat, runNetstat } from './netstat.js';
-import { type ListProcesses, type ListSome, ProcessTracker, listProcesses, listSome } from './proctree.js';
+import { realpathSync } from 'node:fs';
+import { type CwdOf, type ListProcesses, type ListSome, ProcessTracker, cwdOf, listProcesses, listSome } from './proctree.js';
 import type { SessionObserver, SessionObserverFactory } from './session.js';
 import { promises as dns } from 'node:dns';
 import type { DirectConn } from '../har/types.js';
@@ -11,6 +12,7 @@ export interface ObserverDeps {
   lsof?: RunLsof;
   lsofPort?: RunLsofPort;
   netstat?: RunNetstat;
+  cwdOf?: CwdOf;
   reverse?: Reverse;
   treeEveryMs?: number;
   watchEveryMs?: number;
@@ -19,6 +21,60 @@ export interface ObserverDeps {
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+function realpath(p: string): string {
+  try {
+    return realpathSync(p);
+  } catch {
+    return p;
+  }
+}
+
+/**
+ * A detached helper whose parent exits at once is re-parented to launchd before any
+ * process listing links it to the app. Orphans started during the run whose working
+ * folder is the app's are marked likely: waited for, adopted when they use the proxy.
+ * Not done for `/` or the home folder, where unrelated processes live.
+ */
+function orphanJudge(tracker: ProcessTracker, cwd: string | undefined, look: CwdOf): () => Promise<void> {
+  const home = realpath(process.env.HOME ?? '');
+  const appCwd = cwd ? realpath(cwd) : undefined;
+  const sinceSec = Math.floor(Date.now() / 1000);
+  let ok = !!appCwd && appCwd !== '/' && appCwd !== home;
+  return async () => {
+    if (!ok) return;
+    const cands = tracker.orphanCandidates(sinceSec);
+    if (!cands.length) return;
+    let dirs: Map<number, string>;
+    try {
+      dirs = await look(cands.map((r) => r.pid));
+    } catch {
+      ok = false;
+      return;
+    }
+    for (const r of cands) tracker.judge(r, dirs.get(r.pid) === appCwd);
+  };
+}
+
+function signalProven(tracker: ProcessTracker, signal: NodeJS.Signals): number {
+  let n = 0;
+  for (const pid of tracker.alive()) {
+    try {
+      process.kill(pid, signal);
+      n++;
+    } catch {
+      // already gone
+    }
+  }
+  return n;
+}
+
+function likelyNote(tracker: ProcessTracker): string[] {
+  const left = tracker.aliveOrLikely().length - tracker.alive().length;
+  return left > 0
+    ? [`${left} process${left === 1 ? '' : 'es'} that looked like the app's (started during the run in its folder, never connected to whatleaks) ${left === 1 ? 'was' : 'were'} still running and left alone.`]
+    : [];
+}
 
 /** Best-effort reverse DNS, at most 1 s per address. */
 async function withReverse(list: DirectConn[], reverse: Reverse, timeoutMs = 1000): Promise<DirectConn[]> {
@@ -51,8 +107,9 @@ export function createObserver(deps: ObserverDeps = {}): SessionObserverFactory 
 }
 
 function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
-  return (rootPid, proxyPort, watch): SessionObserver => {
+  return (rootPid, proxyPort, watch, cwd): SessionObserver => {
     const tracker = new ProcessTracker(rootPid, deps.list ?? listProcesses);
+    const judge = orphanJudge(tracker, cwd, deps.cwdOf ?? cwdOf);
     const watcher = new NetstatWatcher(deps.netstat ?? runNetstat);
     const some = deps.listSome ?? listSome;
     const lsof = deps.lsof ?? runLsof;
@@ -70,7 +127,9 @@ function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
       } catch {
         treeOk = false;
         notes.push('Could not list processes (ps), so processes the app left running were not waited for.');
+        return;
       }
+      await judge();
     };
     // Children get higher pids than the app (until the pid counter wraps), so other
     // processes' sockets are not even remembered.
@@ -124,17 +183,9 @@ function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
       anyAlive: async () => {
         await sample();
         await refresh();
-        return treeOk && tracker.alive().length > 0;
+        return treeOk && tracker.aliveOrLikely().length > 0;
       },
-      signalAll: (signal) => {
-        for (const pid of tracker.alive()) {
-          try {
-            process.kill(pid, signal);
-          } catch {
-            // already gone
-          }
-        }
-      },
+      signalAll: (signal) => signalProven(tracker, signal),
       finish: async () => {
         await refresh();
         await sample();
@@ -143,6 +194,7 @@ function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
         await Promise.all([treeLoop, watchLoop]);
         const isApp = (pid: number): boolean => tracker.everTracked(pid);
         const direct = watch && sockOk ? await withReverse(watcher.results(isApp, (pid) => tracker.name(pid)), deps.reverse ?? dns.reverse) : [];
+        notes.push(...likelyNote(tracker));
         if (watch && !sockOk) notes.push('Could not run netstat, so connections that bypassed the proxy are not listed.');
         if (watch && sockOk && watcher.dnsSamples(isApp) > 0) notes.push('The app talked to a DNS server directly; DNS lookups are not listed.');
         return { direct, watcher: watch ? (sockOk ? 'on' : 'unavailable') : 'off', notes };
@@ -153,8 +205,9 @@ function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
 
 /** The portable backend: `lsof` for the tracked pids. */
 function lsofObserver(deps: ObserverDeps): SessionObserverFactory {
-  return (rootPid, proxyPort, watch): SessionObserver => {
+  return (rootPid, proxyPort, watch, cwd): SessionObserver => {
     const tracker = new ProcessTracker(rootPid, deps.list ?? listProcesses);
+    const judge = orphanJudge(tracker, cwd, deps.cwdOf ?? cwdOf);
     const watcher = new DirectWatcher(deps.lsof ?? runLsof);
     const lsofPort = deps.lsofPort ?? runLsofPort;
     const notes: string[] = [];
@@ -170,7 +223,9 @@ function lsofObserver(deps: ObserverDeps): SessionObserverFactory {
       } catch {
         treeOk = false;
         notes.push('Could not list processes (ps), so processes the app left running were not waited for.');
+        return;
       }
+      await judge();
     };
     const loop = async (everyMs: number, step: () => Promise<void>): Promise<void> => {
       while (!stopped) {
@@ -200,22 +255,15 @@ function lsofObserver(deps: ObserverDeps): SessionObserverFactory {
       anyAlive: async () => {
         await sample();
         await refresh();
-        return treeOk && tracker.alive().length > 0;
+        return treeOk && tracker.aliveOrLikely().length > 0;
       },
-      signalAll: (signal) => {
-        for (const pid of tracker.alive()) {
-          try {
-            process.kill(pid, signal);
-          } catch {
-            // already gone
-          }
-        }
-      },
+      signalAll: (signal) => signalProven(tracker, signal),
       finish: async () => {
         await sample();
         stopped = true;
         await Promise.all([treeLoop, watchLoop]);
         const direct = watchOk ? await watcher.results(deps.reverse) : [];
+        notes.push(...likelyNote(tracker));
         if (watch && !watchOk) notes.push('Could not run lsof, so connections that bypassed the proxy are not listed.');
         if (watchOk && watcher.dnsSamples() > 0) notes.push('The app talked to a DNS server directly; DNS lookups are not listed.');
         return { direct, watcher: watch ? (watchOk ? 'on' : 'unavailable') : 'off', notes };

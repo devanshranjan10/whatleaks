@@ -41,12 +41,12 @@ export interface SessionOptions {
 export interface SessionObserver {
   /** True while any process the app started is still alive. */
   anyAlive(): Promise<boolean>;
-  /** Stop every tracked process (used for --duration and interrupts). */
-  signalAll(signal: NodeJS.Signals): void;
+  /** Stop every process proven to be the app's (used for --duration and interrupts); returns how many. */
+  signalAll(signal: NodeJS.Signals): number;
   /** Stop sampling and return what was seen. */
   finish(): Promise<{ direct: DirectConn[]; watcher: SessionMeta['watcher']; notes: string[] }>;
 }
-export type SessionObserverFactory = (rootPid: number, proxyPort: number, watch: boolean) => SessionObserver;
+export type SessionObserverFactory = (rootPid: number, proxyPort: number, watch: boolean, cwd?: string) => SessionObserver;
 
 export interface SessionResult {
   har: Har;
@@ -164,7 +164,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         onStop: (signal) => observer?.signalAll(signal),
       });
       appRunning = true;
-      if (opts.observers) observer = opts.observers(launched.pid, proxy.port, opts.watch);
+      if (opts.observers) observer = opts.observers(launched.pid, proxy.port, opts.watch, opts.cwd);
       result = await launched.done;
       appRunning = false;
 
@@ -178,14 +178,13 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         interrupted: () => interrupted,
         onWaiting: () => opts.log(`whatleaks: ${opts.command} exited; waiting up to ${Math.round(opts.lingerMs / 1000)} s for processes it left running`),
       });
-      if (observer && (await observer.anyAlive())) {
+      // They carry this run's proxy settings, which stop working when the proxy closes.
+      if (observer && (await observer.anyAlive()) && observer.signalAll('SIGTERM') > 0) {
         notes.push(
           interrupted
             ? 'Interrupted while waiting for processes the app left running; they were stopped, and traffic they would have sent later is not included.'
             : `Some processes started by the app were still running ${Math.round(opts.lingerMs / 1000)} s after it exited; they were stopped, and traffic they would have sent later is not included.`,
         );
-        // They carry this run's proxy settings, which stop working when the proxy closes.
-        observer.signalAll('SIGTERM');
       }
       if (observer) {
         const seen = await observer.finish();

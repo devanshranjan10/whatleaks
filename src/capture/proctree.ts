@@ -31,6 +31,33 @@ export const listProcesses: ListProcesses = async () => {
 
 export type ListSome = (pids: number[]) => Promise<ProcRow[]>;
 
+export type CwdOf = (pids: number[]) => Promise<Map<number, string>>;
+
+/** Working directories of these processes (`lsof -d cwd`); processes we may not inspect are left out. */
+export const cwdOf: CwdOf = async (pids) => {
+  let out: string;
+  try {
+    ({ stdout: out } = await run('lsof', ['-a', '-p', pids.join(','), '-d', 'cwd', '-Fn'], { timeout: 5000 }));
+  } catch (err) {
+    const e = err as { code?: number | string; stdout?: string };
+    if (e.code !== 1) throw err;
+    out = e.stdout ?? '';
+  }
+  const map = new Map<number, string>();
+  let pid = 0;
+  for (const line of out.split('\n')) {
+    if (line.startsWith('p')) pid = Number(line.slice(1));
+    else if (line.startsWith('n') && pid) map.set(pid, line.slice(1));
+  }
+  return map;
+};
+
+/** `ps -o lstart` text as epoch seconds (local time, whole seconds). */
+export function startedSec(started: string): number {
+  const t = Date.parse(started);
+  return Number.isNaN(t) ? 0 : Math.floor(t / 1000);
+}
+
 /** The same columns for a few pids (ps exits 1 when none of them is alive). */
 export const listSome: ListSome = async (pids) => {
   try {
@@ -56,6 +83,13 @@ export class ProcessTracker {
   private readonly pidNames = new Map<number, string>();
   private latest: ProcRow[] = [];
   private readonly pendingAdopt = new Set<number>();
+  /**
+   * Processes that are probably the app's but not proven: re-parented to launchd and
+   * started during the run in the app's folder. Waited for, never signalled, never
+   * credited with traffic until they connect to the proxy (which adopts them).
+   */
+  private readonly likely = new Map<string, string>();
+  private readonly rejected = new Set<string>();
 
   constructor(
     private readonly rootPid: number,
@@ -99,6 +133,7 @@ export class ProcessTracker {
 
   private add(r: ProcRow): void {
     this.known.set(identity(r), r.comm);
+    this.likely.delete(identity(r));
     this.pidNames.set(r.pid, r.comm);
   }
 
@@ -125,6 +160,25 @@ export class ProcessTracker {
 
   alive(): number[] {
     return this.latest.filter((r) => this.known.has(identity(r))).map((r) => r.pid);
+  }
+
+  /** Proven and likely processes still alive (for waiting). */
+  aliveOrLikely(): number[] {
+    return this.latest.filter((r) => this.known.has(identity(r)) || this.likely.has(identity(r))).map((r) => r.pid);
+  }
+
+  /** Orphans started at or after `sinceSec` that have not been judged yet. */
+  orphanCandidates(sinceSec: number): ProcRow[] {
+    return this.latest.filter((r) => r.ppid === 1 && !this.known.has(identity(r)) && !this.likely.has(identity(r)) && !this.rejected.has(identity(r)) && startedSec(r.started) >= sinceSec);
+  }
+
+  judge(row: ProcRow, likely: boolean): void {
+    if (likely) this.likely.set(identity(row), row.comm);
+    else this.rejected.add(identity(row));
+  }
+
+  likelyCount(): number {
+    return this.likely.size;
   }
 
   name(pid: number): string | undefined {

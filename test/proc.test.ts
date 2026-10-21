@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DirectWatcher, isLoopback, parseLsof, proxyClients } from '../src/capture/direct.js';
-import { type ProcRow, ProcessTracker, parsePs } from '../src/capture/proctree.js';
+import { type ProcRow, ProcessTracker, parsePs, startedSec } from '../src/capture/proctree.js';
 
 const fixture = (name: string): string => readFileSync(new URL(`fixtures/proc/${name}`, import.meta.url), 'utf8');
 
@@ -65,6 +65,40 @@ describe('ProcessTracker', () => {
     );
     await t.refresh();
     expect(t.alive().sort()).toEqual([10, 20, 30]);
+  });
+});
+
+describe('ProcessTracker: likely orphans and short-lived children', () => {
+  const at = (sec: number): string => new Date((1_792_000_000 + sec) * 1000).toString().slice(0, 24).replace(/^(\w+ \w+ \d+) (\d+) (.*)$/, '$1 $3 $2');
+
+  it('offers orphans started since the run began, waits for likely ones, never signals them', async () => {
+    const table = [row(10, 1, at(0), 'app'), row(20, 1, at(5), 'node'), row(30, 1, at(-60), 'old-daemon'), row(40, 1, at(6), 'mdworker')];
+    const t = new ProcessTracker(10, () => Promise.resolve(table));
+    await t.refresh();
+    const since = startedSec(at(1));
+    expect(t.orphanCandidates(since).map((r) => r.pid)).toEqual([20, 40]);
+    t.judge(table[1]!, true);
+    t.judge(table[3]!, false);
+    expect(t.orphanCandidates(since)).toEqual([]);
+    expect(t.aliveOrLikely().sort()).toEqual([10, 20]);
+    expect(t.alive()).toEqual([10]);
+    expect(t.everTracked(20)).toBe(false);
+    // Proven once it connects to the proxy.
+    t.adopt([20]);
+    await t.refresh();
+    expect(t.alive().sort()).toEqual([10, 20]);
+    expect(t.likelyCount()).toBe(0);
+  });
+
+  it('adopts a child seen only once, through a targeted listing, and remembers exited pids', async () => {
+    const t = new ProcessTracker(10, () => Promise.resolve([row(10, 1, at(0), 'app')]));
+    await t.refresh();
+    t.consider([row(11, 10, at(1), 'curl'), row(12, 11, at(1), 'sh'), row(99, 1, at(1), 'other')]);
+    expect(t.everTracked(11) && t.everTracked(12)).toBe(true);
+    expect(t.everTracked(99)).toBe(false);
+    await t.refresh(); // 11 and 12 have exited
+    expect(t.name(11)).toBe('curl');
+    expect(t.everTracked(10)).toBe(true);
   });
 });
 
