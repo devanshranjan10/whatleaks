@@ -5,7 +5,19 @@
     "machine": "Darwin 25.6.0 arm64, 8 CPUs",
     "whatleaks": "0.1.0 (/tmp/wlb/after/dist/cli.js)",
     "mitmproxy": "Mitmproxy: 12.2.3",
-    "node": "v26.0.0"
+    "node": "v26.0.0",
+    "rerun": [
+      {
+        "date": "2026-10-21T12:04:02.641Z",
+        "scenarios": [
+          "node26-agent",
+          "node22-agent",
+          "udp"
+        ],
+        "why": "build f80a1be: new agent scenarios (D-29); UDP read every 2nd poll",
+        "cli": "/tmp/wlb/after/dist/cli.js"
+      }
+    ]
   },
   "results": [
     {
@@ -324,6 +336,324 @@
       "atBestCI": [
         0.7008472464490406,
         1
+      ]
+    },
+    {
+      "id": "node26-agent",
+      "group": "proxy-aware",
+      "title": "Node 26 https.request with its own keep-alive Agent",
+      "expect": "payload",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3130,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3082,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3110,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 9,
+        "payload": 9,
+        "request": 0,
+        "host": 0,
+        "missed": 0
+      },
+      "atBest": 1,
+      "atBestCI": [
+        0.7008472464490406,
+        1
+      ]
+    },
+    {
+      "id": "node26-agent",
+      "group": "proxy-aware",
+      "title": "Node 26 https.request with its own keep-alive Agent",
+      "expect": "payload",
+      "tool": "mitmproxy",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 149,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        },
+        {
+          "run": 2,
+          "wallMs": 134,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        },
+        {
+          "run": 3,
+          "wallMs": 158,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        }
+      ],
+      "total": {
+        "attempted": 9,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 9
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2991527535509594
+      ]
+    },
+    {
+      "id": "node22-agent",
+      "group": "proxy-aware",
+      "title": "Node 22.23 https.request with its own keep-alive Agent",
+      "expect": "payload",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3056,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3025,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3170,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 9,
+        "payload": 9,
+        "request": 0,
+        "host": 0,
+        "missed": 0
+      },
+      "atBest": 1,
+      "atBestCI": [
+        0.7008472464490406,
+        1
+      ]
+    },
+    {
+      "id": "node22-agent",
+      "group": "proxy-aware",
+      "title": "Node 22.23 https.request with its own keep-alive Agent",
+      "expect": "payload",
+      "tool": "mitmproxy",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 139,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        },
+        {
+          "run": 2,
+          "wallMs": 134,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        },
+        {
+          "run": 3,
+          "wallMs": 147,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        }
+      ],
+      "total": {
+        "attempted": 9,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 9
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2991527535509594
       ]
     },
     {
@@ -7416,61 +7746,61 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 5415,
+          "wallMs": 63174,
           "exit": 0,
           "tally": {
             "attempted": 1,
             "payload": 0,
             "request": 0,
-            "host": 0,
-            "missed": 1
+            "host": 1,
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "udp:0=missed"
+            "udp:0=host"
           ],
           "findings": []
         },
         {
           "run": 2,
-          "wallMs": 5293,
+          "wallMs": 60200,
           "exit": 0,
           "tally": {
             "attempted": 1,
             "payload": 0,
             "request": 0,
-            "host": 0,
-            "missed": 1
+            "host": 1,
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "udp:0=missed"
+            "udp:0=host"
           ],
           "findings": []
         },
         {
           "run": 3,
-          "wallMs": 5090,
+          "wallMs": 58370,
           "exit": 0,
           "tally": {
             "attempted": 1,
             "payload": 0,
             "request": 0,
-            "host": 0,
-            "missed": 1
+            "host": 1,
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "udp:0=missed"
+            "udp:0=host"
           ],
           "findings": []
         },
         {
           "run": 4,
-          "wallMs": 6932,
+          "wallMs": 62521,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7488,7 +7818,7 @@
         },
         {
           "run": 5,
-          "wallMs": 7978,
+          "wallMs": 61439,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7506,61 +7836,7 @@
         },
         {
           "run": 6,
-          "wallMs": 7243,
-          "exit": 0,
-          "tally": {
-            "attempted": 1,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 1
-          },
-          "unexpected": [],
-          "delivered": 1,
-          "outcomes": [
-            "udp:0=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 7,
-          "wallMs": 4794,
-          "exit": 0,
-          "tally": {
-            "attempted": 1,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 1
-          },
-          "unexpected": [],
-          "delivered": 1,
-          "outcomes": [
-            "udp:0=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 8,
-          "wallMs": 5921,
-          "exit": 0,
-          "tally": {
-            "attempted": 1,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 1
-          },
-          "unexpected": [],
-          "delivered": 1,
-          "outcomes": [
-            "udp:0=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 9,
-          "wallMs": 6066,
+          "wallMs": 74400,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7577,8 +7853,62 @@
           "findings": []
         },
         {
+          "run": 7,
+          "wallMs": 63194,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 1,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=host"
+          ],
+          "findings": []
+        },
+        {
+          "run": 8,
+          "wallMs": 66610,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 1,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=host"
+          ],
+          "findings": []
+        },
+        {
+          "run": 9,
+          "wallMs": 5274,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
           "run": 10,
-          "wallMs": 5005,
+          "wallMs": 4349,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7599,13 +7929,13 @@
         "attempted": 10,
         "payload": 0,
         "request": 0,
-        "host": 3,
-        "missed": 7
+        "host": 8,
+        "missed": 2
       },
-      "atBest": 0.3,
+      "atBest": 0.8,
       "atBestCI": [
-        0.10778928748621182,
-        0.6032267800204347
+        0.49015684672072346,
+        0.9433190520193067
       ]
     },
     {
@@ -7618,7 +7948,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 491,
+          "wallMs": 169,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7635,7 +7965,7 @@
         },
         {
           "run": 2,
-          "wallMs": 450,
+          "wallMs": 168,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7652,7 +7982,7 @@
         },
         {
           "run": 3,
-          "wallMs": 411,
+          "wallMs": 159,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7669,7 +7999,7 @@
         },
         {
           "run": 4,
-          "wallMs": 387,
+          "wallMs": 158,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7686,7 +8016,7 @@
         },
         {
           "run": 5,
-          "wallMs": 553,
+          "wallMs": 159,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7703,7 +8033,7 @@
         },
         {
           "run": 6,
-          "wallMs": 469,
+          "wallMs": 157,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7720,7 +8050,7 @@
         },
         {
           "run": 7,
-          "wallMs": 583,
+          "wallMs": 163,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7737,7 +8067,7 @@
         },
         {
           "run": 8,
-          "wallMs": 599,
+          "wallMs": 160,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7754,7 +8084,7 @@
         },
         {
           "run": 9,
-          "wallMs": 1457,
+          "wallMs": 161,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -7771,7 +8101,7 @@
         },
         {
           "run": 10,
-          "wallMs": 783,
+          "wallMs": 161,
           "exit": 0,
           "tally": {
             "attempted": 1,

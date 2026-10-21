@@ -4,12 +4,14 @@ Run 2026-10-21T11:44:16.656Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/t
 
 ## whatleaks
 
-Attempts 546: payload 66 %, request 1 %, host only 25 %, **silently missed 8 %** (42).
+Attempts 564: payload 68 %, request 1 %, host only 25 %, **silently missed 7 %** (37).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
 | Node 26 fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 26 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
+| Node 26 https.request with its own keep-alive Agent | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
+| Node 22.23 https.request with its own keep-alive Agent | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 26 gzip, brotli, zstd bodies | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 22.23 fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 22.23 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
@@ -39,7 +41,7 @@ Attempts 546: payload 66 %, request 1 %, host only 25 %, **silently missed 8 %**
 | raw TCP reset by the client after 50 ms | host | 10 | 0 | 0 | 8 | 2 | 80 % (49–94) | – |
 | raw TCP reset by the client after 200 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 4 | 6 | 40 % (17–69) | – |
-| one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 3 | 7 | 30 % (11–60) | – |
+| one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 8 | 2 | 80 % (49–94) | – |
 | one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 1.5 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
@@ -52,12 +54,14 @@ Attempts 546: payload 66 %, request 1 %, host only 25 %, **silently missed 8 %**
 
 ## mitmproxy
 
-Attempts 546: payload 62 %, request 0 %, host only 5 %, **silently missed 32 %** (177).
+Attempts 564: payload 60 %, request 0 %, host only 5 %, **silently missed 35 %** (195).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
 | Node 26 fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 26 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
+| Node 26 https.request with its own keep-alive Agent | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
+| Node 22.23 https.request with its own keep-alive Agent | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
 | Node 26 gzip, brotli, zstd bodies | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 22.23 fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 22.23 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |

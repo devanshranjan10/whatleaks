@@ -74,11 +74,14 @@ function summarise(tool: Tool, w: Workload, r: ClientResult, time?: ReturnType<t
   };
 }
 
+/** The bare client, also under /usr/bin/time: its CPU is subtracted from whatleaks' total (which includes the app). */
 async function runDirect(lab: Lab, w: Workload, out: string): Promise<Measured> {
   const env = { ...cleanEnv(lab, out), NODE_EXTRA_CA_CERTS: lab.caPath };
-  const child = spawn(process.execPath, [CLIENT, ...w.args], { env, stdio: 'inherit' });
+  const child = spawn('/usr/bin/time', ['-l', process.execPath, CLIENT, ...w.args], { env, stdio: ['ignore', 'inherit', 'pipe'] });
+  let err = '';
+  child.stderr.on('data', (d: Buffer) => (err += d.toString()));
   await waitExit(child, 300_000);
-  return summarise('direct', w, JSON.parse(readFileSync(out, 'utf8')) as ClientResult);
+  return summarise('direct', w, JSON.parse(readFileSync(out, 'utf8')) as ClientResult, parseTimeL(err));
 }
 
 async function runWhatleaks(lab: Lab, w: Workload, out: string): Promise<Measured> {
@@ -91,6 +94,7 @@ async function runWhatleaks(lab: Lab, w: Workload, out: string): Promise<Measure
   let err = '';
   child.stderr.on('data', (d: Buffer) => (err += d.toString()));
   await waitExit(child, 300_000);
+  writeFileSync(join(WLB, 'perf', `${w.id}-whatleaks.stderr.txt`), err);
   if (!existsSync(out)) throw new Error(`${w.id}: the client wrote no result under whatleaks:\n${err.slice(-2000)}`);
   return summarise('whatleaks', w, JSON.parse(readFileSync(out, 'utf8')) as ClientResult, parseTimeL(err));
 }
@@ -150,9 +154,14 @@ async function main(): Promise<void> {
   const meta = { tag: flags.tag, date: new Date().toISOString(), machine: `${os.type()} ${os.release()} ${os.arch()}, ${os.cpus().length} CPUs`, node: process.version, cli: CLI };
   const lines = [`# Performance: ${flags.tag}`, '', `Run ${meta.date} on ${meta.machine}, Node ${meta.node}. Client: Node https to the lab over the LAN address.`, ''];
   for (const w of WORKLOADS) {
-    lines.push(`## ${w.title}`, '', '| | p50 ms | p95 ms | p99 ms | MiB/s | tool peak RSS MiB | tool CPU s |', '|---|---|---|---|---|---|---|');
-    for (const m of results.filter((r) => r.workload === w.id)) {
-      lines.push(`| ${m.tool} | ${f(m.p50)} | ${f(m.p95)} | ${f(m.p99)} | ${f(m.mbPerSec)} | ${f(m.maxRssMiB, 0)} | ${f(m.cpuSec, 2)} |`);
+    lines.push(`## ${w.title}`, '', '| | p50 ms | p95 ms | p99 ms | MiB/s | peak RSS MiB | CPU s | tool CPU s |', '|---|---|---|---|---|---|---|---|');
+    const ms = results.filter((r) => r.workload === w.id);
+    for (const m of ms) {
+      // "tool CPU": whatleaks' total minus the bare client's (it includes the app it runs);
+      // mitmproxy's own process only; the client itself for "direct".
+      const bare = ms.find((x) => x.tool === 'direct')?.cpuSec;
+      const tool = m.tool === 'whatleaks' && m.cpuSec !== undefined && bare !== undefined ? m.cpuSec - bare : m.tool === 'mitmproxy' ? m.cpuSec : undefined;
+      lines.push(`| ${m.tool} | ${f(m.p50)} | ${f(m.p95)} | ${f(m.p99)} | ${f(m.mbPerSec)} | ${f(m.maxRssMiB, 0)} | ${f(m.cpuSec, 2)} | ${f(tool, 2)} |`);
     }
     lines.push('');
   }

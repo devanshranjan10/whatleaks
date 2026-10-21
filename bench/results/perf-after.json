@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "tag": "after",
+    "date": "2026-10-21T12:09:57.500Z",
+    "machine": "Darwin 25.6.0 arm64, 8 CPUs",
+    "node": "v26.0.0",
+    "cli": "/tmp/wlb/after/dist/cli.js"
+  },
+  "results": [
+    {
+      "tool": "direct",
+      "workload": "keepalive",
+      "p50": 0.172833,
+      "p95": 0.34,
+      "p99": 0.523625,
+      "mean": 0.5205942100000004,
+      "wallMs": 162
+    },
+    {
+      "tool": "whatleaks",
+      "workload": "keepalive",
+      "p50": 0.596208,
+      "p95": 1.812042,
+      "p99": 3.821416,
+      "mean": 0.9334672066666659,
+      "wallMs": 288,
+      "maxRssMiB": 146.59375,
+      "cpuSec": 3.06
+    },
+    {
+      "tool": "mitmproxy",
+      "workload": "keepalive",
+      "p50": 1.189667,
+      "p95": 1.612917,
+      "p99": 4.468417,
+      "mean": 1.490776,
+      "wallMs": 455,
+      "maxRssMiB": 89.78125,
+      "cpuSec": 0.9600000000000001
+    },
+    {
+      "tool": "direct",
+      "workload": "fresh",
+      "p50": 4.446,
+      "p95": 7.862833,
+      "p99": 28.209333,
+      "mean": 5.479699140000003,
+      "wallMs": 550
+    },
+    {
+      "tool": "whatleaks",
+      "workload": "fresh",
+      "p50": 18.563542,
+      "p95": 42.332875,
+      "p99": 57.163792,
+      "mean": 21.75214294000001,
+      "wallMs": 2178,
+      "maxRssMiB": 224.75,
+      "cpuSec": 5.1899999999999995
+    },
+    {
+      "tool": "mitmproxy",
+      "workload": "fresh",
+      "p50": 13.58425,
+      "p95": 25.106541,
+      "p99": 29.061042,
+      "mean": 15.390924570000005,
+      "wallMs": 1541,
+      "maxRssMiB": 87.765625,
+      "cpuSec": 1.66
+    },
+    {
+      "tool": "direct",
+      "workload": "upload",
+      "p50": 6.713416,
+      "p95": 30.558833,
+      "p99": 30.558833,
+      "mean": 9.6468623,
+      "wallMs": 99,
+      "mbPerSec": 414.6425931673141
+    },
+    {
+      "tool": "whatleaks",
+      "workload": "upload",
+      "p50": 55.557792,
+      "p95": 134.361375,
+      "p99": 134.361375,
+      "mean": 65.1400792,
+      "wallMs": 654,
+      "mbPerSec": 61.406127366206825
+    },
+    {
+      "tool": "mitmproxy",
+      "workload": "upload",
+      "p50": 17.532291,
+      "p95": 216.006667,
+      "p99": 216.006667,
+      "mean": 37.4756039,
+      "wallMs": 377,
+      "mbPerSec": 106.7361051918899,
+      "maxRssMiB": 287.640625,
+      "cpuSec": 0.86
+    }
+  ],
+  "startup": {
+    "directMs": [
+      140,
+      100,
+      104,
+      118,
+      107,
+      130,
+      119,
+      100,
+      121,
+      103
+    ],
+    "whatleaksMs": [
+      3466,
+      2938,
+      3140,
+      3262,
+      2825,
+      2957,
+      3031,
+      3117,
+      3206,
+      2984
+    ]
+  }
+}

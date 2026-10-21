@@ -4,12 +4,14 @@ Run 2026-10-21T06:06:32.865Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/t
 
 ## whatleaks
 
-Attempts 546: payload 34 %, request 12 %, host only 8 %, **silently missed 47 %** (255).
+Attempts 564: payload 33 %, request 11 %, host only 7 %, **silently missed 48 %** (273).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
 | Node 26 fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 26 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
+| Node 26 https.request with its own keep-alive Agent | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
+| Node 22.23 https.request with its own keep-alive Agent | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
 | Node 26 gzip, brotli, zstd bodies | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 22.23 fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 22.23 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |

@@ -40,6 +40,15 @@
           "tcp-rst-200ms"
         ],
         "why": "harness fix"
+      },
+      {
+        "date": "2026-10-21T11:54:19.642Z",
+        "scenarios": [
+          "node26-agent",
+          "node22-agent"
+        ],
+        "why": "new scenario (app-made agents)",
+        "cli": "/tmp/wlb/before/dist/cli.js"
       }
     ]
   },
@@ -360,6 +369,168 @@
       "atBestCI": [
         0.7008472464490406,
         1
+      ]
+    },
+    {
+      "id": "node26-agent",
+      "group": "proxy-aware",
+      "title": "Node 26 https.request with its own keep-alive Agent",
+      "expect": "payload",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3482,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3196,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3288,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 9,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 9
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2991527535509594
+      ]
+    },
+    {
+      "id": "node22-agent",
+      "group": "proxy-aware",
+      "title": "Node 22.23 https.request with its own keep-alive Agent",
+      "expect": "payload",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3320,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3244,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3251,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 9,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 9
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2991527535509594
       ]
     },
     {
