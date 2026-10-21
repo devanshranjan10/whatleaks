@@ -80,9 +80,16 @@ async function withLoopbackListen<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * A connection to one of this machine's own addresses is answered (accepted or refused)
+ * in well under a millisecond. Tunnel (utun) and AirDrop (awdl) addresses never answer
+ * one at all; with a 1 s timeout they added a second to every run.
+ */
+const PROBE_TIMEOUT_MS = 150;
+
 function canConnect(host: string, port: number): Promise<boolean> {
   return new Promise((resolve) => {
-    const s = net.connect({ host, port, timeout: 1000 });
+    const s = net.connect({ host, port, timeout: PROBE_TIMEOUT_MS });
     const done = (ok: boolean): void => {
       s.destroy();
       resolve(ok);
@@ -104,10 +111,10 @@ async function assertLoopbackOnly(server: Mockttp, port: number): Promise<void> 
   if (addr && typeof addr === 'object' && addr.address !== '127.0.0.1') {
     throw new Error(`proxy bound to ${addr.address} instead of 127.0.0.1; refusing to run`);
   }
-  const external = Object.values(os.networkInterfaces())
-    .flat()
-    .filter((a): a is os.NetworkInterfaceInfo => !!a && !a.internal)
-    .map((a) => a.address);
+  // Link-local IPv6 addresses need their interface to be dialled at all.
+  const external = Object.entries(os.networkInterfaces()).flatMap(([name, addrs]) =>
+    (addrs ?? []).filter((a) => !a.internal).map((a) => (a.family === 'IPv6' && a.address.toLowerCase().startsWith('fe80') ? `${a.address}%${name}` : a.address)),
+  );
   const reachable = await Promise.all(external.map((ip) => canConnect(ip, port)));
   const open = external.filter((_, i) => reachable[i]);
   if (open.length > 0) throw new Error(`proxy reachable on ${open.join(', ')}; refusing to run`);
