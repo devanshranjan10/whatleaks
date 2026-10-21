@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import os from 'node:os';
 import { type Identity, type Matcher, buildMatchers } from './analyze/identity.js';
 import type { Capture } from './har/types.js';
@@ -17,6 +18,22 @@ export async function matchersFor(capture: Capture, env: NodeJS.ProcessEnv = pro
   const ids = await identities(env);
   const cwd = capture.meta?.cwd;
   const home = ids.find((i) => i.kind === 'home')?.value ?? os.homedir();
-  if (cwd && cwd !== home && cwd !== '/') ids.push({ kind: 'project-path', value: cwd });
+  if (cwd && cwd !== home && cwd !== '/') for (const value of cwdForms(cwd)) ids.push({ kind: 'project-path', value });
   return buildMatchers(ids);
+}
+
+/**
+ * The folder as given and as the app itself sees it: `process.cwd()` and getcwd() return
+ * the resolved path, so on macOS a run in /tmp/x reports (and hashes) /private/tmp/x.
+ */
+export function cwdForms(cwd: string): string[] {
+  const forms = new Set([cwd]);
+  try {
+    forms.add(realpathSync(cwd));
+  } catch {
+    // The folder may not exist where the report is made; fall back to known macOS links.
+  }
+  if (/^\/(tmp|var|etc)(\/|$)/.test(cwd)) forms.add(`/private${cwd}`);
+  if (/^\/private\/(tmp|var|etc)(\/|$)/.test(cwd)) forms.add(cwd.slice('/private'.length));
+  return [...forms];
 }
