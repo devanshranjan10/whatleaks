@@ -1,7 +1,8 @@
 # Accuracy
 
 What whatleaks gets right, what it misses, and how each claim was checked. Everything
-here was run on 2026-10-21 on macOS 26.6.2 (arm64), with whatleaks on Node 26.0.0.
+here was run on 2026-10-21 on macOS 26.6.2 (arm64), with whatleaks on Node 26. The
+benchmark with every number and the baselines is [`BENCHMARK.md`](BENCHMARK.md).
 
 ## 1. Ground truth on real tools
 
@@ -18,23 +19,31 @@ Details and outputs: [`docs/e2e/README.md`](e2e/README.md).
 
 ## 2. Which clients can be inspected
 
+Lab percentages are "at the best possible outcome" in `docs/BENCHMARK.md` §3: exact
+ground truth, 3 or 10 runs each.
+
 | Client | Result | How it was checked |
 |---|---|---|
-| Node `fetch`, `http`, `https` (Node ≥ 22.21 or ≥ 24.5) | captured, bodies included | integration tests (`test/integration/capture.test.ts`); Next.js e2e |
-| Node < 22.21, or 24.0–24.4 for `http`/`https` | **bypasses the proxy**; whatleaks prints a warning | version table from nodejs.org docs; warning covered by `test/nodecheck.test.ts` |
-| macOS `/usr/bin/curl` 8.7.1 | captured, http and https | integration test |
-| Python `urllib` (Homebrew 3.14, OpenSSL) | captured | integration test |
-| Apple `/usr/bin/python3` (LibreSSL 2.8.3) | ignores `SSL_CERT_FILE`, so it refuses the CA and is reported by hostname only | e2e §4, through whatleaks |
-| Rust: Turborepo 2.11.10 | captured | e2e |
-| Go 1.26.5 on macOS | ignores `SSL_CERT_FILE` (platform verifier), so it is reported by hostname only | e2e §4, through whatleaks |
-| A client that pins its own trust store | refused and **named** with a count; contents not shown | integration test |
-| Detached helper that sends after the app exits | captured (whatleaks waits up to `--linger`, default 10 s, plus a 1 s grace period after exit) | integration tests (a helper sending 1.5 s after exit, and one starting right at exit); `next dev` on SIGTERM (e2e §4) |
-| Program that ignores proxy settings | destination listed under "not visible" if the 0.5 s `lsof` sampler sees the connection | integration test with a connection held for 1.8 s. **Connections shorter than the sampling gap can be missed; the miss rate is not measured.** |
-| Request whose body upload is cut off | listed, marked as cut off | unit test, plus the Turborepo e2e run |
-| WebSockets | messages the app sends are recorded (count and first 3) | **not tested** |
-| HTTP/2-only clients | configured (mockttp `http2: 'fallback'`) | **not tested** |
-| HTTP/3 (QUIC, UDP) | not proxied. Appears only as a direct UDP connection, if sampled | **not tested** |
-| GUI and Electron apps, browsers, system daemons | **not tested.** whatleaks only sees processes it launches, through environment variables | n/a |
+| Node `fetch`, `http`, `https` (Node ≥ 22.21 or ≥ 24.5) | captured, bodies included | lab 100 %; integration tests; Next.js e2e |
+| Node `https` with an `Agent` the app creates (keep-alive, axios, got) | captured: the preload gives such agents `proxyEnv` (D-29) | lab 100 % on Node 22.23 and 26 (mitmproxy 0 %); integration test with class and old-style subclasses |
+| Node < 22.21, or 24.0–24.4 for `http`/`https` | captured through the preload's CONNECT tunnels (D-25) | lab 100 % on Node 20 (mitmproxy 0 %); Next.js on Node 20, 22 of 22 events |
+| Bun `fetch` | captured | lab 100 % |
+| macOS `/usr/bin/curl` 8.7.1, HTTP/1.1 and `--http2` | captured | lab 100 %; integration test |
+| Python `urllib` (Homebrew 3.14), `requests`, `httpx` | captured | lab 100 % |
+| Java 25 `HttpClient` | captured through `JAVA_TOOL_OPTIONS` and a JKS truststore (D-26) | lab 100 % (mitmproxy 0 %); integration test |
+| Rust: Turborepo 2.11.10 | captured | real-tool runs, 10 of the 10 events that leave the process |
+| Apple `/usr/bin/python3` (LibreSSL), macOS system Ruby 2.6, Go 1.26 | refuse the CA; reported by hostname, with a count | lab 100 % at that outcome |
+| A client that pins its own trust store | refused and **named** with a count; contents not shown | lab 100 %; integration test |
+| WebSockets | every message the app sends is kept within limits (1000 messages, 1 MiB) and scanned | lab 100 % for 2 and 20 messages, and for identifiers in message 5 of 6 |
+| Detached helper that sends after the app exits | captured up to `--linger` (default 10 s) when it runs in the app's folder or connects to the proxy | lab 100 % for 0.2, 1.5, 3 and 8 s after exit |
+| Short-lived child that connects directly | named, attributed to the app | lab 100 % |
+| Upload over 8 MiB, or abandoned mid-way | listed, marked cut off; the first MiB kept and decoded | lab 100 % at that outcome; integration tests |
+| Program that ignores proxy settings (`node:http2`, aiohttp, raw TCP, UDP) | named as a direct connection by address and process | lab, across runs: `node:http2` 60–100 %, aiohttp 50–90 %, TCP held 10 ms to 2 s 100 %, TCP reset after 50 ms or more 80–100 %, connected UDP 70–100 % |
+| Connection reset by the app within ~10 ms, or closed at once by the server | **often missed**: there is nothing left to find once it closes | lab: reset after 10 ms 10–40 %, server closes at once 0–40 % |
+| UDP sent with `sendto()` on an unconnected socket | **never seen**: the socket has no destination address | lab 0 % |
+| HTTP/3 (QUIC) | not proxied; named as a direct UDP connection (QUIC uses connected sockets) | lab: connected UDP 70–100 % |
+| Linux | `/proc` backend, no tools needed | `node:22-slim` container, 6 of 6 checks |
+| GUI and Electron apps, browsers, system daemons | **not tested.** whatleaks only sees processes it launches | n/a |
 
 ## 3. Identity detection
 
@@ -45,7 +54,15 @@ Details and outputs: [`docs/e2e/README.md`](e2e/README.md).
   base64, JSON-escaped paths, URL-encoded paths, and strings inside binary
   (protobuf-like) bodies.
 
-**Real captures:** none of the three Next.js or two Turborepo captures contained this
+**Lab** (`docs/BENCHMARK.md`): a request carrying this machine's username, hostname,
+project path, home path, sha256(MAC), machine id, git email and git name is flagged for
+all 8 kinds in every run. A WebSocket message carrying three of them is flagged too.
+Decoys in the same body were not flagged: a random UUID, a random sha256, `root` and
+`admin`.
+
+**Real captures:** Astro 7.4's telemetry event was flagged for the project path. Without
+a git remote, Astro sends the sha256 of the project folder as
+`context.anonymousProjectId`, and whatleaks names that field and the hash form. None of the three Next.js or two Turborepo captures contained this
 machine's identifiers. A plain `grep` of the raw HARs for the username, hostname, home
 path and git email agreed, so there were no false positives on real data.
 

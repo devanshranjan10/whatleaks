@@ -4,8 +4,9 @@ This is the resume point for any session.
 
 Spec: `docs/superpowers/specs/2026-10-21-whatleaks-design.md`.
 Plan: `docs/superpowers/plans/2026-10-21-whatleaks.md`.
-Decisions: `docs/DECISIONS.md` (D-01 to D-23). Research: `docs/RESEARCH.md`.
+Decisions: `docs/DECISIONS.md` (D-01 to D-30). Research: `docs/RESEARCH.md`.
 Accuracy: `docs/ACCURACY.md`. Real runs: `docs/e2e/README.md`.
+Benchmark: `docs/BENCHMARK.md` (spec `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md`).
 
 ## Status
 
@@ -29,12 +30,47 @@ independent code review.
 | M9 README and docs | ab14818, fb0eacf, 9441ec7 |
 | Independent review: 20 findings fixed | ba283cc, f4060a2 |
 
-**Gate on the last commit:** `npm ci`, typecheck, lint, **168 offline tests**, build. It
+| Benchmark (lab, real tools, perf, Linux) and the gaps it found | c2dbf16 … 6856b3b; see `docs/BENCHMARK.md` §7 |
+
+**Gate on the last commit:** `npm ci`, typecheck, lint, **220 offline tests**, build. It
 passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It returns
 npm's real exit code; an earlier `| grep` pipe hid two lint failures, which were
 amended.
 
 ---
+
+## Benchmark session (2026-10-21, afternoon)
+
+The owner asked for real evals and benchmarks, and for the gaps they show to be fixed
+(D-24). Results are in `docs/BENCHMARK.md`.
+- **Lab, 564 attempts with exact ground truth:** silently missed 48 % → **6 %**
+  (mitmproxy 35 %). At the best possible outcome: 41 % → **94 %** (mitmproxy 65 %).
+- **Real tools:** whatleaks matched each tool's debug output.
+  - Next.js on Node 20 and 22: 22 of 22.
+  - Wrangler: 3 of 3.
+  - Turborepo: the same 10 of 17 as before, and the other 7 never leave the process.
+  - mitmproxy saw nothing from Next.js on Node 20 or from Turborepo. phonehome only
+    named hosts.
+- **Linux:** a `/proc` backend, checked in `node:22-slim`.
+- **Fixed along the way:**
+  - Java;
+  - Node < 22.21;
+  - app-made Node agents on new Node;
+  - short direct connections and short-lived children;
+  - late helpers;
+  - WebSocket scanning;
+  - large and abandoned uploads;
+  - a report that took hours on a 1 MiB plain-text body (quadratic email regex);
+  - a pipeline (`| tail`) that made runs wait 10 s;
+  - 1 s of startup on machines with VPN interfaces;
+  - the 12 findings of a second independent review.
+- **Decided under the owner's "do what's best", reversible:**
+  - D-25: the Node preload, which settles open question 5 below; `--no-node-preload`
+    turns it off.
+  - D-30: polling every 20 ms while the app is busy, which costs CPU.
+- **Machine notes:** the disk ran full once, from a scratch Prisma install, since
+  deleted. Wi-Fi dropped and the LAN address changed during runs. The bench runner now
+  waits, reruns and resumes.
 
 ## Morning summary (2026-10-21)
 
@@ -97,16 +133,17 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
 
 ### What doesn't work, or is untested
 
-- **Tested only on macOS 26.6.2 (arm64).** Linux and Windows are untested.
-- **Untested:** GUI and Electron apps, browsers, WebSockets, HTTP/2-only clients,
-  HTTP/3, and forwarding through an existing corporate proxy (implemented, not
-  tested).
-- **Some helpers are missed.** A detached helper whose parent exits at once, and which
-  first connects more than `--grace` seconds (default 1 s) later, is not captured.
-- **Old Node bypasses the proxy.** Node older than 22.21 (and 24.0–24.4 for
-  `http`/`https`) ignores the proxy. whatleaks warns, but the requests bypass it and
-  are caught only if the 0.5 s `lsof` sampler sees them. On Node 22.19, a short
-  `fetch` was missed.
+- **Benchmarked on macOS 26.6.2 (arm64); Linux checked in a container.** Windows is
+  untested.
+- **Untested:** GUI and Electron apps, browsers, and forwarding through an existing
+  corporate proxy (implemented, not tested).
+- **Some helpers are missed.** A detached helper whose parent exits at once, that runs
+  outside the app's folder, and that first connects more than `--grace` seconds
+  (default 1 s) later, is not captured. In the app's folder it is waited for (lab:
+  100 % up to 8 s).
+- **Very short connections that bypass the proxy can be missed.** That means ones
+  reset within ~10 ms, or closed at once by the server. So is UDP sent with `sendto()`
+  (`docs/BENCHMARK.md` §3).
 - **Keyword guesses mislabel some APIs** (GitHub `/events`). They are marked `?` and
   never counted in headlines or `--strict`.
 - **Imported HAR** was tested only with hand-made devtools-style and mitmproxy-style
@@ -127,14 +164,15 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
    framing should be "the opt-out you assumed isn't the one that works", not "Next.js
    lies". A broader "we audited N dev tools" post would need more real runs: each
    tool's run with its documented opt-out.
-5. **Old Node.** Should whatleaks inject a `NODE_OPTIONS` preload for Node older than
-   22.21 (D-20)? That widens coverage, but it edits the app's own `NODE_OPTIONS`.
+5. **Old Node — decided in the benchmark session (D-25), please confirm.** whatleaks
+   now adds a `NODE_OPTIONS` preload by default. It lifted Node 20 from 0 to 100 % and
+   app-made agents on new Node from 0 to 100 %. `--no-node-preload` turns it off.
 
 ### How to resume
 
 ```
 cd ~/Downloads/sideproj/whatleaks
-npm ci && ./scripts/gate.sh        # 168 tests, all offline
+npm ci && ./scripts/gate.sh        # 220 tests, all offline
 node dist/cli.js --help
 ```
 

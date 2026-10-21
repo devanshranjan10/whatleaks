@@ -238,28 +238,30 @@ the raw traffic: share the report, not the HAR.
 
 ## Accuracy
 
-The full write-up is in [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
+Measured in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); method notes in
+[`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
 
-- **Next.js 16.4.2:** whatleaks captured exactly the 22 events, with the same counts
-  for all 7 event names, that `NEXT_TELEMETRY_DEBUG=1` prints for the same build.
-- **Turborepo 2.11.10:** whatleaks captured 10 of the 17 events that
-  `TURBO_TELEMETRY_DEBUG=1` prints. The other 7 never left the process: turbo exits
-  about a second after its last batch is queued, before that batch's request starts.
-  whatleaks reports what crossed the wire, not what a tool intended to send.
-- **Clients checked by tests or real runs:**
-  - Node `fetch`, `http` and `https` (Node ≥ 22.21 or ≥ 24.5)
-  - curl
-  - Python `urllib` (Homebrew build)
-  - a Rust binary (turbo)
-  - detached helpers that send after the app exits, including `next dev` on shutdown
-  - clients that refuse the CA (Go, Apple's Python, a pinned client): named, contents
-    hidden
-  - a direct connection that bypasses the proxy
-- **Identity detection** finds every planted identifier form in tests. On five real
-  captures it reported none, and `grep` agreed that none were there.
-- **Classification:** all 3 distinct endpoints in the real runs were labelled
-  correctly. That is a small sample. Keyword guesses will mislabel some ordinary APIs,
-  which is why they are marked `?`.
+- **Lab with exact ground truth.** 43 scenarios and 564 attempts, covering Node
+  20/22/26, Bun, curl, four Python HTTP clients and Apple's Python, Ruby, Go, Java,
+  WebSockets, raw TCP and UDP, and late helpers.
+  - whatleaks silently missed **6 %** of attempts. mitmproxy, given the same
+    environment, missed 35 %. The build before this benchmark missed 48 %.
+  - Every remaining miss is a connection that ignores the proxy and is gone within
+    milliseconds, or UDP sent without a destination address on the socket.
+  - Nothing the app did not send was ever credited to it.
+- **Real tools, against each tool's own debug output:**
+  - Next.js 16.4.2: 22 of 22 events, on Node 22 and on Node 20.
+  - Wrangler 4.151: 3 of 3 events.
+  - Turborepo 2.11: 10 of 17 events. The other 7 never leave the process before turbo
+    exits.
+  - mitmproxy saw none of Next.js on Node 20 or of Turborepo.
+- **Identity detection:**
+  - all 8 planted identifier kinds were found in every run, including inside
+    WebSocket messages;
+  - none of the planted decoys was flagged.
+- **Linux:** checked in a container with no `ps`, `lsof` or `netstat`.
+- **Classification:** endpoints are labelled from a catalog of known telemetry hosts,
+  or by keyword guesses marked `?`, which can mislabel ordinary APIs.
 
 ## Limitations
 
