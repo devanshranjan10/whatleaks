@@ -80,7 +80,7 @@ describe('ProcessTracker: likely orphans and short-lived children', () => {
   const at = (sec: number): string => new Date((1_792_000_000 + sec) * 1000).toString().slice(0, 24).replace(/^(\w+ \w+ \d+) (\d+) (.*)$/, '$1 $3 $2');
 
   it('offers orphans started since the run began, waits for likely ones, never signals them', async () => {
-    const table = [row(10, 1, at(0), 'app'), row(20, 1, at(5), 'node'), row(30, 1, at(-60), 'old-daemon'), row(40, 1, at(6), 'mdworker')];
+    const table = [row(10, 1, at(0), 'app'), row(20, 1, at(5), 'node'), row(30, 1, at(-60), 'old-daemon'), row(40, 1, at(6), 'mdworker'), row(5, 1, at(6), 'pid-wrapped')];
     const t = new ProcessTracker(10, () => Promise.resolve(table));
     await t.refresh();
     const since = startedSec(at(1));
@@ -128,6 +128,15 @@ describe('ProcessTracker: likely orphans and short-lived children', () => {
     const t = new ProcessTracker(10, () => Promise.resolve(table), 902);
     await t.refresh();
     expect(t.orphanCandidates(startedSec(at(0))).map((r) => r.pid)).toEqual([20]);
+  });
+
+  it('does not take the rest of a pipeline (`whatleaks run -- x | tail`) for a helper', async () => {
+    // shell 901 starts tail 905 and whatleaks 906 together; whatleaks starts the app 907.
+    const table = [row(1, 0, at(-99), 'launchd'), row(901, 1, at(-80), 'zsh'), row(905, 901, at(0), 'tail'), row(906, 901, at(0), 'node'), row(907, 906, at(0), 'app'), row(950, 901, at(2), 'later-job')];
+    const t = new ProcessTracker(907, () => Promise.resolve(table), 906);
+    await t.refresh();
+    // A shell is not a subreaper: neither tail nor a later job of the same shell is a candidate.
+    expect(t.orphanCandidates(startedSec(at(0)))).toEqual([]);
   });
 
   it('adopts a child seen only once, through a targeted listing, and remembers exited pids', async () => {

@@ -77,6 +77,9 @@ export const listSome: ListSome = async (pids) => {
 
 const identity = (r: { pid: number; started: string }): string => `${r.pid}@${r.started}`;
 
+/** Process names of common subreapers (PR_SET_CHILD_SUBREAPER): user service managers and container inits. */
+const SUBREAPERS = /^(systemd|tini|dumb-init|catatonit|s6-svscan|runsvdir|containerd-shim.*|conmon|bwrap)$/;
+
 /**
  * Every process descended from the app, including ones re-parented after their parent
  * exited (detached "flush telemetry later" helpers). A process is identified by pid and
@@ -188,20 +191,29 @@ export class ProcessTracker {
   }
 
   /**
-   * whatleaks' own ancestors. An orphan from the app's tree is re-parented to init or to
-   * the nearest subreaper above it (systemd --user, a container shim), which is one of these.
+   * Where an orphan from the app's tree ends up: init, or the nearest subreaper above it
+   * (systemd --user, a container init), which is one of whatleaks' ancestors. Shells are
+   * not subreapers; counting them made a pipeline's `| tail` look like the app's helper.
    */
   private reapers(): Set<number> {
     const byPid = new Map(this.latest.map((r) => [r.pid, r]));
     const out = new Set<number>([1]);
-    for (let r = byPid.get(byPid.get(this.self)?.ppid ?? -1); r && !out.has(r.pid); r = byPid.get(r.ppid)) out.add(r.pid);
+    const seen = new Set<number>();
+    for (let r = byPid.get(byPid.get(this.self)?.ppid ?? -1); r && !seen.has(r.pid); r = byPid.get(r.ppid)) {
+      seen.add(r.pid);
+      if (SUBREAPERS.test(r.comm)) out.add(r.pid);
+    }
     return out;
   }
 
-  /** Orphans started at or after `sinceSec` that have not been judged yet. */
+  /**
+   * Orphans started at or after `sinceSec` that have not been judged yet. Only pids above
+   * the app's: a helper starts after the app, while processes the shell started alongside
+   * it (the rest of a pipeline) have lower pids.
+   */
   orphanCandidates(sinceSec: number): ProcRow[] {
     const reapers = this.reapers();
-    return this.latest.filter((r) => reapers.has(r.ppid) && r.pid !== this.self && !this.known.has(identity(r)) && !this.likely.has(identity(r)) && !this.rejected.has(identity(r)) && startedSec(r.started) >= sinceSec);
+    return this.latest.filter((r) => reapers.has(r.ppid) && r.pid > this.rootPid && r.pid !== this.self && !this.known.has(identity(r)) && !this.likely.has(identity(r)) && !this.rejected.has(identity(r)) && startedSec(r.started) >= sinceSec);
   }
 
   judge(row: ProcRow, likely: boolean): void {
