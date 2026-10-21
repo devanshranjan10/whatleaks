@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+*.har
+!test/fixtures/**/*.har
+whatleaks-*.md
+whatleaks-*.json
+whatleaks-*.tgz

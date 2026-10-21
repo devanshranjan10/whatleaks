@@ -86,3 +86,12 @@ appears as a fact in reports.
 **D-12 — The child-environment list and the opt-out catalog come from verified
 docs.** Every opt-out entry carries a source URL. Entries that could not be verified
 are left out rather than guessed.
+
+**D-13 — Override `basic-ftp` to `^6.2.3`.** `npm audit` reported 4 high-severity
+findings. All trace to `basic-ftp@5.3.1` (GHSA-c475-qrg2-pj4r, a CPU DoS in FTP
+directory-listing parsing), reached through mockttp → pac-proxy-agent → get-uri. That
+FTP path is only used to fetch PAC files over `ftp://`, which whatleaks never
+configures.
+- The override clears the audit, and `get-uri` and `mockttp` still load.
+- If a later get-uri breaks on basic-ftp 6, drop the override. The FTP path is
+  unreachable in whatleaks.
