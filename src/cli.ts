@@ -153,7 +153,25 @@ try {
   if (err instanceof CliError) {
     process.stderr.write(`whatleaks: ${err.message}\n`);
     process.exitCode = err.exitCode;
+  } else if (systemError(err)) {
+    process.stderr.write(`whatleaks: ${systemError(err)}\n`);
+    process.exitCode = 1;
   } else {
     throw err;
   }
+}
+
+/** A plain sentence for operating-system errors (disk full, no permission), else undefined. */
+function systemError(err: unknown): string | undefined {
+  const e = err as NodeJS.ErrnoException;
+  const why: Record<string, string> = {
+    ENOSPC: 'no space left on the disk',
+    EACCES: 'permission denied',
+    EPERM: 'operation not permitted',
+    EROFS: 'the file system is read-only',
+    EMFILE: 'too many open files',
+    EDQUOT: 'disk quota exceeded',
+  };
+  if (!e || typeof e.code !== 'string' || !why[e.code]) return undefined;
+  return `${e.syscall ? `${e.syscall} ` : ''}failed${e.path ? ` for ${e.path}` : ''}: ${why[e.code]} (${e.code})`;
 }
