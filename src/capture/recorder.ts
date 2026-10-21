@@ -1,9 +1,8 @@
+import { keepWsMessage } from '../har/limits.js';
 import type { EntryMeta, HarEntry, HarNameValue, PassthroughHost, RefusedHost } from '../har/types.js';
 
 export const MAX_REQUEST_BODY = 1024 * 1024;
 export const MAX_RESPONSE_TEXT = 64 * 1024;
-const MAX_WS_SAMPLES = 3;
-const MAX_WS_SAMPLE_CHARS = 2000;
 
 export interface RecordedRequest {
   id: string;
@@ -41,7 +40,7 @@ interface Pending {
   bodyPending?: boolean;
   res?: RecordedResponse;
   aborted?: string;
-  ws?: { sent: number; samples: string[] };
+  ws?: { sent: number; samples: string[]; chars?: number };
 }
 
 const utf8 = new TextDecoder('utf-8', { fatal: true });
@@ -121,9 +120,11 @@ export class Recorder {
     const ws = this.pending.get(streamId)?.ws;
     if (!ws) return;
     ws.sent++;
-    if (ws.samples.length < MAX_WS_SAMPLES) {
-      const text = isBinary ? undefined : isText(content);
-      ws.samples.push(text !== undefined ? text.slice(0, MAX_WS_SAMPLE_CHARS) : `‹binary, ${content.length} bytes›`);
+    const text = isBinary ? undefined : isText(content);
+    const kept = keepWsMessage(ws, text ?? `‹binary, ${content.length} bytes›`);
+    if (kept !== undefined) {
+      ws.samples.push(kept);
+      ws.chars = (ws.chars ?? 0) + kept.length;
     }
   }
 
@@ -175,7 +176,7 @@ export class Recorder {
     if (p.aborted) meta.aborted = p.aborted;
     if (!res && !p.aborted && !p.ws) meta.incomplete = true;
     if (p.bodyPending) meta.bodyIncomplete = true;
-    if (p.ws) meta.websocket = p.ws;
+    if (p.ws) meta.websocket = { sent: p.ws.sent, samples: p.ws.samples };
     const wait = res ? Math.max(0, res.endedAt - req.startedAt) : 0;
     return {
       startedDateTime: new Date(req.startedAt).toISOString(),

@@ -31,6 +31,8 @@ export interface ReportOptions {
 }
 
 const SAMPLE_CHARS = 4000;
+/** WebSocket messages shown in a payload sample; every kept message is scanned. */
+const WS_SHOWN = 3;
 const TEXT_LEAF_CHARS = 200;
 const TIMELINE_BUCKETS = 20;
 const MAX_LOCATIONS = 8;
@@ -79,7 +81,25 @@ function requestLeaves(req: CapturedRequest, body: DecodedBody): Leaf[] {
   } else if (body.format === 'binary') {
     for (const s of body.strings ?? []) leaves.push({ path: 'body:strings', value: s });
   }
+  for (const m of wsTexts(req)) {
+    const parsed = parseJson(m);
+    if (parsed !== undefined && typeof parsed === 'object' && parsed !== null) leaves.push(...flatten(parsed, 'ws'));
+    else leaves.push({ path: 'ws', value: m.slice(0, TEXT_LEAF_CHARS) });
+  }
   return leaves;
+}
+
+/** Text WebSocket messages the app sent (binary ones are kept only as a size note). */
+function wsTexts(req: CapturedRequest): string[] {
+  return (req.websocket?.samples ?? []).filter((s) => !s.startsWith('‹binary,'));
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Every string whitelisted for identity scanning, with where it came from. */
@@ -103,6 +123,8 @@ function scanTargets(req: CapturedRequest, body: DecodedBody, leaves: Leaf[]): A
   if ((body.format === 'json' || body.format === 'ndjson' || body.format === 'form') && body.text !== undefined) {
     out.push(['body', body.text]);
   }
+  // Whole WebSocket messages too, for the same reason.
+  for (const m of wsTexts(req)) out.push(['ws', m]);
   return out;
 }
 
@@ -255,7 +277,9 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
     if (ep.samples.length < samplesPerEndpoint && hasPayload) {
       let text = sampleBody(body, redactor);
       if (req.websocket?.samples.length) {
-        text += `${text ? '\n' : ''}websocket messages sent: ${req.websocket.sent}\n${req.websocket.samples.map((s) => wsMessage(s, redactor)).join('\n')}`;
+        const shown = req.websocket.samples.slice(0, WS_SHOWN);
+        text += `${text ? '\n' : ''}websocket messages sent: ${req.websocket.sent}\n${shown.map((s) => wsMessage(s, redactor)).join('\n')}`;
+        if (req.websocket.sent > shown.length) text += `\n… ${req.websocket.sent - shown.length} more (all kept messages were scanned)`;
       }
       const t = truncate(text, SAMPLE_CHARS);
       const sample: Sample = { offsetMs: req.offsetMs, url: redactor.url(req.url), format: body.format, body: t.text, truncated: t.truncated || req.truncated };
@@ -269,7 +293,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
       const { hits, rest } = scanIdentity(text, opts.matchers);
       const where = redactor.path(location);
       // The whole-body scan only adds kinds the per-field scan did not already place.
-      const wholeBody = location === 'body' && body.format !== 'text';
+      const wholeBody = (location === 'body' && body.format !== 'text') || location === 'ws';
       for (const h of hits) {
         if (wholeBody && seenKinds.has(h.kind)) continue;
         seenKinds.add(h.kind);

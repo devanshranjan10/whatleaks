@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { HarError, parseHar } from '../src/har/read.js';
 import { serializeHar, writeHarFile } from '../src/har/write.js';
-import { T0, harText, makeHar } from './helpers/har.js';
+import { T0, entry, harText, makeHar } from './helpers/har.js';
 
 const fixture = (name: string): string => readFileSync(new URL(`fixtures/${name}`, import.meta.url), 'utf8');
 
@@ -59,6 +59,20 @@ describe('parseHar', () => {
     const cap = parseHar(fixture('mitmproxy-form.har'));
     expect(Buffer.from(cap.requests[0]!.body).toString()).toBe('cid=555.666&en=page_view');
     expect(cap.requests[0]?.status).toBe(204);
+  });
+
+  it('reads WebSocket messages the client sent from devtools/mitmproxy _webSocketMessages', () => {
+    const e = entry({ at: 0, url: 'wss://ws.example/socket' }) as unknown as Record<string, unknown>;
+    e._webSocketMessages = [
+      { type: 'send', time: 1, opcode: 1, data: '{"n":1}' },
+      { type: 'receive', time: 2, opcode: 1, data: '{"ack":1}' },
+      { type: 'send', time: 3, opcode: 2, data: Buffer.from([1, 2, 3]).toString('base64') },
+      { type: 'send', time: 4, opcode: 1, data: 'hello' },
+    ];
+    const har = makeHar([], null);
+    har.log.entries.push(e as never);
+    const cap = parseHar(harText(har));
+    expect(cap.requests[0]?.websocket).toEqual({ sent: 3, samples: ['{"n":1}', '‹binary, 3 bytes›', 'hello'] });
   });
 
   it('throws HarError naming the broken field', () => {

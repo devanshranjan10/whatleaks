@@ -1,3 +1,4 @@
+import { keepWsMessage } from './limits.js';
 import type { Capture, CapturedRequest, HarNameValue, HarPostData, SessionMeta } from './types.js';
 
 export class HarError extends Error {
@@ -68,6 +69,24 @@ function sessionMeta(v: unknown): SessionMeta | undefined {
 }
 
 /**
+ * WebSocket messages the client sent, as Chrome DevTools and mitmproxy export them
+ * (`_webSocketMessages`, type `send`; opcode 2 is binary, base64 in `data`).
+ */
+function devtoolsWebSocket(v: unknown): { sent: number; samples: string[] } | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const ws = { sent: 0, samples: [] as string[] };
+  for (const m of v) {
+    if (!isObj(m) || m.type !== 'send') continue;
+    ws.sent++;
+    const data = str(m.data);
+    const text = m.opcode === 2 ? `‹binary, ${Buffer.from(data, 'base64').length} bytes›` : data;
+    const kept = keepWsMessage(ws, text);
+    if (kept !== undefined) ws.samples.push(kept);
+  }
+  return ws;
+}
+
+/**
  * Parse HAR text from whatleaks or any other producer (browser devtools, mitmproxy,
  * Proxyman, Charles, HTTP Toolkit). Structural problems throw `HarError` naming the
  * field; a malformed individual entry is skipped and listed in `warnings`.
@@ -120,7 +139,7 @@ export function parseHar(text: string): Capture {
           sent: num(em.websocket.sent),
           samples: Array.isArray(em.websocket.samples) ? em.websocket.samples.map((s) => str(s)) : [],
         }
-      : undefined;
+      : devtoolsWebSocket(entry._webSocketMessages);
 
     parsed.push({
       startedAt,

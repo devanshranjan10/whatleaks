@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_REQUEST_BODY, Recorder } from '../src/capture/recorder.js';
+import { MAX_WS_MESSAGE_CHARS, MAX_WS_TOTAL_CHARS } from '../src/har/limits.js';
 
 const T = Date.parse('2026-10-21T10:00:00Z');
 const req = (id: string, extra: Partial<Parameters<Recorder['request']>[0]> = {}) => ({
@@ -66,9 +67,21 @@ describe('Recorder', () => {
     const [a, w] = r.entries();
     expect(a?._whatleaks).toMatchObject({ aborted: 'ECONNRESET' });
     expect(a?._whatleaks?.incomplete).toBeUndefined();
-    expect(w?._whatleaks?.websocket).toEqual({ sent: 6, samples: ['{"n":0}', '{"n":1}', '{"n":2}'] });
+    expect(w?._whatleaks?.websocket).toEqual({ sent: 6, samples: ['{"n":0}', '{"n":1}', '{"n":2}', '{"n":3}', '{"n":4}', '‹binary, 2 bytes›'] });
     expect(r.refused()).toEqual([{ host: 'pinned.example', count: 2, cause: 'cert-rejected', firstAt: '2026-10-21T10:00:00.000Z', lastAt: expect.any(String) as string }]);
     expect(r.passthroughs()[0]).toMatchObject({ host: 'bank.example', port: 443, count: 1 });
     expect(r.inFlight()).toBe(0);
+  });
+
+  it('keeps WebSocket messages up to a per-connection budget, and keeps counting after it', () => {
+    const r = new Recorder(() => T);
+    r.request(req('w', { method: 'GET', body: new Uint8Array(), websocket: true }));
+    const big = 'x'.repeat(MAX_WS_MESSAGE_CHARS + 10);
+    const fits = Math.floor(MAX_WS_TOTAL_CHARS / MAX_WS_MESSAGE_CHARS);
+    for (let i = 0; i < fits + 2; i++) r.websocketMessage('w', Buffer.from(big), false);
+    const ws = r.entries()[0]?._whatleaks?.websocket;
+    expect(ws?.sent).toBe(fits + 2);
+    expect(ws?.samples).toHaveLength(fits);
+    expect(ws?.samples[0]).toHaveLength(MAX_WS_MESSAGE_CHARS);
   });
 });

@@ -112,4 +112,15 @@ describe('buildReport', () => {
     expect(empty.endpoints).toEqual([]);
     expect(empty.findings).toEqual([]);
   });
+
+  it('scans every kept WebSocket message for identifiers and fields, not just the shown ones', () => {
+    const msgs = Array.from({ length: 6 }, (_, i) => JSON.stringify(i === 4 ? { n: i, user: 'janedoe', home: '/Users/janedoe/x', email: 'jane@doe.dev' } : { n: i }));
+    const har = makeHar([{ at: 0, url: 'wss://ws.example/socket', meta: { websocket: { sent: 6, samples: msgs } } }]);
+    const r = buildReport(parseHar(harText(har)), { matchers, rules: TEST_RULES });
+    expect(r.findings.map((f) => f.kind).sort()).toEqual(expect.arrayContaining(['git-email', 'home', 'username']));
+    expect(r.findings.find((f) => f.kind === 'username')?.locations).toEqual(['ws.user']);
+    expect(r.endpoints[0]?.fields.map((f) => f.path)).toContain('ws.n');
+    // Only the first three are shown; the rest are summarised.
+    expect(r.endpoints[0]?.samples[0]?.body).toContain('… 3 more');
+  });
 });
