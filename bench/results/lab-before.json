@@ -24,6 +24,13 @@
           "udp-unconnected"
         ],
         "why": "harness fix"
+      },
+      {
+        "date": "2026-10-21T08:01:55.321Z",
+        "scenarios": [
+          "bun-fetch"
+        ],
+        "why": "harness fix"
       }
     ]
   },
@@ -1147,20 +1154,80 @@
       "title": "Bun fetch",
       "expect": "payload",
       "tool": "whatleaks",
-      "runs": [],
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3533,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3318,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3221,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ],
+          "findings": []
+        }
+      ],
       "total": {
-        "attempted": 0,
-        "payload": 0,
+        "attempted": 9,
+        "payload": 9,
         "request": 0,
         "host": 0,
         "missed": 0
       },
-      "atBest": 0,
+      "atBest": 1,
       "atBestCI": [
-        0,
+        0.7008472464490406,
         1
-      ],
-      "skipped": "/opt/homebrew/bin/bun"
+      ]
     },
     {
       "id": "bun-fetch",
@@ -1168,20 +1235,77 @@
       "title": "Bun fetch",
       "expect": "payload",
       "tool": "mitmproxy",
-      "runs": [],
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 132,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ]
+        },
+        {
+          "run": 2,
+          "wallMs": 88,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ]
+        },
+        {
+          "run": 3,
+          "wallMs": 79,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 3,
+            "request": 0,
+            "host": 0,
+            "missed": 0
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
+          ]
+        }
+      ],
       "total": {
-        "attempted": 0,
-        "payload": 0,
+        "attempted": 9,
+        "payload": 9,
         "request": 0,
         "host": 0,
         "missed": 0
       },
-      "atBest": 0,
+      "atBest": 1,
       "atBestCI": [
-        0,
+        0.7008472464490406,
         1
-      ],
-      "skipped": "/opt/homebrew/bin/bun"
+      ]
     },
     {
       "id": "curl",

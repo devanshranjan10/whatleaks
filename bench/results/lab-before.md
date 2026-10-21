@@ -4,7 +4,7 @@ Run 2026-10-21T06:06:32.865Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/t
 
 ## whatleaks
 
-Attempts 507: payload 35 %, request 12 %, host only 8 %, **silently missed 44 %** (225).
+Attempts 516: payload 36 %, request 12 %, host only 8 %, **silently missed 44 %** (225).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -15,6 +15,7 @@ Attempts 507: payload 35 %, request 12 %, host only 8 %, **silently missed 44 %*
 | Node 22.23 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 20 fetch (ignores NODE_USE_ENV_PROXY) | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
 | Node 20 https.request (ignores NODE_USE_ENV_PROXY) | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
+| Bun fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | curl (macOS) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | curl --http2 | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python 3.14 urllib (Homebrew) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
@@ -48,7 +49,7 @@ Attempts 507: payload 35 %, request 12 %, host only 8 %, **silently missed 44 %*
 
 ## mitmproxy
 
-Attempts 507: payload 65 %, request 0 %, host only 6 %, **silently missed 29 %** (147).
+Attempts 516: payload 66 %, request 0 %, host only 6 %, **silently missed 28 %** (147).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -59,6 +60,7 @@ Attempts 507: payload 65 %, request 0 %, host only 6 %, **silently missed 29 %**
 | Node 22.23 https.request | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node 20 fetch (ignores NODE_USE_ENV_PROXY) | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
 | Node 20 https.request (ignores NODE_USE_ENV_PROXY) | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
+| Bun fetch | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | curl (macOS) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | curl --http2 | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python 3.14 urllib (Homebrew) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
@@ -89,6 +91,4 @@ Attempts 507: payload 65 %, request 0 %, host only 6 %, **silently missed 29 %**
 | child process lives ~100 ms and connects directly | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | body with this machine’s identifiers and decoys | payload | 3 | 3 | 0 | 0 | 0 | 100 % (44–100) | – |
 | identifiers in the 5th of 6 WebSocket messages | payload | 18 | 18 | 0 | 0 | 0 | 100 % (82–100) | – |
-
-Skipped (runtime missing): bun-fetch (/opt/homebrew/bin/bun), bun-fetch (/opt/homebrew/bin/bun)
 
