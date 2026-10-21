@@ -20,6 +20,8 @@ export interface Scenario {
   why?: string;
   /** Missing runtime on this machine: the scenario is skipped and listed as skipped. */
   missing?: string;
+  /** Wait this long after the tool exits before reading the ledger (late helpers keep writing). */
+  settleMs?: number;
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -30,7 +32,7 @@ export const RUNTIMES = {
   node26: process.execPath,
   node22: process.env.WLB_NODE22 ?? '/tmp/wl-e2e/node22-bin/node',
   node20: process.env.WLB_NODE20 ?? '/opt/homebrew/opt/node@20/bin/node',
-  bun: '/opt/homebrew/bin/bun',
+  bun: process.env.WLB_BUN ?? join(process.env.HOME ?? '', '.bun/bin/bun'),
   brewPython: '/opt/homebrew/bin/python3',
   applePython: '/usr/bin/python3',
   venvPython: join(WLB, 'venv/bin/python'),
@@ -112,11 +114,11 @@ export const SCENARIOS: Scenario[] = [
   },
 
   // --- Process lifecycle ------------------------------------------------------------
-  { id: 'helper-0.2s', group: 'lifecycle', title: 'detached helper sends 0.2 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '200'), repeat: 10, expect: 'payload' },
-  { id: 'helper-1.5s', group: 'lifecycle', title: 'detached helper sends 1.5 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '1500'), repeat: 10, expect: 'payload' },
-  { id: 'helper-3s', group: 'lifecycle', title: 'detached helper sends 3 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '3000'), repeat: 10, expect: 'payload' },
-  { id: 'helper-8s', group: 'lifecycle', title: 'detached helper sends 8 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '8000'), repeat: 10, expect: 'payload' },
-  { id: 'chain', group: 'lifecycle', title: 'grandchild sends after its parent exited', argv: node(RUNTIMES.node26, 'chain'), repeat: 10, expect: 'payload' },
+  { id: 'helper-0.2s', group: 'lifecycle', title: 'detached helper sends 0.2 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '200'), repeat: 10, expect: 'payload', settleMs: 2200 },
+  { id: 'helper-1.5s', group: 'lifecycle', title: 'detached helper sends 1.5 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '1500'), repeat: 10, expect: 'payload', settleMs: 3500 },
+  { id: 'helper-3s', group: 'lifecycle', title: 'detached helper sends 3 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '3000'), repeat: 10, expect: 'payload', settleMs: 5000 },
+  { id: 'helper-8s', group: 'lifecycle', title: 'detached helper sends 8 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '8000'), repeat: 10, expect: 'payload', settleMs: 10000 },
+  { id: 'chain', group: 'lifecycle', title: 'grandchild sends after its parent exited', argv: node(RUNTIMES.node26, 'chain'), repeat: 10, expect: 'payload', settleMs: 2000 },
   {
     id: 'shortchild-tcp', group: 'lifecycle', title: 'child process lives ~100 ms and connects directly', argv: node(RUNTIMES.node26, 'shortchild', '20'), repeat: 10,
     expect: 'host', why: 'not HTTP',

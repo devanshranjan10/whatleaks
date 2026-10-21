@@ -34,6 +34,8 @@ const { values: flags } = parseArgs({
     tag: { type: 'string', default: 'run' },
     // Another build of whatleaks to measure, e.g. an older commit's dist/cli.js.
     cli: { type: 'string' },
+    // Replace the matching scenario × tool rows of an earlier result file instead of writing a new one.
+    'merge-into': { type: 'string' },
   },
 });
 const CLI = resolve(flags.cli ?? join(root, 'dist/cli.js'));
@@ -133,8 +135,10 @@ async function runWhatleaks(lab: Lab, sc: Scenario, run: number, dir: string, pl
   const { code } = await waitExit(child, 120_000);
   const wallMs = Date.now() - t0;
   writeFileSync(`${base}.out.txt`, out);
-  await sleep(200); // let the lab log the last events
+  // Let the lab log the last events, and late helpers write their ledger lines.
+  await sleep(200 + (sc.settleMs ?? 0));
   const entries = readLedger(ledger);
+  if (entries.length === 0) throw new Error(`${sc.id} run ${run}: the client recorded no attempts (scenario broken); see ${base}.out.txt`);
   let capture: Capture | undefined;
   try {
     capture = parseHar(readFileSync(`${base}.har`, 'utf8'));
@@ -269,7 +273,7 @@ const pct = (n: number, d: number): string => (d === 0 ? '–' : `${Math.round((
 function markdown(results: ScenarioResult[], meta: Record<string, unknown>): string {
   const lines: string[] = [];
   lines.push(`# Lab benchmark: ${String(meta.tag)}`, '', `Run ${String(meta.date)} on ${String(meta.machine)}. whatleaks ${String(meta.whatleaks)}; mitmproxy ${String(meta.mitmproxy)}.`, '');
-  for (const tool of tools) {
+  for (const tool of [...new Set(results.map((r) => r.tool))]) {
     const rs = results.filter((r) => r.tool === tool && !r.skipped);
     const t = sum(rs.map((r) => r.total));
     lines.push(`## ${tool}`, '', `Attempts ${t.attempted}: payload ${pct(t.payload, t.attempted)}, request ${pct(t.request, t.attempted)}, host only ${pct(t.host, t.attempted)}, **silently missed ${pct(t.missed, t.attempted)}** (${t.missed}).`, '');
@@ -331,9 +335,20 @@ async function main(): Promise<void> {
     node: process.version,
   };
   mkdirSync(join(root, 'bench/results'), { recursive: true });
-  const out = join(root, 'bench/results', `lab-${flags.tag}`);
-  writeFileSync(`${out}.json`, JSON.stringify({ meta, results }, null, 2) + '\n');
-  writeFileSync(`${out}.md`, markdown(results, meta) + '\n');
+  let finalResults = results;
+  let finalMeta: Record<string, unknown> = meta;
+  const target = flags['merge-into'] ?? flags.tag;
+  const out = join(root, 'bench/results', `lab-${target}`);
+  if (flags['merge-into']) {
+    const prev = JSON.parse(readFileSync(`${out}.json`, 'utf8')) as { meta: Record<string, unknown>; results: ScenarioResult[] };
+    const key = (r: ScenarioResult): string => `${r.id} ${r.tool}`;
+    const fresh = new Map(results.map((r) => [key(r), r]));
+    const order = SCENARIOS.map((sc) => sc.id);
+    finalResults = [...prev.results.filter((r) => !fresh.has(key(r))), ...results].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id) || a.tool.localeCompare(b.tool) * -1);
+    finalMeta = { ...prev.meta, rerun: [...((prev.meta.rerun as unknown[]) ?? []), { date: meta.date, scenarios: [...new Set(results.map((r) => r.id))], why: 'harness fix' }] };
+  }
+  writeFileSync(`${out}.json`, JSON.stringify({ meta: finalMeta, results: finalResults }, null, 2) + '\n');
+  writeFileSync(`${out}.md`, markdown(finalResults, finalMeta) + '\n');
   console.error(`wrote ${out}.json and .md`);
   process.exit(0);
 }
