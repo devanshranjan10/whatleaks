@@ -18,4 +18,11 @@ export default tseslint.config(
     files: ['**/*.js', '**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
+  {
+    // Benchmark lab clients are plain Node scripts.
+    files: ['bench/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', setTimeout: 'readonly', fetch: 'readonly', URL: 'readonly', WebSocket: 'readonly' },
+    },
+  },
 );
