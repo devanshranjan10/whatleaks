@@ -39,6 +39,8 @@ const { values: flags } = parseArgs({
     'merge-into': { type: 'string' },
     // Keep the finished scenario × tool rows of an interrupted run with the same tag.
     resume: { type: 'boolean', default: false },
+    // Recorded with --merge-into: why these rows were measured again.
+    why: { type: 'string', default: 'harness fix' },
   },
 });
 const CLI = resolve(flags.cli ?? join(root, 'dist/cli.js'));
@@ -424,7 +426,7 @@ async function main(): Promise<void> {
     const fresh = new Map(results.map((r) => [key(r), r]));
     const order = SCENARIOS.map((sc) => sc.id);
     finalResults = [...prev.results.filter((r) => !fresh.has(key(r))), ...results].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id) || a.tool.localeCompare(b.tool) * -1);
-    finalMeta = { ...prev.meta, rerun: [...((prev.meta.rerun as unknown[]) ?? []), { date: meta.date, scenarios: [...new Set(results.map((r) => r.id))], why: 'harness fix' }] };
+    finalMeta = { ...prev.meta, rerun: [...((prev.meta.rerun as unknown[]) ?? []), { date: meta.date, scenarios: [...new Set(results.map((r) => r.id))], why: flags.why, cli: CLI }] };
   }
   writeFileSync(`${out}.json`, JSON.stringify({ meta: finalMeta, results: finalResults }, null, 2) + '\n');
   writeFileSync(`${out}.md`, markdown(finalResults, finalMeta) + '\n');
