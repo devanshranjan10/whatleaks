@@ -129,3 +129,8 @@ path. The opt-out catalog has 32 environment variables, each with a source. Tool
 whose only opt-out is a config file or a command (VS Code, Gemini CLI, Codex CLI,
 Firebase CLI) are left out of `--opt-out`; the README tells users to do a manual
 before/after with `whatleaks diff` for those.
+
+**D-18 — The `--no-decrypt <host>` flag became `--passthrough <host>`.** Commander
+parses any `--no-*` flag as a boolean negation, so it cannot take a value.
+`--passthrough` matches mockttp's own term (`tlsPassthrough`). Tunnelled hosts are
+counted and listed under "not visible".

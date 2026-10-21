@@ -109,7 +109,7 @@ export function renderMarkdown(report: Report): string {
   if (report.refused.length + report.passthrough.length + report.direct.length > 0) {
     out.push('## Not visible to whatleaks', '');
     for (const r of report.refused) out.push(`- ${code(r.host)}: ${plural(r.count, 'connection')} did not accept the whatleaks certificate (${r.cause}). Contents unknown.`);
-    for (const p of report.passthrough) out.push(`- ${code(`${p.host}:${p.port}`)}: ${plural(p.count, 'connection')} tunnelled without decrypting (\`--no-decrypt\`).`);
+    for (const p of report.passthrough) out.push(`- ${code(`${p.host}:${p.port}`)}: ${plural(p.count, 'connection')} tunnelled without decrypting (\`--passthrough\`).`);
     for (const d of report.direct) {
       out.push(`- ${code(`${d.remote}:${d.port}`)}${d.rdns ? ` (${code(d.rdns)})` : ''} ${d.protocol}: direct connection by \`${d.process}\` that bypassed the proxy.`);
     }

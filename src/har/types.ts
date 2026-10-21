@@ -97,7 +97,7 @@ export interface RefusedHost {
   lastAt: string;
 }
 
-/** A host the user asked not to decrypt (`--no-decrypt`). */
+/** A host the user asked not to decrypt (`--passthrough`). */
 export interface PassthroughHost {
   host: string;
   port: number;

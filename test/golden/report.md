@@ -238,7 +238,7 @@ URL: `https://flags.example.com/sdk/evalx/abc`
 ## Not visible to whatleaks
 
 - `pinned.example`: 3 connections did not accept the whatleaks certificate (cert-rejected). Contents unknown.
-- `bank.example:443`: 1 connection tunnelled without decrypting (`--no-decrypt`).
+- `bank.example:443`: 1 connection tunnelled without decrypting (`--passthrough`).
 - `140.82.112.3:443` (`lb-140-82-112-3-iad.github.com`) TCP: direct connection by `git` that bypassed the proxy.
 
 ## Notes

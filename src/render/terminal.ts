@@ -80,7 +80,7 @@ export function renderTerminal(report: Report, options: TerminalOptions = {}): s
   const cap = report.capture;
   const t = report.totals;
 
-  const head = [c.bold('whatleaks'), cap.command.length ? commandLine(cap.command) : cap.label, duration(cap.durationMs)];
+  const head = [c.bold('whatleaks'), cap.command.length ? clip(commandLine(cap.command), 80) : cap.label, duration(cap.durationMs)];
   if (cap.exitCode !== null) head.push(`exit ${cap.exitCode}`);
   if (cap.stoppedBy && cap.stoppedBy !== 'exit') head.push(`stopped by ${cap.stoppedBy}`);
   out.push(head.join(' · '));
@@ -123,7 +123,7 @@ export function renderTerminal(report: Report, options: TerminalOptions = {}): s
       out.push(`  ${c.red('✗')} ${r.host} — ${plural(r.count, 'connection')} did not accept the whatleaks certificate (${r.cause}); contents unknown`);
     }
     for (const p of report.passthrough) {
-      out.push(`  ${c.yellow('↷')} ${p.host}:${p.port} — ${plural(p.count, 'connection')} tunnelled without decrypting (--no-decrypt)`);
+      out.push(`  ${c.yellow('↷')} ${p.host}:${p.port} — ${plural(p.count, 'connection')} tunnelled without decrypting (--passthrough)`);
     }
     for (const d of report.direct) {
       const name = d.rdns ? ` (${d.rdns})` : '';

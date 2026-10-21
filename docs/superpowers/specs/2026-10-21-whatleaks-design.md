@@ -216,7 +216,7 @@ report <har> ───────┴──────────────�
 ```
 whatleaks run [opts] -- <cmd...>       capture one run, print report, write HAR
   -l, --label <name>  -o, --out <file>  -d, --duration <s>  --linger <s>
-  --opt-out  -e, --env <K=V...>  --no-decrypt <host...>  --no-watch
+  --opt-out  -e, --env <K=V...>  --passthrough <host> (repeatable; see D-18)  --no-watch
   --md <file>  --json <file>  --samples <n>  --raw
 whatleaks compare [opts] -- <cmd...>   run twice (default, then opted out) and diff
   --off-env <K=V...>  --no-known-opt-outs  --out-dir <dir>  --strict  (+ run opts)
