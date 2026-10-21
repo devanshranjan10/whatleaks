@@ -401,6 +401,7 @@ async function main(): Promise<void> {
     if (missing) throw new Error(missing);
   }
   const htkServer = tools.includes('httptoolkit') ? await startHtkServer() : undefined;
+  process.on('exit', () => htkServer?.stop());
   const ids = await localIdentities();
   const planted = {
     gitEmail: ids.find((i) => i.kind === 'git-email')?.value ?? '',

@@ -1,11 +1,12 @@
 {
   "meta": {
     "tag": "after",
-    "date": "2026-10-21T15:12:22.691Z",
+    "date": "2026-10-21T18:00:52.097Z",
     "machine": "Darwin 25.6.0 arm64",
     "cli": "/tmp/wlb/after/dist/cli.js",
     "phonehome": "zyralab/phonehome@946f42d",
-    "mitmproxy": "mitmproxy 12 (uvx)"
+    "mitmproxy": "mitmproxy 12 (uvx)",
+    "httptoolkit": "httptoolkit-server v1.27.3"
   },
   "results": [
     {
@@ -27,7 +28,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 6536,
+            "wallMs": 3877,
             "notes": []
           },
           {
@@ -42,7 +43,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 9552,
+            "wallMs": 3641,
             "notes": []
           }
         ],
@@ -58,7 +59,7 @@
             "stable-id"
           ],
           "exit": 0,
-          "wallMs": 11027,
+          "wallMs": 4405,
           "notes": []
         },
         "optout": {
@@ -70,7 +71,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 6062,
+          "wallMs": 3040,
           "notes": []
         }
       },
@@ -94,15 +95,25 @@
           "telemetry.nextjs.org"
         ],
         "exit": 0,
-        "wallMs": 3564
+        "wallMs": 1807
+      },
+      "httptoolkit": {
+        "telemetryRequests": 8,
+        "events": 22,
+        "hostsNamed": [
+          "registry.npmjs.org",
+          "telemetry.nextjs.org"
+        ],
+        "exit": 0,
+        "wallMs": 2647
       },
       "phonehome": {
         "telemetryDestinationSeen": true,
         "labelledTelemetry": false,
-        "rows": 93,
+        "rows": 24,
         "rowsFromTool": 2,
-        "rowsOther": 91,
-        "wallMs": 3405
+        "rowsOther": 22,
+        "wallMs": 1929
       }
     },
     {
@@ -124,7 +135,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 5492,
+            "wallMs": 3996,
             "notes": [
               "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
             ]
@@ -141,7 +152,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 5369,
+            "wallMs": 4343,
             "notes": [
               "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
             ]
@@ -159,7 +170,7 @@
             "stable-id"
           ],
           "exit": 0,
-          "wallMs": 5882,
+          "wallMs": 3553,
           "notes": [
             "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
           ]
@@ -173,7 +184,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 4806,
+          "wallMs": 2875,
           "notes": [
             "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
           ]
@@ -196,15 +207,25 @@
         "events": 0,
         "hostsNamed": [],
         "exit": 0,
-        "wallMs": 2247
+        "wallMs": 1326
+      },
+      "httptoolkit": {
+        "telemetryRequests": 8,
+        "events": 22,
+        "hostsNamed": [
+          "registry.npmjs.org",
+          "telemetry.nextjs.org"
+        ],
+        "exit": 0,
+        "wallMs": 2053
       },
       "phonehome": {
         "telemetryDestinationSeen": true,
         "labelledTelemetry": false,
-        "rows": 87,
+        "rows": 22,
         "rowsFromTool": 2,
-        "rowsOther": 85,
-        "wallMs": 2921
+        "rowsOther": 20,
+        "wallMs": 1721
       }
     },
     {
@@ -223,7 +244,7 @@
             "catalogClassified": true,
             "findings": [],
             "exit": 0,
-            "wallMs": 3607,
+            "wallMs": 2346,
             "notes": []
           },
           {
@@ -235,7 +256,7 @@
             "catalogClassified": true,
             "findings": [],
             "exit": 0,
-            "wallMs": 3024,
+            "wallMs": 1911,
             "notes": []
           }
         ],
@@ -246,7 +267,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 2806,
+          "wallMs": 1834,
           "notes": []
         },
         "optout": {
@@ -256,7 +277,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 2634,
+          "wallMs": 2147,
           "notes": []
         }
       },
@@ -277,15 +298,24 @@
         "events": 0,
         "hostsNamed": [],
         "exit": 0,
-        "wallMs": 213
+        "wallMs": 116
+      },
+      "httptoolkit": {
+        "telemetryRequests": 1,
+        "events": 10,
+        "hostsNamed": [
+          "telemetry.vercel.com"
+        ],
+        "exit": 0,
+        "wallMs": 261
       },
       "phonehome": {
         "telemetryDestinationSeen": false,
         "labelledTelemetry": false,
-        "rows": 21,
+        "rows": 24,
         "rowsFromTool": 0,
-        "rowsOther": 21,
-        "wallMs": 418
+        "rowsOther": 24,
+        "wallMs": 211
       }
     },
     {
@@ -306,7 +336,7 @@
               "project-path"
             ],
             "exit": 0,
-            "wallMs": 3819,
+            "wallMs": 3673,
             "notes": []
           },
           {
@@ -320,7 +350,7 @@
               "project-path"
             ],
             "exit": 0,
-            "wallMs": 3832,
+            "wallMs": 3097,
             "notes": []
           }
         ],
@@ -335,7 +365,7 @@
             "project-path"
           ],
           "exit": 0,
-          "wallMs": 5754,
+          "wallMs": 3160,
           "notes": []
         },
         "optout": {
@@ -345,7 +375,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 6723,
+          "wallMs": 3670,
           "notes": []
         }
       },
@@ -368,15 +398,22 @@
           "telemetry.astro.build"
         ],
         "exit": 0,
-        "wallMs": 1764
+        "wallMs": 947
+      },
+      "httptoolkit": {
+        "telemetryRequests": 0,
+        "events": 0,
+        "hostsNamed": [],
+        "exit": 0,
+        "wallMs": 1372
       },
       "phonehome": {
         "telemetryDestinationSeen": false,
         "labelledTelemetry": false,
-        "rows": 21,
+        "rows": 22,
         "rowsFromTool": 0,
-        "rowsOther": 21,
-        "wallMs": 1489
+        "rowsOther": 22,
+        "wallMs": 1100
       }
     },
     {
@@ -398,7 +435,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 8355,
+            "wallMs": 5827,
             "notes": []
           },
           {
@@ -413,7 +450,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 7094,
+            "wallMs": 6281,
             "notes": []
           }
         ],
@@ -426,7 +463,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 7491,
+          "wallMs": 4751,
           "notes": []
         },
         "optout": {
@@ -438,7 +475,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 7654,
+          "wallMs": 11009,
           "notes": []
         }
       },
@@ -462,15 +499,25 @@
           "sparrow.cloudflare.com"
         ],
         "exit": 0,
-        "wallMs": 4091
+        "wallMs": 5659
+      },
+      "httptoolkit": {
+        "telemetryRequests": 3,
+        "events": 3,
+        "hostsNamed": [
+          "api.cloudflare.com",
+          "sparrow.cloudflare.com"
+        ],
+        "exit": 0,
+        "wallMs": 3208
       },
       "phonehome": {
         "telemetryDestinationSeen": true,
         "labelledTelemetry": false,
-        "rows": 27,
+        "rows": 28,
         "rowsFromTool": 3,
-        "rowsOther": 24,
-        "wallMs": 4202
+        "rowsOther": 25,
+        "wallMs": 4185
       }
     }
   ]

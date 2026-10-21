@@ -36,6 +36,7 @@ if (mode === 'latency') {
   for (let i = 0; i < n; i++) out.ms.push(await post(false, i, body));
   out.bytes = body.length * n;
 }
-https.globalAgent.destroy();
 out.wallMs = Date.now() - t0;
 writeFileSync(E.PERF_OUT, JSON.stringify(out));
+// Interceptors may replace the global agent with one that has no destroy() (HTTP Toolkit's global-agent).
+https.globalAgent.destroy?.();

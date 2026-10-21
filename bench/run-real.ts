@@ -202,6 +202,7 @@ async function main(): Promise<void> {
   const only = flags.only ? new Set(flags.only.split(',')) : undefined;
   const htkServer = skip.has('httptoolkit') || htkMissing() ? undefined : await startHtkServer();
   const htk = !!htkServer;
+  process.on('exit', () => htkServer?.stop());
   const dir = join(WLB, 'real-runs', flags.tag);
   mkdirSync(dir, { recursive: true });
   const results: Record<string, unknown>[] = [];

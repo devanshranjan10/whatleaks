@@ -167,6 +167,8 @@ async function main(): Promise<void> {
   mkdirSync(join(WLB, 'perf'), { recursive: true });
   const lab = await startLab(join(WLB, 'lab-certs'));
   const htk = htkMissing() ? undefined : await startHtkServer();
+  // Never leave HTTP Toolkit's server running (it holds fixed ports).
+  process.on('exit', () => htk?.stop());
   const results: Measured[] = [];
   for (const w of WORKLOADS) {
     for (const tool of ['direct', 'whatleaks', 'mitmproxy', ...(htk ? ['httptoolkit'] : [])] as Tool[]) {
