@@ -4,7 +4,7 @@ This is the resume point for any session.
 
 Spec: `docs/superpowers/specs/2026-10-21-whatleaks-design.md`.
 Plan: `docs/superpowers/plans/2026-10-21-whatleaks.md`.
-Decisions: `docs/DECISIONS.md` (D-01 to D-30). Research: `docs/RESEARCH.md`.
+Decisions: `docs/DECISIONS.md` (D-01 to D-33). Research: `docs/RESEARCH.md`.
 Accuracy: `docs/ACCURACY.md`. Real runs: `docs/e2e/README.md`.
 Benchmark: `docs/BENCHMARK.md` (spec `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md`).
 
@@ -31,13 +31,37 @@ independent code review.
 | Independent review: 20 findings fixed | ba283cc, f4060a2 |
 
 | Benchmark (lab, real tools, perf, Linux) and the gaps it found | c2dbf16 … 6856b3b; see `docs/BENCHMARK.md` §7 |
+| HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | fbc545d … 110f4f9 |
 
-**Gate on the last commit:** `npm ci`, typecheck, lint, **220 offline tests**, build. It
+**Gate on the last commit:** `npm ci`, typecheck, lint, **229 offline tests**, build. It
 passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It returns
 npm's real exit code; an earlier `| grep` pipe hid two lint failures, which were
 amended.
 
 ---
+
+## Benchmark session, second round (2026-10-21 evening to 2026-10-22)
+
+The owner wants to claim the results publicly. Results are in `docs/BENCHMARK.md`.
+- **New baseline: HTTP Toolkit** server v1.27.3, driven like its desktop app.
+- **Lab on Linux** in Docker, with all three tools.
+- **Silently missed, macOS / Linux:** whatleaks **5 % / 5 %**, mitmproxy 35 % / 36 %,
+  HTTP Toolkit 65 % / 69 %. No baseline reached a better outcome than whatleaks in any
+  scenario, except mitmproxy keeping all of a 9 MiB upload (whatleaks caps at 8 MiB by
+  design).
+- **Real tools:** whatleaks 5 of 5, HTTP Toolkit 4, mitmproxy 3.
+- **Fixed:**
+  - Apple's Python, the system Ruby and aiohttp, which HTTP Toolkit read and whatleaks
+    only named (D-31);
+  - `node:http2`, which no other tool reads (D-32);
+  - about 6 ms of proxy CPU per new TLS connection (D-33). The p50 per new connection
+    went from 18.9 to 9.4 ms, now the lowest of the three proxies.
+- **Harness fixes:** Debian curl hashing, the summary's scoring of the old build, the
+  perf client under HTTP Toolkit.
+- **Left as is:**
+  - the remaining 27 misses need a kernel-level hook (D-04);
+  - large uploads are slower than mitmproxy's because of a quadratic buffer in mockttp
+    (D-33). The fix belongs upstream.
 
 ## Benchmark session (2026-10-21, afternoon)
 
@@ -133,7 +157,7 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
 
 ### What doesn't work, or is untested
 
-- **Benchmarked on macOS 26.6.2 (arm64); Linux checked in a container.** Windows is
+- **Benchmarked on macOS 26.6.2 (arm64) and on Linux in Docker (arm64).** Windows is
   untested.
 - **Untested:** GUI and Electron apps, browsers, and forwarding through an existing
   corporate proxy (implemented, not tested).
@@ -166,13 +190,14 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
    tool's run with its documented opt-out.
 5. **Old Node — decided in the benchmark session (D-25), please confirm.** whatleaks
    now adds a `NODE_OPTIONS` preload by default. It lifted Node 20 from 0 to 100 % and
-   app-made agents on new Node from 0 to 100 %. `--no-node-preload` turns it off.
+   app-made agents on new Node from 0 to 100 %. `--no-preload` turns it off, together
+   with the Python and Ruby hooks (D-31).
 
 ### How to resume
 
 ```
 cd ~/Downloads/sideproj/whatleaks
-npm ci && ./scripts/gate.sh        # 220 tests, all offline
+npm ci && ./scripts/gate.sh        # 229 tests, all offline
 node dist/cli.js --help
 ```
 

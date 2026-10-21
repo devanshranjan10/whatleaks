@@ -297,3 +297,33 @@ What stays untouched:
 
 `--no-node-preload` becomes `--no-preload` and turns all three hooks off. Nothing had
 been published, so no alias is kept.
+
+**D-32 — The Node preload tunnels `node:http2`.** `node:http2` reads no proxy variables
+on any Node version, so whatleaks could only name its connections, and only when a poll
+saw them (60 to 100 % in the lab). The preload now wraps `http2.connect`. For an `https:`
+authority that is not loopback or in `NO_PROXY`, the session gets a TLS connection over a
+CONNECT tunnel to the run's proxy, with ALPN `h2`. The proxy already reads HTTP/2 (curl
+`--http2`). It is installed on every Node version, unlike the http, https and fetch
+tunnels (D-25).
+
+What stays untouched:
+- an app that passes its own `createConnection` keeps it;
+- `http:` (h2c) authorities stay direct;
+- the app's TLS options are passed on, so a client given its own `ca` still refuses the
+  run's CA (D-04).
+
+Lab: `node:http2` payload read 10 of 10 on macOS and on Linux; mitmproxy and HTTP Toolkit
+0 of 10.
+
+**D-33 — Shared upstream TLS contexts.** Profiling the "new connection each" workload
+showed about 6 ms of CPU per connection in `tls.createSecureContext`. mockttp sets
+`allowPartialTrustChain` on every upstream connection on Node ≥ 22.9, and Node cannot share
+its root store with such a context, so each one copies every root certificate. whatleaks
+now keeps one context per distinct set of plain options (at most 64), built on first use.
+Contexts with key material or their own CA list are built as before. Trust is unchanged:
+the shared context is the one that would have been built.
+
+Not fixed: mockttp's request-body-data events concatenate each chunk onto the pending
+buffer (`emitBodyDataEvents`), which costs about 15 ms per 4 MiB upload. whatleaks needs
+those events to count bodies past the cap. mockttp is a runtime dependency, so the fix
+belongs upstream, not in a postinstall patch.

@@ -1,14 +1,16 @@
 # Accuracy
 
 What whatleaks gets right, what it misses, and how each claim was checked. Everything
-here was run on 2026-10-21 on macOS 26.6.2 (arm64), with whatleaks on Node 26. The
-benchmark with every number and the baselines is [`BENCHMARK.md`](BENCHMARK.md).
+here was run on 2026-10-21 and 22 on macOS 26.6.2 (arm64), with whatleaks on Node 26,
+and the lab also on Debian in Docker. The benchmark with every number and the baselines
+(mitmproxy, HTTP Toolkit) is [`BENCHMARK.md`](BENCHMARK.md).
 
 ## 1. Ground truth on real tools
 
 | Tool | Ground truth | What whatleaks saw | Match |
 |---|---|---|---|
-| Next.js 16.4.2, `next build` (Node 22.23.3) | `NEXT_TELEMETRY_DEBUG=1` printed 22 events, 7 names | 8 requests carrying the same 22 events, with identical per-name counts | **22 / 22 events** |
+| Next.js 16.4.2, `next build` (Node 22.23.3 and Node 20) | `NEXT_TELEMETRY_DEBUG=1` printed 22 events, 7 names | 8 requests carrying the same 22 events, with identical per-name counts | **22 / 22 events** |
+| Wrangler 4.151.3, `wrangler whoami` | its debug log printed "Posting data" 3 times | 3 events | **3 / 3** |
 | Turborepo 2.11.10, `turbo run build` | `TURBO_TELEMETRY_DEBUG=1` printed 17 events | 1 request carrying 10 events (turbo aborted it after upload) | **10 / 17**: the other 7 never left the process before it exited. The cause is in turbo's own exit logic; see e2e §2 |
 
 The Turborepo gap is not a capture miss: no second request was ever started. A debug
@@ -20,7 +22,7 @@ Details and outputs: [`docs/e2e/README.md`](e2e/README.md).
 ## 2. Which clients can be inspected
 
 Lab percentages are "at the best possible outcome" in `docs/BENCHMARK.md` §3: exact
-ground truth, 3 or 10 runs each.
+ground truth, 3 or 10 runs each, on macOS and on Linux unless one is named.
 
 | Client | Result | How it was checked |
 |---|---|---|
@@ -29,20 +31,24 @@ ground truth, 3 or 10 runs each.
 | Node < 22.21, or 24.0–24.4 for `http`/`https` | captured through the preload's CONNECT tunnels (D-25) | lab 100 % on Node 20 (mitmproxy 0 %); Next.js on Node 20, 22 of 22 events |
 | Bun `fetch` | captured | lab 100 % |
 | macOS `/usr/bin/curl` 8.7.1, HTTP/1.1 and `--http2` | captured | lab 100 %; integration test |
-| Python `urllib` (Homebrew 3.14), `requests`, `httpx` | captured | lab 100 % |
-| Java 25 `HttpClient` | captured through `JAVA_TOOL_OPTIONS` and a JKS truststore (D-26) | lab 100 % (mitmproxy 0 %); integration test |
+| Python `urllib` (Homebrew 3.14, Debian), `requests`, `httpx` | captured | lab 100 % |
+| Apple `/usr/bin/python3` (LibreSSL), macOS system Ruby 2.6 | captured: they ignore `SSL_CERT_FILE`, so a hook adds the run's CA to their default contexts (D-31) | lab 100 % (mitmproxy 0 %); integration tests |
+| Python aiohttp (ignores proxy variables unless `trust_env=True`) | captured: the Python hook makes `trust_env` default to True (D-31) | lab 100 % (mitmproxy 0 %); integration test |
+| `node:http2` (reads no proxy variables on any Node) | captured: the preload tunnels it (D-32) | lab 100 % (mitmproxy and HTTP Toolkit 0 %); integration test; Linux check against example.com |
+| Go 1.26 on Linux | captured (reads `SSL_CERT_FILE`) | Linux lab 100 % |
+| Java 25 (macOS) and OpenJDK 17 (Linux) `HttpClient` | captured through `JAVA_TOOL_OPTIONS` and a JKS truststore (D-26) | lab 100 % (mitmproxy 0 %); integration test |
 | Rust: Turborepo 2.11.10 | captured | real-tool runs, 10 of the 10 events that leave the process |
-| Apple `/usr/bin/python3` (LibreSSL), macOS system Ruby 2.6, Go 1.26 | refuse the CA; reported by hostname, with a count | lab 100 % at that outcome |
+| Go 1.26 on macOS (reads only the keychain) | refuses the CA; reported by hostname, with a count | lab 100 % at that outcome |
 | A client that pins its own trust store | refused and **named** with a count; contents not shown | lab 100 %; integration test |
 | WebSockets | every message the app sends is kept within limits (1000 messages, 1 MiB) and scanned | lab 100 % for 2 and 20 messages, and for identifiers in message 5 of 6 |
 | Detached helper that sends after the app exits | captured up to `--linger` (default 10 s) when it runs in the app's folder or connects to the proxy | lab 100 % for 0.2, 1.5, 3 and 8 s after exit |
 | Short-lived child that connects directly | named, attributed to the app | lab 100 % |
 | Upload over 8 MiB, or abandoned mid-way | listed, marked cut off; the first MiB kept and decoded | lab 100 % at that outcome; integration tests |
-| Program that ignores proxy settings (`node:http2`, aiohttp, raw TCP, UDP) | named as a direct connection by address and process | lab, across runs: `node:http2` 60–100 %, aiohttp 50–90 %, TCP held 10 ms to 2 s 100 %, TCP reset after 50 ms or more 80–100 %, connected UDP 70–100 % |
-| Connection reset by the app within ~10 ms, or closed at once by the server | **often missed**: there is nothing left to find once it closes | lab: reset after 10 ms 10–40 %, server closes at once 0–40 % |
+| Program that ignores proxy settings (raw TCP, UDP, other HTTP clients) | named as a direct connection by address and process | lab, across runs: TCP held 100 ms to 2 s 100 %, TCP held 10 ms 100 % on macOS and 60 % on Linux, TCP reset after 50 ms or more 80–100 %, connected UDP 70–100 % |
+| Connection reset by the app within ~10 ms, or closed at once by the server | **often missed**: there is nothing left to find once it closes | lab: reset after 10 ms 10–50 %, server closes at once 0–40 % |
 | UDP sent with `sendto()` on an unconnected socket | **never seen**: the socket has no destination address | lab 0 % |
 | HTTP/3 (QUIC) | not proxied; named as a direct UDP connection (QUIC uses connected sockets) | lab: connected UDP 70–100 % |
-| Linux | `/proc` backend, no tools needed | `node:22-slim` container, 6 of 6 checks |
+| Linux | `/proc` backend, no tools needed | full lab in Docker (5 % silently missed, as on macOS); `node:22-slim` container, 6 of 6 checks |
 | GUI and Electron apps, browsers, system daemons | **not tested.** whatleaks only sees processes it launches | n/a |
 
 ## 3. Identity detection

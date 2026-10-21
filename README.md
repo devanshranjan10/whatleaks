@@ -182,10 +182,16 @@ and where it appeared. This line is from the test suite's synthetic capture:
 
    - Java: `JAVA_TOOL_OPTIONS` with the proxy and a truststore file whatleaks writes
      itself (the JVM ignores the variables above).
-   - Node: a small preload (`NODE_OPTIONS=--require`). On Node older than 22.21 it
-     routes `http`, `https` and `fetch` through the proxy. On newer Node it gives agents
-     the app creates itself the proxy settings. Node's built-in support covers only the
-     global agent. `--no-node-preload` turns it off.
+   - Node: a small preload (`NODE_OPTIONS=--require`).
+     - On Node older than 22.21 it routes `http`, `https` and `fetch` through the proxy.
+     - On newer Node it gives agents the app creates itself the proxy settings. Node's
+       built-in support covers only the global agent.
+     - On every Node it tunnels `node:http2`, which reads no proxy variables.
+   - Python (`PYTHONPATH`) and Ruby (`RUBYOPT`): small hooks for builds that ignore
+     `SSL_CERT_FILE`, such as Apple's `/usr/bin/python3` and the macOS system Ruby. The
+     Python hook also makes aiohttp honour the proxy variables, as `trust_env=True`
+     would. A client given its own CA file keeps it.
+   - `--no-preload` turns all three off.
 
    Trust reaches only the app's own process tree. **Nothing is installed in your
    system's trust store, and no system proxy settings change.**
@@ -241,25 +247,37 @@ the raw traffic: share the report, not the HAR.
 Measured in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); method notes in
 [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
 
-- **Lab with exact ground truth.** 43 scenarios and 564 attempts, covering Node
-  20/22/26, Bun, curl, four Python HTTP clients and Apple's Python, Ruby, Go, Java,
-  WebSockets, raw TCP and UDP, and late helpers.
-  - whatleaks silently missed **6 %** of attempts. mitmproxy, given the same
-    environment, missed 35 %. The build before this benchmark missed 48 %.
+- **Lab with exact ground truth.** 43 scenarios and 564 attempts on macOS, 40 and 537 on
+  Linux, covering Node 20/22/26, Bun, curl, four Python HTTP clients and Apple's
+  Python, Ruby, Go, Java, WebSockets, `node:http2`, raw TCP and UDP, and late helpers.
+  Two other tools ran on the same scenarios:
+
+  | Silently missed | macOS | Linux |
+  |---|---|---|
+  | **whatleaks** | **5 %** | **5 %** |
+  | mitmproxy 12.2.3, given the same environment | 35 % | 36 % |
+  | HTTP Toolkit server 1.27.3, with its own interception | 65 % | 69 % |
+  | the build before this benchmark | 48 % | – |
+
+  - whatleaks read the full payload of 78 % of attempts on both platforms, and reached
+    the best outcome its rules allow in 95 %.
   - Every remaining miss is a connection that ignores the proxy and is gone within
-    milliseconds, or UDP sent without a destination address on the socket.
+    about 10 ms, or UDP sent without a destination address on the socket.
   - Nothing the app did not send was ever credited to it.
-- **Real tools, against each tool's own debug output:**
+- **Real tools, against each tool's own debug output:** whatleaks matched 5 of 5,
+  HTTP Toolkit 4 of 5, mitmproxy 3 of 5.
   - Next.js 16.4.2: 22 of 22 events, on Node 22 and on Node 20.
   - Wrangler 4.151: 3 of 3 events.
   - Turborepo 2.11: 10 of 17 events. The other 7 never leave the process before turbo
     exits.
-  - mitmproxy saw none of Next.js on Node 20 or of Turborepo.
+  - mitmproxy saw none of Next.js on Node 20 or of Turborepo. HTTP Toolkit missed
+    Astro's event (Node 26 `fetch`).
 - **Identity detection:**
   - all 8 planted identifier kinds were found in every run, including inside
     WebSocket messages;
   - none of the planted decoys was flagged.
-- **Linux:** checked in a container with no `ps`, `lsof` or `netstat`.
+- **Linux:** the full lab in Docker (Debian, Node 20 to 26, Python, Go, Java), and a
+  check in a container with no `ps`, `lsof` or `netstat`.
 - **Classification:** endpoints are labelled from a catalog of known telemetry hosts,
   or by keyword guesses marked `?`, which can mislabel ordinary APIs.
 
@@ -268,20 +286,20 @@ Measured in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); method notes in
 Measured limits are in [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
 
 - **Platforms.**
-  - macOS is benchmarked.
-  - Linux is checked in a slim container (`bench/linux/check.mjs`) with no `ps`,
+  - macOS and Linux (Docker, arm64) are benchmarked.
+  - Linux is also checked in a slim container (`bench/linux/check.mjs`) with no `ps`,
     `lsof` or `netstat`.
   - Windows is untested and has no backend: process watching would be off there.
 - **Only processes you launch through whatleaks.** GUI apps, Electron apps, browsers
   and system daemons were not tested.
 - **Apps that refuse the CA cannot be read, only named.**
-  - Go programs on macOS, Apple's `/usr/bin/python3`, the macOS system Ruby and
-    pinned clients refuse the CA.
+  - Go programs on macOS (they read only the system keychain) and pinned clients
+    refuse the CA.
   - whatleaks names the host and counts the refusals. It does not try to get around
     pinning.
 - **Connections that bypass the proxy are named, not read.**
-  - Examples: `node:http2`, raw sockets, Python `aiohttp` (which ignores proxy
-    variables by default), UDP.
+  - Examples: raw sockets, UDP, and HTTP clients that ignore proxy variables other
+    than `node:http2` and aiohttp, which whatleaks routes through the proxy.
   - They are found by polling, which misses very short ones:
     - a socket closed by the app is found afterwards on macOS (TIME_WAIT keeps its
       owner);
@@ -292,7 +310,8 @@ Measured limits are in [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
     and is never seen.
   - On Linux a closed socket has no owner, so only open ones count.
 - **Not covered by the Node preload:** the `undici` npm package with its own dispatcher,
-  and `node:http2`. Their connections are named as direct connections.
+  and `node:http2` over plain-text `http:` (h2c). Their connections are named as direct
+  connections.
 - **Late helpers outside the project folder.** A detached helper whose parent exits at
   once is waited for when it runs in the app's folder. One that runs from `/` or your
   home folder, and first connects more than `--grace` seconds after the exit, is

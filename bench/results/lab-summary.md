@@ -2,9 +2,9 @@
 
 | | attempts | payload | request | host only | **silently missed** | at best possible |
 |---|---|---|---|---|---|---|
-| whatleaks before | 564 | 33 % | 11 % | 7 % | **48 %** (273) | 41 % |
-| whatleaks | 564 | 68 % | 1 % | 23 % | **9 %** (48) | 91 % |
-| mitmproxy | 564 | 60 % | 0 % | 5 % | **35 %** (195) | 65 % |
+| whatleaks before | 564 | 33 % | 11 % | 7 % | **48 %** (273) | 38 % |
+| whatleaks | 564 | 78 % | 1 % | 17 % | **5 %** (27) | 95 % |
+| mitmproxy | 564 | 60 % | 0 % | 5 % | **35 %** (195) | 62 % |
 | HTTP Toolkit | 564 | 32 % | 0 % | 2 % | **65 %** (369) | 35 % |
 
 "At best possible": share of attempts that reached the best outcome whatleaks can reach without breaking its rules (payload for proxy-aware clients; the destination named for pinned clients and clients that ignore proxies). A baseline can go beyond it (HTTP Toolkit reads some clients whatleaks can only name); those are listed below the table.
@@ -26,16 +26,16 @@
 | Python 3.14 urllib (Homebrew) | payload | 100 % | **100 %** | 100 % | 100 % |
 | Python requests | payload | 100 % | **100 %** | 100 % | 100 % |
 | Python httpx | payload | 100 % | **100 %** | 100 % | 100 % |
-| Apple /usr/bin/python3 urllib (LibreSSL) | host | 100 % | **100 %** | 100 % | 100 % |
-| Ruby 2.6 Net::HTTP (macOS system) | host | 100 % | **100 %** | 100 % | 100 % |
+| Apple /usr/bin/python3 urllib (LibreSSL) | payload | 0 % | **100 %** | 0 % | 100 % |
+| Ruby 2.6 Net::HTTP (macOS system) | payload | 0 % | **100 %** | 0 % | 100 % |
 | Go 1.26 net/http | host | 100 % | **100 %** | 100 % | 100 % |
 | Java 25 HttpClient | payload | 0 % | **100 %** | 0 % | 100 % |
 | Node WebSocket, 2 messages | payload | 100 % | **100 %** | 100 % | 0 % |
 | Node WebSocket, 20 messages | payload | 15 % | **100 %** | 100 % | 0 % |
 | 9 MiB upload | request | 100 % | **100 %** | 100 % | 0 % |
 | client pinning its own trust store | host | 100 % | **100 %** | 100 % | 100 % |
-| Node http2 module | host | 0 % | **70 %** | 0 % | 0 % |
-| Python aiohttp (trust_env=False) | host | 0 % | **40 %** | 0 % | 100 % |
+| Node http2 module (ignores proxy variables) | payload | 0 % | **100 %** | 0 % | 0 % |
+| Python aiohttp (ignores proxy variables by default) | payload | 0 % | **100 %** | 0 % | 100 % |
 | raw TCP held 10 ms | host | 0 % | **100 %** | 0 % | 0 % |
 | raw TCP held 100 ms | host | 0 % | **100 %** | 0 % | 0 % |
 | raw TCP held 500 ms | host | 20 % | **100 %** | 0 % | 0 % |
@@ -56,7 +56,4 @@
 | identifiers in the 5th of 6 WebSocket messages | payload | 50 % | **100 %** | 100 % | 0 % |
 
 Beyond the best possible outcome:
-- HTTP Toolkit read 9 of 9 payloads in "Apple /usr/bin/python3 urllib (LibreSSL)" (whatleaks 0)
-- HTTP Toolkit read 9 of 9 payloads in "Ruby 2.6 Net::HTTP (macOS system)" (whatleaks 0)
 - mitmproxy read 3 of 3 payloads in "9 MiB upload" (whatleaks 0)
-- HTTP Toolkit read 30 of 30 payloads in "Python aiohttp (trust_env=False)" (whatleaks 0)

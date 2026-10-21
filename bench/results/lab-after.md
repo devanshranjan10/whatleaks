@@ -4,7 +4,7 @@ Run 2026-10-21T17:56:28.953Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/t
 
 ## whatleaks
 
-Attempts 564: payload 68 %, request 1 %, host only 23 %, **silently missed 9 %** (48).
+Attempts 564: payload 78 %, request 1 %, host only 17 %, **silently missed 5 %** (27).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -23,16 +23,16 @@ Attempts 564: payload 68 %, request 1 %, host only 23 %, **silently missed 9 %**
 | Python 3.14 urllib (Homebrew) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python requests | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python httpx | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
-| Apple /usr/bin/python3 urllib (LibreSSL) | host | 9 | 0 | 0 | 9 | 0 | 100 % (70–100) | – |
-| Ruby 2.6 Net::HTTP (macOS system) | host | 9 | 0 | 0 | 9 | 0 | 100 % (70–100) | – |
+| Apple /usr/bin/python3 urllib (LibreSSL) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
+| Ruby 2.6 Net::HTTP (macOS system) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Go 1.26 net/http | host | 9 | 0 | 0 | 9 | 0 | 100 % (70–100) | – |
 | Java 25 HttpClient | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node WebSocket, 2 messages | payload | 6 | 6 | 0 | 0 | 0 | 100 % (61–100) | – |
 | Node WebSocket, 20 messages | payload | 60 | 60 | 0 | 0 | 0 | 100 % (94–100) | – |
 | 9 MiB upload | request | 3 | 0 | 3 | 0 | 0 | 100 % (44–100) | – |
 | client pinning its own trust store | host | 3 | 0 | 0 | 3 | 0 | 100 % (44–100) | – |
-| Node http2 module | host | 10 | 0 | 0 | 7 | 3 | 70 % (40–89) | – |
-| Python aiohttp (trust_env=False) | host | 30 | 0 | 0 | 12 | 18 | 40 % (25–58) | – |
+| Node http2 module (ignores proxy variables) | payload | 10 | 10 | 0 | 0 | 0 | 100 % (72–100) | – |
+| Python aiohttp (ignores proxy variables by default) | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | raw TCP held 10 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP held 100 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
@@ -73,16 +73,16 @@ Attempts 564: payload 60 %, request 0 %, host only 5 %, **silently missed 35 %**
 | Python 3.14 urllib (Homebrew) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python requests | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python httpx | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
-| Apple /usr/bin/python3 urllib (LibreSSL) | host | 9 | 0 | 0 | 9 | 0 | 100 % (70–100) | – |
-| Ruby 2.6 Net::HTTP (macOS system) | host | 9 | 0 | 0 | 9 | 0 | 100 % (70–100) | – |
+| Apple /usr/bin/python3 urllib (LibreSSL) | payload | 9 | 0 | 0 | 9 | 0 | 0 % (0–30) | – |
+| Ruby 2.6 Net::HTTP (macOS system) | payload | 9 | 0 | 0 | 9 | 0 | 0 % (0–30) | – |
 | Go 1.26 net/http | host | 9 | 0 | 0 | 9 | 0 | 100 % (70–100) | – |
 | Java 25 HttpClient | payload | 9 | 0 | 0 | 0 | 9 | 0 % (0–30) | – |
 | Node WebSocket, 2 messages | payload | 6 | 6 | 0 | 0 | 0 | 100 % (61–100) | – |
 | Node WebSocket, 20 messages | payload | 60 | 60 | 0 | 0 | 0 | 100 % (94–100) | – |
 | 9 MiB upload | request | 3 | 3 | 0 | 0 | 0 | 100 % (44–100) | – |
 | client pinning its own trust store | host | 3 | 0 | 0 | 3 | 0 | 100 % (44–100) | – |
-| Node http2 module | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
-| Python aiohttp (trust_env=False) | host | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |
+| Node http2 module (ignores proxy variables) | payload | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Python aiohttp (ignores proxy variables by default) | payload | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |
 | raw TCP held 10 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 100 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
@@ -123,16 +123,16 @@ Attempts 564: payload 32 %, request 0 %, host only 2 %, **silently missed 65 %**
 | Python 3.14 urllib (Homebrew) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python requests | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Python httpx | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
-| Apple /usr/bin/python3 urllib (LibreSSL) | host | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
-| Ruby 2.6 Net::HTTP (macOS system) | host | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
+| Apple /usr/bin/python3 urllib (LibreSSL) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
+| Ruby 2.6 Net::HTTP (macOS system) | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Go 1.26 net/http | host | 9 | 0 | 0 | 9 | 0 | 100 % (70–100) | – |
 | Java 25 HttpClient | payload | 9 | 9 | 0 | 0 | 0 | 100 % (70–100) | – |
 | Node WebSocket, 2 messages | payload | 6 | 0 | 0 | 0 | 6 | 0 % (0–39) | – |
 | Node WebSocket, 20 messages | payload | 60 | 0 | 0 | 0 | 60 | 0 % (0–6) | – |
 | 9 MiB upload | request | 3 | 0 | 0 | 0 | 3 | 0 % (0–56) | – |
 | client pinning its own trust store | host | 3 | 0 | 0 | 3 | 0 | 100 % (44–100) | – |
-| Node http2 module | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
-| Python aiohttp (trust_env=False) | host | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
+| Node http2 module (ignores proxy variables) | payload | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Python aiohttp (ignores proxy variables by default) | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | raw TCP held 10 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 100 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |

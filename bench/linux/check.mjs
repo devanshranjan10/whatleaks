@@ -36,8 +36,9 @@ function check(id, title, ok, detail) {
     'http2',
     "const c = require('node:http2').connect('https://example.com'); const r = c.request({ ':path': '/wl-linux-h2' }); r.resume(); r.on('end', () => setTimeout(() => { c.close(); process.exit(0); }, 600)); c.on('error', () => process.exit(4));",
   );
-  const d = c.meta.direct.filter((x) => x.port === 443);
-  check('http2-direct', 'node:http2 (ignores the proxy) named as a direct connection, held 600 ms', d.length > 0, JSON.stringify(d.map((x) => `${x.remote}:${x.port} ${x.process} ×${x.connections ?? 1}`)));
+  // It reads no proxy variables; the Node preload tunnels it (D-32).
+  const e = c.har.log.entries.find((x) => x.request.url === 'https://example.com/wl-linux-h2');
+  check('http2', 'node:http2 (ignores the proxy) captured through the preload', !!e, `entries=${c.har.log.entries.length} status=${e?.response.status}`);
 }
 {
   // Repeated: a 10 ms socket is caught only if a /proc poll lands inside its lifetime.

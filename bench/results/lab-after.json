@@ -11,6 +11,39 @@
       5.9,
       7.1,
       6.2
+    ],
+    "rerun": [
+      {
+        "date": "2026-10-21T18:06:31.125Z",
+        "scenarios": [
+          "py-urllib",
+          "py-requests",
+          "py-httpx",
+          "py-apple",
+          "ruby-system",
+          "py-aiohttp"
+        ],
+        "why": "build 3774b7f: Python and Ruby hooks (D-31); these rows now expect the payload",
+        "cli": "/tmp/wlb/after/dist/cli.js",
+        "loadavg": [
+          3.5,
+          5.8,
+          6.2
+        ]
+      },
+      {
+        "date": "2026-10-21T19:24:54.953Z",
+        "scenarios": [
+          "node-http2"
+        ],
+        "why": "build a152a58: the preload tunnels node:http2 (D-32); the row now expects the payload",
+        "cli": "/tmp/wlb/after/dist/cli.js",
+        "loadavg": [
+          5.9,
+          6.5,
+          5.5
+        ]
+      }
     ]
   },
   "results": [
@@ -2867,7 +2900,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 2409,
+          "wallMs": 2692,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -2887,7 +2920,7 @@
         },
         {
           "run": 2,
-          "wallMs": 2252,
+          "wallMs": 2875,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -2907,7 +2940,7 @@
         },
         {
           "run": 3,
-          "wallMs": 2212,
+          "wallMs": 2794,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -2948,7 +2981,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 114,
+          "wallMs": 139,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -2967,7 +3000,7 @@
         },
         {
           "run": 2,
-          "wallMs": 92,
+          "wallMs": 95,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -2986,7 +3019,7 @@
         },
         {
           "run": 3,
-          "wallMs": 94,
+          "wallMs": 93,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3026,7 +3059,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 170,
+          "wallMs": 190,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3045,7 +3078,7 @@
         },
         {
           "run": 2,
-          "wallMs": 98,
+          "wallMs": 104,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3064,7 +3097,7 @@
         },
         {
           "run": 3,
-          "wallMs": 101,
+          "wallMs": 110,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3104,7 +3137,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 2648,
+          "wallMs": 2940,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3124,7 +3157,7 @@
         },
         {
           "run": 2,
-          "wallMs": 2120,
+          "wallMs": 2302,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3144,7 +3177,7 @@
         },
         {
           "run": 3,
-          "wallMs": 2297,
+          "wallMs": 2383,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3185,7 +3218,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 186,
+          "wallMs": 306,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3204,7 +3237,7 @@
         },
         {
           "run": 2,
-          "wallMs": 158,
+          "wallMs": 253,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3223,7 +3256,7 @@
         },
         {
           "run": 3,
-          "wallMs": 174,
+          "wallMs": 225,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3263,7 +3296,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 706,
+          "wallMs": 272,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3282,7 +3315,7 @@
         },
         {
           "run": 2,
-          "wallMs": 481,
+          "wallMs": 184,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3301,7 +3334,7 @@
         },
         {
           "run": 3,
-          "wallMs": 629,
+          "wallMs": 177,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3341,7 +3374,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 2702,
+          "wallMs": 2643,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3361,7 +3394,7 @@
         },
         {
           "run": 2,
-          "wallMs": 2111,
+          "wallMs": 2392,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3381,7 +3414,7 @@
         },
         {
           "run": 3,
-          "wallMs": 2308,
+          "wallMs": 2248,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3422,7 +3455,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 202,
+          "wallMs": 235,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3441,7 +3474,7 @@
         },
         {
           "run": 2,
-          "wallMs": 181,
+          "wallMs": 217,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3538,7 +3571,7 @@
         },
         {
           "run": 3,
-          "wallMs": 139,
+          "wallMs": 144,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3573,76 +3606,75 @@
       "id": "py-apple",
       "group": "proxy-aware",
       "title": "Apple /usr/bin/python3 urllib (LibreSSL)",
-      "expect": "host",
-      "why": "ignores SSL_CERT_FILE; refuses the CA (D-04: no system trust changes)",
+      "expect": "payload",
       "tool": "whatleaks",
       "runs": [
         {
           "run": 1,
-          "wallMs": 2250,
+          "wallMs": 2525,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
-          "delivered": 0,
+          "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 2,
-          "wallMs": 2111,
+          "wallMs": 2038,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
-          "delivered": 0,
+          "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 3,
-          "wallMs": 2259,
+          "wallMs": 2347,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
-          "delivered": 0,
+          "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         }
       ],
       "total": {
         "attempted": 9,
-        "payload": 0,
+        "payload": 9,
         "request": 0,
-        "host": 9,
+        "host": 0,
         "missed": 0
       },
       "atBest": 1,
@@ -3655,13 +3687,12 @@
       "id": "py-apple",
       "group": "proxy-aware",
       "title": "Apple /usr/bin/python3 urllib (LibreSSL)",
-      "expect": "host",
-      "why": "ignores SSL_CERT_FILE; refuses the CA (D-04: no system trust changes)",
+      "expect": "payload",
       "tool": "mitmproxy",
       "runs": [
         {
           "run": 1,
-          "wallMs": 129,
+          "wallMs": 194,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3680,7 +3711,7 @@
         },
         {
           "run": 2,
-          "wallMs": 107,
+          "wallMs": 122,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3699,7 +3730,7 @@
         },
         {
           "run": 3,
-          "wallMs": 105,
+          "wallMs": 103,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3724,23 +3755,22 @@
         "host": 9,
         "missed": 0
       },
-      "atBest": 1,
+      "atBest": 0,
       "atBestCI": [
-        0.7008472464490406,
-        1
+        0,
+        0.2991527535509594
       ]
     },
     {
       "id": "py-apple",
       "group": "proxy-aware",
       "title": "Apple /usr/bin/python3 urllib (LibreSSL)",
-      "expect": "host",
-      "why": "ignores SSL_CERT_FILE; refuses the CA (D-04: no system trust changes)",
+      "expect": "payload",
       "tool": "httptoolkit",
       "runs": [
         {
           "run": 1,
-          "wallMs": 158,
+          "wallMs": 249,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3759,7 +3789,7 @@
         },
         {
           "run": 2,
-          "wallMs": 110,
+          "wallMs": 104,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3778,7 +3808,7 @@
         },
         {
           "run": 3,
-          "wallMs": 110,
+          "wallMs": 109,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3813,76 +3843,75 @@
       "id": "ruby-system",
       "group": "proxy-aware",
       "title": "Ruby 2.6 Net::HTTP (macOS system)",
-      "expect": "host",
-      "why": "refuses the CA (system Ruby uses its own trust store)",
+      "expect": "payload",
       "tool": "whatleaks",
       "runs": [
         {
           "run": 1,
-          "wallMs": 2615,
+          "wallMs": 2329,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
-          "delivered": 0,
+          "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 2,
-          "wallMs": 2310,
+          "wallMs": 2207,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
-          "delivered": 0,
+          "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 3,
-          "wallMs": 2160,
+          "wallMs": 2240,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
-          "delivered": 0,
+          "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         }
       ],
       "total": {
         "attempted": 9,
-        "payload": 0,
+        "payload": 9,
         "request": 0,
-        "host": 9,
+        "host": 0,
         "missed": 0
       },
       "atBest": 1,
@@ -3895,13 +3924,12 @@
       "id": "ruby-system",
       "group": "proxy-aware",
       "title": "Ruby 2.6 Net::HTTP (macOS system)",
-      "expect": "host",
-      "why": "refuses the CA (system Ruby uses its own trust store)",
+      "expect": "payload",
       "tool": "mitmproxy",
       "runs": [
         {
           "run": 1,
-          "wallMs": 148,
+          "wallMs": 277,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3920,7 +3948,7 @@
         },
         {
           "run": 2,
-          "wallMs": 119,
+          "wallMs": 167,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3939,7 +3967,7 @@
         },
         {
           "run": 3,
-          "wallMs": 121,
+          "wallMs": 155,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3964,23 +3992,22 @@
         "host": 9,
         "missed": 0
       },
-      "atBest": 1,
+      "atBest": 0,
       "atBestCI": [
-        0.7008472464490406,
-        1
+        0,
+        0.2991527535509594
       ]
     },
     {
       "id": "ruby-system",
       "group": "proxy-aware",
       "title": "Ruby 2.6 Net::HTTP (macOS system)",
-      "expect": "host",
-      "why": "refuses the CA (system Ruby uses its own trust store)",
+      "expect": "payload",
       "tool": "httptoolkit",
       "runs": [
         {
           "run": 1,
-          "wallMs": 183,
+          "wallMs": 204,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -3999,7 +4026,7 @@
         },
         {
           "run": 2,
-          "wallMs": 132,
+          "wallMs": 190,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -4018,7 +4045,7 @@
         },
         {
           "run": 3,
-          "wallMs": 123,
+          "wallMs": 179,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -5591,216 +5618,216 @@
     {
       "id": "node-http2",
       "group": "proxy-ignoring",
-      "title": "Node http2 module",
-      "expect": "host",
-      "why": "ignores proxy variables",
+      "title": "Node http2 module (ignores proxy variables)",
+      "expect": "payload",
+      "why": "the Node preload tunnels it; other tools see it only as a direct connection",
       "tool": "whatleaks",
       "runs": [
         {
           "run": 1,
-          "wallMs": 2205,
+          "wallMs": 3001,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
-            "host": 1,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=host"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 2,
-          "wallMs": 2149,
+          "wallMs": 2634,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
-            "host": 1,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=host"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 3,
-          "wallMs": 2191,
+          "wallMs": 2324,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
             "host": 0,
-            "missed": 1
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=missed"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 4,
-          "wallMs": 2200,
+          "wallMs": 2271,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
             "host": 0,
-            "missed": 1
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=missed"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 5,
-          "wallMs": 2174,
+          "wallMs": 2155,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
-            "host": 1,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=host"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 6,
-          "wallMs": 2214,
+          "wallMs": 2395,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
-            "host": 1,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=host"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 7,
-          "wallMs": 2132,
+          "wallMs": 2117,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
             "host": 0,
-            "missed": 1
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=missed"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 8,
-          "wallMs": 2242,
+          "wallMs": 2237,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
-            "host": 1,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=host"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 9,
-          "wallMs": 2129,
+          "wallMs": 2287,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
-            "host": 1,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=host"
+            "http:0=payload"
           ],
           "findings": []
         },
         {
           "run": 10,
-          "wallMs": 2177,
+          "wallMs": 2180,
           "exit": 0,
           "tally": {
             "attempted": 1,
-            "payload": 0,
+            "payload": 1,
             "request": 0,
-            "host": 1,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 1,
           "outcomes": [
-            "http:0=host"
+            "http:0=payload"
           ],
           "findings": []
         }
       ],
       "total": {
         "attempted": 10,
-        "payload": 0,
+        "payload": 10,
         "request": 0,
-        "host": 7,
-        "missed": 3
+        "host": 0,
+        "missed": 0
       },
-      "atBest": 0.7,
+      "atBest": 1,
       "atBestCI": [
-        0.3967732199795652,
-        0.892210712513788
+        0.7224598312333834,
+        1
       ]
     },
     {
       "id": "node-http2",
       "group": "proxy-ignoring",
-      "title": "Node http2 module",
-      "expect": "host",
-      "why": "ignores proxy variables",
+      "title": "Node http2 module (ignores proxy variables)",
+      "expect": "payload",
+      "why": "the Node preload tunnels it; other tools see it only as a direct connection",
       "tool": "mitmproxy",
       "runs": [
         {
           "run": 1,
-          "wallMs": 108,
+          "wallMs": 107,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -5817,7 +5844,7 @@
         },
         {
           "run": 2,
-          "wallMs": 92,
+          "wallMs": 161,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -5834,7 +5861,7 @@
         },
         {
           "run": 3,
-          "wallMs": 99,
+          "wallMs": 106,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -5851,57 +5878,6 @@
         },
         {
           "run": 4,
-          "wallMs": 93,
-          "exit": 0,
-          "tally": {
-            "attempted": 1,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 1
-          },
-          "unexpected": [],
-          "delivered": 1,
-          "outcomes": [
-            "http:0=missed"
-          ]
-        },
-        {
-          "run": 5,
-          "wallMs": 98,
-          "exit": 0,
-          "tally": {
-            "attempted": 1,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 1
-          },
-          "unexpected": [],
-          "delivered": 1,
-          "outcomes": [
-            "http:0=missed"
-          ]
-        },
-        {
-          "run": 6,
-          "wallMs": 96,
-          "exit": 0,
-          "tally": {
-            "attempted": 1,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 1
-          },
-          "unexpected": [],
-          "delivered": 1,
-          "outcomes": [
-            "http:0=missed"
-          ]
-        },
-        {
-          "run": 7,
           "wallMs": 97,
           "exit": 0,
           "tally": {
@@ -5918,8 +5894,59 @@
           ]
         },
         {
+          "run": 5,
+          "wallMs": 108,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "http:0=missed"
+          ]
+        },
+        {
+          "run": 6,
+          "wallMs": 109,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "http:0=missed"
+          ]
+        },
+        {
+          "run": 7,
+          "wallMs": 127,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "http:0=missed"
+          ]
+        },
+        {
           "run": 8,
-          "wallMs": 95,
+          "wallMs": 108,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -5936,7 +5963,7 @@
         },
         {
           "run": 9,
-          "wallMs": 96,
+          "wallMs": 106,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -5953,7 +5980,7 @@
         },
         {
           "run": 10,
-          "wallMs": 93,
+          "wallMs": 109,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -5985,14 +6012,14 @@
     {
       "id": "node-http2",
       "group": "proxy-ignoring",
-      "title": "Node http2 module",
-      "expect": "host",
-      "why": "ignores proxy variables",
+      "title": "Node http2 module (ignores proxy variables)",
+      "expect": "payload",
+      "why": "the Node preload tunnels it; other tools see it only as a direct connection",
       "tool": "httptoolkit",
       "runs": [
         {
           "run": 1,
-          "wallMs": 173,
+          "wallMs": 195,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6009,7 +6036,7 @@
         },
         {
           "run": 2,
-          "wallMs": 125,
+          "wallMs": 137,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6026,7 +6053,7 @@
         },
         {
           "run": 3,
-          "wallMs": 122,
+          "wallMs": 130,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6043,7 +6070,7 @@
         },
         {
           "run": 4,
-          "wallMs": 125,
+          "wallMs": 142,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6060,7 +6087,7 @@
         },
         {
           "run": 5,
-          "wallMs": 124,
+          "wallMs": 132,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6077,7 +6104,7 @@
         },
         {
           "run": 6,
-          "wallMs": 127,
+          "wallMs": 140,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6094,7 +6121,7 @@
         },
         {
           "run": 7,
-          "wallMs": 126,
+          "wallMs": 180,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6111,7 +6138,7 @@
         },
         {
           "run": 8,
-          "wallMs": 123,
+          "wallMs": 147,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6128,7 +6155,7 @@
         },
         {
           "run": 9,
-          "wallMs": 130,
+          "wallMs": 135,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6177,236 +6204,234 @@
     {
       "id": "py-aiohttp",
       "group": "proxy-ignoring",
-      "title": "Python aiohttp (trust_env=False)",
-      "expect": "host",
-      "why": "ignores proxy variables by default",
+      "title": "Python aiohttp (ignores proxy variables by default)",
+      "expect": "payload",
       "tool": "whatleaks",
       "runs": [
         {
           "run": 1,
-          "wallMs": 2661,
+          "wallMs": 2558,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 2,
-          "wallMs": 2298,
+          "wallMs": 2282,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
             "host": 0,
-            "missed": 3
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 3,
-          "wallMs": 2315,
+          "wallMs": 2287,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 4,
-          "wallMs": 2322,
+          "wallMs": 2357,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
             "host": 0,
-            "missed": 3
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 5,
-          "wallMs": 2381,
+          "wallMs": 2366,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
             "host": 0,
-            "missed": 3
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 6,
-          "wallMs": 2257,
+          "wallMs": 2209,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 7,
-          "wallMs": 2080,
+          "wallMs": 2536,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
-            "host": 3,
+            "host": 0,
             "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=host",
-            "http:1=host",
-            "http:2=host"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 8,
-          "wallMs": 2440,
+          "wallMs": 2881,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
             "host": 0,
-            "missed": 3
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 9,
-          "wallMs": 2156,
+          "wallMs": 2682,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
             "host": 0,
-            "missed": 3
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         },
         {
           "run": 10,
-          "wallMs": 2341,
+          "wallMs": 2276,
           "exit": 0,
           "tally": {
             "attempted": 3,
-            "payload": 0,
+            "payload": 3,
             "request": 0,
             "host": 0,
-            "missed": 3
+            "missed": 0
           },
           "unexpected": [],
           "delivered": 3,
           "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
+            "http:0=payload",
+            "http:1=payload",
+            "http:2=payload"
           ],
           "findings": []
         }
       ],
       "total": {
         "attempted": 30,
-        "payload": 0,
+        "payload": 30,
         "request": 0,
-        "host": 12,
-        "missed": 18
+        "host": 0,
+        "missed": 0
       },
-      "atBest": 0.4,
+      "atBest": 1,
       "atBestCI": [
-        0.24590394326083398,
-        0.5767994750172617
+        0.886482908609522,
+        1
       ]
     },
     {
       "id": "py-aiohttp",
       "group": "proxy-ignoring",
-      "title": "Python aiohttp (trust_env=False)",
-      "expect": "host",
-      "why": "ignores proxy variables by default",
+      "title": "Python aiohttp (ignores proxy variables by default)",
+      "expect": "payload",
       "tool": "mitmproxy",
       "runs": [
         {
           "run": 1,
-          "wallMs": 187,
+          "wallMs": 181,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6425,7 +6450,7 @@
         },
         {
           "run": 2,
-          "wallMs": 169,
+          "wallMs": 173,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6444,7 +6469,7 @@
         },
         {
           "run": 3,
-          "wallMs": 179,
+          "wallMs": 174,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6463,44 +6488,6 @@
         },
         {
           "run": 4,
-          "wallMs": 177,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 3,
-          "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
-          ]
-        },
-        {
-          "run": 5,
-          "wallMs": 176,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 3,
-          "outcomes": [
-            "http:0=missed",
-            "http:1=missed",
-            "http:2=missed"
-          ]
-        },
-        {
-          "run": 6,
           "wallMs": 180,
           "exit": 0,
           "tally": {
@@ -6519,8 +6506,46 @@
           ]
         },
         {
+          "run": 5,
+          "wallMs": 175,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        },
+        {
+          "run": 6,
+          "wallMs": 182,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 3,
+          "outcomes": [
+            "http:0=missed",
+            "http:1=missed",
+            "http:2=missed"
+          ]
+        },
+        {
           "run": 7,
-          "wallMs": 172,
+          "wallMs": 174,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6539,7 +6564,7 @@
         },
         {
           "run": 8,
-          "wallMs": 177,
+          "wallMs": 174,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6558,7 +6583,7 @@
         },
         {
           "run": 9,
-          "wallMs": 177,
+          "wallMs": 173,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6577,7 +6602,7 @@
         },
         {
           "run": 10,
-          "wallMs": 177,
+          "wallMs": 175,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6611,14 +6636,13 @@
     {
       "id": "py-aiohttp",
       "group": "proxy-ignoring",
-      "title": "Python aiohttp (trust_env=False)",
-      "expect": "host",
-      "why": "ignores proxy variables by default",
+      "title": "Python aiohttp (ignores proxy variables by default)",
+      "expect": "payload",
       "tool": "httptoolkit",
       "runs": [
         {
           "run": 1,
-          "wallMs": 310,
+          "wallMs": 317,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6637,7 +6661,7 @@
         },
         {
           "run": 2,
-          "wallMs": 190,
+          "wallMs": 182,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6656,7 +6680,7 @@
         },
         {
           "run": 3,
-          "wallMs": 196,
+          "wallMs": 194,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6675,7 +6699,7 @@
         },
         {
           "run": 4,
-          "wallMs": 191,
+          "wallMs": 233,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6694,7 +6718,7 @@
         },
         {
           "run": 5,
-          "wallMs": 183,
+          "wallMs": 201,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6713,7 +6737,7 @@
         },
         {
           "run": 6,
-          "wallMs": 178,
+          "wallMs": 183,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6732,7 +6756,7 @@
         },
         {
           "run": 7,
-          "wallMs": 181,
+          "wallMs": 180,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6751,7 +6775,7 @@
         },
         {
           "run": 8,
-          "wallMs": 192,
+          "wallMs": 208,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6770,7 +6794,7 @@
         },
         {
           "run": 9,
-          "wallMs": 186,
+          "wallMs": 188,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6789,7 +6813,7 @@
         },
         {
           "run": 10,
-          "wallMs": 182,
+          "wallMs": 198,
           "exit": 0,
           "tally": {
             "attempted": 3,
