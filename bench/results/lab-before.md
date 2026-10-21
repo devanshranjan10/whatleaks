@@ -4,7 +4,7 @@ Run 2026-10-21T06:06:32.865Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/t
 
 ## whatleaks
 
-Attempts 437: payload 41 %, request 14 %, host only 10 %, **silently missed 35 %** (155).
+Attempts 507: payload 35 %, request 12 %, host only 8 %, **silently missed 44 %** (225).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -35,11 +35,12 @@ Attempts 437: payload 41 %, request 14 %, host only 10 %, **silently missed 35 %
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 2 | 8 | 20 % (6–51) | – |
 | raw TCP held 2 s | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP, server closes first (100 ms) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
-| one UDP datagram | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 1.5 s after the app exits | payload | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |
-| detached helper sends 3 s after the app exits | payload | 0 | 0 | 0 | 0 | 0 | 0 % (0–100) | – |
-| detached helper sends 8 s after the app exits | payload | 0 | 0 | 0 | 0 | 0 | 0 % (0–100) | – |
+| detached helper sends 3 s after the app exits | payload | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |
+| detached helper sends 8 s after the app exits | payload | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |
 | grandchild sends after its parent exited | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | child process lives ~100 ms and connects directly | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | body with this machine’s identifiers and decoys | payload | 3 | 3 | 0 | 0 | 0 | 100 % (44–100) | – |
@@ -47,7 +48,7 @@ Attempts 437: payload 41 %, request 14 %, host only 10 %, **silently missed 35 %
 
 ## mitmproxy
 
-Attempts 497: payload 66 %, request 0 %, host only 6 %, **silently missed 28 %** (137).
+Attempts 507: payload 65 %, request 0 %, host only 6 %, **silently missed 29 %** (147).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -78,7 +79,8 @@ Attempts 497: payload 66 %, request 0 %, host only 6 %, **silently missed 28 %**
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP held 2 s | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | raw TCP, server closes first (100 ms) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
-| one UDP datagram | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 1.5 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 3 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |

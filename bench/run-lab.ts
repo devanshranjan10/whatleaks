@@ -7,6 +7,7 @@
  * Needs `npm run build` and `bench/setup.sh`. Writes bench/results/lab-<tag>.{json,md}.
  */
 import { type ChildProcess, spawn } from 'node:child_process';
+import { lookup } from 'node:dns/promises';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -36,6 +37,8 @@ const { values: flags } = parseArgs({
     cli: { type: 'string' },
     // Replace the matching scenario × tool rows of an earlier result file instead of writing a new one.
     'merge-into': { type: 'string' },
+    // Keep the finished scenario × tool rows of an interrupted run with the same tag.
+    resume: { type: 'boolean', default: false },
   },
 });
 const CLI = resolve(flags.cli ?? join(root, 'dist/cli.js'));
@@ -44,6 +47,48 @@ const tools = flags.tools.split(',') as Tool[];
 const only = flags.only ? new Set(flags.only.split(',')) : undefined;
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * The lab name resolves through public DNS (sslip.io) and the lab listens on the LAN
+ * address, so a Wi-Fi drop makes clients fail before they reach anything. That is not
+ * something a capture tool can miss or catch, so such a scenario is run again.
+ */
+async function labUp(lab: Lab): Promise<boolean> {
+  const onLan = Object.values(os.networkInterfaces()).some((xs) => xs?.some((x) => x.address === lab.ip));
+  if (!onLan) return false;
+  try {
+    return (await lookup(lab.host, { family: 4 })).address === lab.ip;
+  } catch {
+    return false;
+  }
+}
+
+async function waitForLab(lab: Lab): Promise<void> {
+  for (let i = 0; !(await labUp(lab)); i++) {
+    if (i === 0) console.error('lab unreachable (network down?); waiting');
+    if (i > 360) throw new Error('lab unreachable for 30 minutes');
+    await sleep(5000);
+  }
+}
+
+/** Watches the lab's reachability while a scenario runs; `outage` turns true on any failed check. */
+function watchLab(lab: Lab): { stop: () => Promise<boolean> } {
+  let outage = false;
+  let running = true;
+  const loop = (async () => {
+    while (running) {
+      if (!(await labUp(lab))) outage = true;
+      await sleep(1000);
+    }
+  })();
+  return {
+    stop: async () => {
+      running = false;
+      await loop;
+      return outage;
+    },
+  };
+}
 
 function readLedger(path: string): LedgerEntry[] {
   if (!existsSync(path)) return [];
@@ -293,8 +338,16 @@ async function main(): Promise<void> {
   if (!existsSync(CLI)) throw new Error('run `npm run build` first');
   mkdirSync(join(WLB, 'work'), { recursive: true });
   const dir = join(WLB, 'lab-runs', flags.tag);
-  rmSync(dir, { recursive: true, force: true });
+  if (!flags.resume) rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
+  const progress = join(dir, 'progress.jsonl');
+  const done = new Map<string, ScenarioResult>();
+  if (flags.resume && existsSync(progress)) {
+    for (const l of readFileSync(progress, 'utf8').split('\n').filter(Boolean)) {
+      const r = JSON.parse(l) as ScenarioResult;
+      done.set(`${r.id} ${r.tool}`, r);
+    }
+  }
   const lab = await startLab(join(WLB, 'lab-certs'));
   const ids = await localIdentities();
   const planted = {
@@ -312,17 +365,35 @@ async function main(): Promise<void> {
         results.push({ ...summarise(sc, tool, []), skipped: sc.missing });
         continue;
       }
-      let rs: RunResult[];
-      if (tool === 'whatleaks') {
-        rs = [];
-        for (let run = 1; run <= runs; run++) rs.push(await runWhatleaks(lab, sc, run, dir, planted));
-      } else {
-        rs = await runMitmScenario(lab, sc, runs, dir, planted);
+      const prev = done.get(`${sc.id} ${tool}`);
+      if (prev) {
+        results.push(prev);
+        continue;
+      }
+      let rs: RunResult[] = [];
+      for (let attempt = 1; ; attempt++) {
+        await waitForLab(lab);
+        const watch = watchLab(lab);
+        let failure: Error | undefined;
+        try {
+          if (tool === 'whatleaks') {
+            rs = [];
+            for (let run = 1; run <= runs; run++) rs.push(await runWhatleaks(lab, sc, run, dir, planted));
+          } else {
+            rs = await runMitmScenario(lab, sc, runs, dir, planted);
+          }
+        } catch (e) {
+          failure = e instanceof Error ? e : new Error(String(e));
+        }
+        const outage = await watch.stop();
+        if (!outage && !failure) break;
+        if (!outage || attempt >= 3) throw failure ?? new Error(`${sc.id} ${tool}: network outages on ${attempt} attempts`);
+        console.error(`${tool} ${sc.id}: network outage during the runs; running the scenario again`);
       }
       const s = summarise(sc, tool, rs);
       results.push(s);
       console.error(`${tool.padEnd(9)} ${sc.id.padEnd(18)} at best ${Math.round(s.atBest * 100)}%  payload ${s.total.payload} request ${s.total.request} host ${s.total.host} missed ${s.total.missed} / ${s.total.attempted}  delivered ${rs.reduce((a, r) => a + r.delivered, 0)}`);
-      appendFileSync(join(dir, 'progress.jsonl'), JSON.stringify(s) + '\n');
+      appendFileSync(progress, JSON.stringify(s) + '\n');
     }
   }
   await lab.close();

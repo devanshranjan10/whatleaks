@@ -5,7 +5,27 @@
     "machine": "Darwin 25.6.0 arm64, 8 CPUs",
     "whatleaks": "0.1.0 (/tmp/wlb/before/dist/cli.js)",
     "mitmproxy": "Mitmproxy: 12.2.3",
-    "node": "v26.0.0"
+    "node": "v26.0.0",
+    "rerun": [
+      {
+        "date": "2026-10-21T06:18:25.826Z",
+        "scenarios": [
+          "helper-0.2s",
+          "helper-1.5s",
+          "helper-3s",
+          "helper-8s"
+        ],
+        "why": "harness fix"
+      },
+      {
+        "date": "2026-10-21T06:21:35.309Z",
+        "scenarios": [
+          "udp",
+          "udp-unconnected"
+        ],
+        "why": "harness fix"
+      }
+    ]
   },
   "results": [
     {
@@ -6113,14 +6133,14 @@
     {
       "id": "udp",
       "group": "proxy-ignoring",
-      "title": "one UDP datagram",
+      "title": "one UDP datagram, connected socket (like QUIC)",
       "expect": "host",
       "why": "UDP is never proxied",
       "tool": "whatleaks",
       "runs": [
         {
           "run": 1,
-          "wallMs": 3402,
+          "wallMs": 3453,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6138,7 +6158,7 @@
         },
         {
           "run": 2,
-          "wallMs": 3222,
+          "wallMs": 3221,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6156,7 +6176,7 @@
         },
         {
           "run": 3,
-          "wallMs": 3266,
+          "wallMs": 3198,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6174,7 +6194,7 @@
         },
         {
           "run": 4,
-          "wallMs": 3155,
+          "wallMs": 3254,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6192,7 +6212,7 @@
         },
         {
           "run": 5,
-          "wallMs": 3211,
+          "wallMs": 3265,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6210,7 +6230,7 @@
         },
         {
           "run": 6,
-          "wallMs": 3230,
+          "wallMs": 3262,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6228,7 +6248,7 @@
         },
         {
           "run": 7,
-          "wallMs": 3200,
+          "wallMs": 3201,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6264,7 +6284,7 @@
         },
         {
           "run": 9,
-          "wallMs": 3252,
+          "wallMs": 3297,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6282,7 +6302,7 @@
         },
         {
           "run": 10,
-          "wallMs": 3298,
+          "wallMs": 3248,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6315,14 +6335,14 @@
     {
       "id": "udp",
       "group": "proxy-ignoring",
-      "title": "one UDP datagram",
+      "title": "one UDP datagram, connected socket (like QUIC)",
       "expect": "host",
       "why": "UDP is never proxied",
       "tool": "mitmproxy",
       "runs": [
         {
           "run": 1,
-          "wallMs": 165,
+          "wallMs": 161,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6339,7 +6359,7 @@
         },
         {
           "run": 2,
-          "wallMs": 160,
+          "wallMs": 161,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6373,7 +6393,7 @@
         },
         {
           "run": 4,
-          "wallMs": 156,
+          "wallMs": 163,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6390,7 +6410,7 @@
         },
         {
           "run": 5,
-          "wallMs": 159,
+          "wallMs": 156,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6424,7 +6444,7 @@
         },
         {
           "run": 7,
-          "wallMs": 160,
+          "wallMs": 157,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6441,7 +6461,7 @@
         },
         {
           "run": 8,
-          "wallMs": 161,
+          "wallMs": 157,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6458,7 +6478,7 @@
         },
         {
           "run": 9,
-          "wallMs": 160,
+          "wallMs": 161,
           "exit": 0,
           "tally": {
             "attempted": 1,
@@ -6505,6 +6525,400 @@
       ]
     },
     {
+      "id": "udp-unconnected",
+      "group": "proxy-ignoring",
+      "title": "one UDP datagram, unconnected socket (sendto)",
+      "expect": "host",
+      "why": "UDP is never proxied",
+      "tool": "whatleaks",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 3366,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 2,
+          "wallMs": 3290,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3208,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 4,
+          "wallMs": 3218,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 5,
+          "wallMs": 3242,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 6,
+          "wallMs": 3305,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 7,
+          "wallMs": 3288,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 8,
+          "wallMs": 3214,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 9,
+          "wallMs": 3269,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 10,
+          "wallMs": 3269,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ],
+          "findings": []
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
+      "id": "udp-unconnected",
+      "group": "proxy-ignoring",
+      "title": "one UDP datagram, unconnected socket (sendto)",
+      "expect": "host",
+      "why": "UDP is never proxied",
+      "tool": "mitmproxy",
+      "runs": [
+        {
+          "run": 1,
+          "wallMs": 155,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 2,
+          "wallMs": 159,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 3,
+          "wallMs": 157,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 4,
+          "wallMs": 162,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 5,
+          "wallMs": 159,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 6,
+          "wallMs": 159,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 7,
+          "wallMs": 159,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 8,
+          "wallMs": 158,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 9,
+          "wallMs": 158,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        },
+        {
+          "run": 10,
+          "wallMs": 157,
+          "exit": 0,
+          "tally": {
+            "attempted": 1,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 1
+          },
+          "unexpected": [],
+          "delivered": 1,
+          "outcomes": [
+            "udp:0=missed"
+          ]
+        }
+      ],
+      "total": {
+        "attempted": 10,
+        "payload": 0,
+        "request": 0,
+        "host": 0,
+        "missed": 10
+      },
+      "atBest": 0,
+      "atBestCI": [
+        0,
+        0.2775401687666165
+      ]
+    },
+    {
       "id": "helper-0.2s",
       "group": "lifecycle",
       "title": "detached helper sends 0.2 s after the app exits",
@@ -6513,7 +6927,7 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 3977,
+          "wallMs": 3958,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6533,7 +6947,7 @@
         },
         {
           "run": 2,
-          "wallMs": 3795,
+          "wallMs": 3932,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6553,7 +6967,7 @@
         },
         {
           "run": 3,
-          "wallMs": 3274,
+          "wallMs": 3932,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6573,7 +6987,7 @@
         },
         {
           "run": 4,
-          "wallMs": 3822,
+          "wallMs": 3857,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6593,7 +7007,7 @@
         },
         {
           "run": 5,
-          "wallMs": 3271,
+          "wallMs": 3728,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6613,7 +7027,7 @@
         },
         {
           "run": 6,
-          "wallMs": 3285,
+          "wallMs": 3784,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6633,7 +7047,7 @@
         },
         {
           "run": 7,
-          "wallMs": 3729,
+          "wallMs": 3346,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6653,7 +7067,7 @@
         },
         {
           "run": 8,
-          "wallMs": 3783,
+          "wallMs": 3775,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6673,7 +7087,7 @@
         },
         {
           "run": 9,
-          "wallMs": 3732,
+          "wallMs": 3823,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6693,7 +7107,7 @@
         },
         {
           "run": 10,
-          "wallMs": 3764,
+          "wallMs": 3256,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -6945,166 +7359,6 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 3397,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 2,
-          "wallMs": 3155,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 3,
-          "wallMs": 3255,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 4,
-          "wallMs": 3177,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 5,
-          "wallMs": 3229,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 6,
-          "wallMs": 3235,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 7,
-          "wallMs": 3204,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 8,
-          "wallMs": 3337,
-          "exit": 0,
-          "tally": {
-            "attempted": 3,
-            "payload": 0,
-            "request": 0,
-            "host": 0,
-            "missed": 3
-          },
-          "unexpected": [],
-          "delivered": 0,
-          "outcomes": [
-            "http:100=missed",
-            "http:101=missed",
-            "http:102=missed"
-          ],
-          "findings": []
-        },
-        {
-          "run": 9,
           "wallMs": 3160,
           "exit": 0,
           "tally": {
@@ -7124,8 +7378,168 @@
           "findings": []
         },
         {
+          "run": 2,
+          "wallMs": 3287,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 3,
+          "wallMs": 3159,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 4,
+          "wallMs": 3165,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 5,
+          "wallMs": 3217,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 6,
+          "wallMs": 3259,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 7,
+          "wallMs": 3200,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 8,
+          "wallMs": 3286,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
+          "run": 9,
+          "wallMs": 3294,
+          "exit": 0,
+          "tally": {
+            "attempted": 3,
+            "payload": 0,
+            "request": 0,
+            "host": 0,
+            "missed": 3
+          },
+          "unexpected": [],
+          "delivered": 0,
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
+          "findings": []
+        },
+        {
           "run": 10,
-          "wallMs": 3190,
+          "wallMs": 3229,
           "exit": 0,
           "tally": {
             "attempted": 3,
@@ -7377,176 +7791,216 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 3389,
+          "wallMs": 3199,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 2,
-          "wallMs": 3223,
+          "wallMs": 3236,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 3,
-          "wallMs": 3334,
+          "wallMs": 3261,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 4,
-          "wallMs": 3191,
+          "wallMs": 3195,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 5,
-          "wallMs": 3275,
+          "wallMs": 3220,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 6,
-          "wallMs": 3237,
+          "wallMs": 3220,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 7,
-          "wallMs": 3190,
+          "wallMs": 3309,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 8,
-          "wallMs": 3170,
+          "wallMs": 3376,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 9,
-          "wallMs": 3325,
+          "wallMs": 3253,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 10,
-          "wallMs": 3178,
+          "wallMs": 3315,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         }
       ],
       "total": {
-        "attempted": 0,
+        "attempted": 30,
         "payload": 0,
         "request": 0,
         "host": 0,
-        "missed": 0
+        "missed": 30
       },
       "atBest": 0,
       "atBestCI": [
         0,
-        1
+        0.11351709139047801
       ]
     },
     {
@@ -7769,176 +8223,216 @@
       "runs": [
         {
           "run": 1,
-          "wallMs": 3402,
+          "wallMs": 3224,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 2,
-          "wallMs": 3281,
+          "wallMs": 3453,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 3,
-          "wallMs": 3315,
+          "wallMs": 3401,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 4,
-          "wallMs": 3234,
+          "wallMs": 3424,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 5,
-          "wallMs": 3187,
+          "wallMs": 3381,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 6,
-          "wallMs": 3311,
+          "wallMs": 3439,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 7,
-          "wallMs": 3228,
+          "wallMs": 3401,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 8,
-          "wallMs": 3200,
+          "wallMs": 3430,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 9,
-          "wallMs": 3260,
+          "wallMs": 3403,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         },
         {
           "run": 10,
-          "wallMs": 3318,
+          "wallMs": 3408,
           "exit": 0,
           "tally": {
-            "attempted": 0,
+            "attempted": 3,
             "payload": 0,
             "request": 0,
             "host": 0,
-            "missed": 0
+            "missed": 3
           },
           "unexpected": [],
           "delivered": 0,
-          "outcomes": [],
+          "outcomes": [
+            "http:100=missed",
+            "http:101=missed",
+            "http:102=missed"
+          ],
           "findings": []
         }
       ],
       "total": {
-        "attempted": 0,
+        "attempted": 30,
         "payload": 0,
         "request": 0,
         "host": 0,
-        "missed": 0
+        "missed": 30
       },
       "atBest": 0,
       "atBestCI": [
         0,
-        1
+        0.11351709139047801
       ]
     },
     {

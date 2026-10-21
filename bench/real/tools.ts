@@ -100,4 +100,19 @@ export const TOOLS: RealTool[] = [
     events: jsonEvents('events'),
     processNames: ['node'],
   },
+  {
+    id: 'wrangler',
+    title: 'Wrangler 4.151 `wrangler whoami` (not logged in)',
+    cwd: join(WLB, 'real/wrangler'),
+    argv: ['./node_modules/.bin/wrangler', 'whoami'],
+    telemetryHosts: ['sparrow.cloudflare.com'],
+    optOut: { WRANGLER_SEND_METRICS: 'false' },
+    optOutSource: 'https://github.com/cloudflare/workers-sdk/blob/main/packages/wrangler/telemetry.md',
+    dnt: 'honoured',
+    dntSource: 'wrangler 4.151 wrangler-dist/cli.js resolveTelemetryStatus(): DO_NOT_TRACK first',
+    // Debug logging still sends; it logs every event it posts.
+    debug: { env: { WRANGLER_LOG: 'debug' }, events: count(/Metrics dispatcher: Posting data/g), source: 'wrangler-dist/cli.js dispatch(): logs "Posting data" before each POST' },
+    events: (bodies) => bodies.length,
+    processNames: ['node'],
+  },
 ];

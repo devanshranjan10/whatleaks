@@ -88,8 +88,21 @@ function listen(server: net.Server, ip: string): Promise<number> {
   });
 }
 
+/** Waits out a Wi-Fi drop (up to 30 minutes) rather than failing a long benchmark chain. */
+async function waitLanAddress(): Promise<string> {
+  for (let i = 0; ; i++) {
+    try {
+      return lanAddress();
+    } catch (e) {
+      if (i >= 360) throw e;
+      if (i === 0) console.error('no LAN address yet; waiting for the network');
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
+}
+
 export async function startLab(certDir: string): Promise<Lab> {
-  const ip = lanAddress();
+  const ip = await waitLanAddress();
   const host = `${ip.replace(/\./g, '-')}.sslip.io`;
   const { caPath, key, cert } = labCerts(certDir, host, ip);
   const events: LabEvent[] = [];
