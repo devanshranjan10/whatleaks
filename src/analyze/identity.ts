@@ -146,7 +146,12 @@ export function scanIdentity(text: string, matchers: Matcher[]): ScanResult {
   return { hits, rest: work };
 }
 
-const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+/**
+ * Starts only where a run of local-part characters starts, with RFC length caps. The
+ * unanchored `[…]+@` form retried from every position of a long run without an '@',
+ * which made a 1 MiB upload of plain text take hours to report.
+ */
+const EMAIL_RE = /(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,253}\.[A-Za-z]{2,63}/g;
 const PATH_RE = /(?:\/(?:Users|home|root|Volumes|private|var\/folders|tmp|mnt)\/[^\s"'<>|:*?]+|[A-Za-z]:\\(?:Users|Documents and Settings)\\[^\s"'<>|:*?]+)/g;
 
 export function findEmails(text: string): string[] {
