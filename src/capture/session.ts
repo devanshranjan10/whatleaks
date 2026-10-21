@@ -54,11 +54,16 @@ const POLL_MS = 200;
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-/** Wait until no request has been in flight and nothing has happened for IDLE_MS. */
-async function settle(isQuiet: () => boolean, lastActivity: () => number): Promise<void> {
+/**
+ * Wait until no request is in flight and nothing has happened for IDLE_MS, counting from
+ * whichever is later: the last proxy activity or `since` (when the app exited). Helpers
+ * that start sending just after the app exits get that grace period, and requests already
+ * in flight get up to IDLE_MAX_MS to finish.
+ */
+export async function settle(isQuiet: () => boolean, lastActivity: () => number, since: number): Promise<void> {
   const deadline = Date.now() + IDLE_MAX_MS;
   while (Date.now() < deadline) {
-    if (isQuiet() && Date.now() - lastActivity() >= IDLE_MS) return;
+    if (isQuiet() && Date.now() - Math.max(lastActivity(), since) >= IDLE_MS) return;
     await sleep(POLL_MS);
   }
 }
@@ -127,7 +132,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
           notes.push(`Some processes started by the app were still running ${Math.round(opts.lingerMs / 1000)} s after it exited; traffic they sent later is not included.`);
         }
       }
-      await settle(() => recorder.inFlight() === 0, () => proxy.lastActivity());
+      await settle(() => recorder.inFlight() === 0, () => proxy.lastActivity(), Date.now());
       if (observer) {
         const seen = await observer.finish();
         watcher = seen.watcher;

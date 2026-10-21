@@ -49,6 +49,17 @@ describe('process tree and linger', () => {
     expect(har.log._whatleaks?.notes.join(' ')).not.toContain('still running');
   });
 
+  it('waits for a helper that starts sending right as the app exits (race with process tracking)', async () => {
+    const late = "setTimeout(() => fetch('https://upstream.test/at-exit', { method: 'POST', body: 'bye' }).finally(() => process.exit(0)), 300)";
+    // Like `next dev` on SIGTERM: early traffic, a quiet spell, then a detached helper and exit.
+    const app = `fetch('https://upstream.test/early').then(() => setTimeout(() => { require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(late)}], { detached: true, stdio: 'ignore' }).unref(); process.exit(0); }, 1500));`;
+    const { har } = await session(app, { lingerMs: 0 });
+    expect(har.log.entries.map((e) => [e.request.url, e.response.status])).toEqual([
+      ['https://upstream.test/early', 200],
+      ['https://upstream.test/at-exit', 200],
+    ]);
+  });
+
   it('stops the whole process tree on --duration', async () => {
     const dir = await mkdtemp(join(os.tmpdir(), 'wl-tree-'));
     const pidFile = join(dir, 'pid');
