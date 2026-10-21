@@ -71,10 +71,10 @@ describe('ProcessTracker', () => {
 describe('parseLsof', () => {
   it('returns connected sockets with their remote end', () => {
     expect(parseLsof(fixture('lsof-F.txt'))).toEqual([
-      { pid: 94669, command: 'node', protocol: 'TCP', remoteHost: '127.0.0.1', remotePort: 55710, state: 'ESTABLISHED' },
-      { pid: 94669, command: 'node', protocol: 'TCP', remoteHost: '140.82.112.3', remotePort: 443, state: 'ESTABLISHED' },
-      { pid: 94700, command: 'git-remote-https', protocol: 'TCP', remoteHost: '2606:4700::6810:84e5', remotePort: 443, state: 'ESTABLISHED' },
-      { pid: 94700, command: 'git-remote-https', protocol: 'UDP', remoteHost: '192.168.1.1', remotePort: 53 },
+      { pid: 94669, command: 'node', protocol: 'TCP', remoteHost: '127.0.0.1', remotePort: 55710, localPort: 55711, state: 'ESTABLISHED' },
+      { pid: 94669, command: 'node', protocol: 'TCP', remoteHost: '140.82.112.3', remotePort: 443, localPort: 55800, state: 'ESTABLISHED' },
+      { pid: 94700, command: 'git-remote-https', protocol: 'TCP', remoteHost: '2606:4700::6810:84e5', remotePort: 443, localPort: 55900, state: 'ESTABLISHED' },
+      { pid: 94700, command: 'git-remote-https', protocol: 'UDP', remoteHost: '192.168.1.1', remotePort: 53, localPort: 61000 },
     ]);
   });
 

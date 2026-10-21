@@ -118,6 +118,10 @@ export interface DirectConn {
   lastAt: string;
   /** Number of watcher samples that saw this connection. */
   samples: number;
+  /** Distinct connections (local ports) to this destination, when the watcher can tell. */
+  connections?: number;
+  /** netstat cut this IPv6 address to fit its column, and lsof could not fill it in. */
+  truncated?: boolean;
   rdns?: string;
 }
 

@@ -445,7 +445,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
       telemetryRequests: endpointList.filter((e) => isKnownTelemetry(e.classification)).reduce((n, e) => n + e.count, 0),
       guessedTelemetryRequests: endpointList.filter((e) => isGuessedTelemetry(e.classification)).reduce((n, e) => n + e.count, 0),
       refusedConnections: refused.reduce((n, r) => n + r.count, 0),
-      directConnections: meta?.direct.length ?? 0,
+      directConnections: (meta?.direct ?? []).reduce((n, d) => n + (d.connections ?? 1), 0),
     },
     destinations,
     endpoints: endpointList,

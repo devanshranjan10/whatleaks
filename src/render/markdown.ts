@@ -117,7 +117,8 @@ export function renderMarkdown(report: Report): string {
     for (const r of report.refused) out.push(`- ${code(r.host)}: ${plural(r.count, 'connection')} did not accept the whatleaks certificate (${r.cause}). Contents unknown.`);
     for (const p of report.passthrough) out.push(`- ${code(`${p.host}:${p.port}`)}: ${plural(p.count, 'connection')} tunnelled without decrypting (\`--passthrough\`).`);
     for (const d of report.direct) {
-      out.push(`- ${code(`${d.remote}:${d.port}`)}${d.rdns ? ` (${code(d.rdns)})` : ''} ${d.protocol}: direct connection by \`${d.process}\` that bypassed the proxy.`);
+      const what = d.connections && d.connections > 1 ? `${d.connections} direct connections` : 'direct connection';
+      out.push(`- ${code(`${d.remote}${d.truncated ? '…' : ''}:${d.port}`)}${d.rdns ? ` (${code(d.rdns)})` : ''} ${d.protocol}: ${what} by \`${d.process}\` that bypassed the proxy.`);
     }
     out.push('');
   }

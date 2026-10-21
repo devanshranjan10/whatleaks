@@ -128,7 +128,9 @@ export function renderTerminal(report: Report, options: TerminalOptions = {}): s
     }
     for (const d of report.direct) {
       const name = d.rdns ? ` (${d.rdns})` : '';
-      out.push(`  ${c.yellow('↷')} ${d.remote}:${d.port}${name} ${d.protocol} — direct connection by ${d.process}, bypassed the proxy`);
+      const cut = d.truncated ? '…' : '';
+      const what = d.connections && d.connections > 1 ? `${d.connections} direct connections` : 'direct connection';
+      out.push(`  ${c.yellow('↷')} ${d.remote}${cut}:${d.port}${name} ${d.protocol} — ${what} by ${d.process}, bypassed the proxy`);
     }
   }
 

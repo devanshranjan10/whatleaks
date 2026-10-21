@@ -11,6 +11,7 @@ export interface LsofConn {
   protocol: 'TCP' | 'UDP';
   remoteHost: string;
   remotePort: number;
+  localPort?: number;
   state?: string;
 }
 
@@ -54,6 +55,8 @@ export function parseLsof(out: string): LsofConn[] {
           current.remoteHost = remote.host;
           current.remotePort = remote.port;
         }
+        const local = splitHostPort(val.slice(0, arrow));
+        if (local) current.localPort = local.port;
       }
     } else if (tag === 'T' && current && val.startsWith('ST=')) {
       current.state = val.slice(3);

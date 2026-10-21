@@ -1,0 +1,15 @@
+Active Internet connections (including servers)
+Proto Recv-Q Send-Q  Local Address                                 Foreign Address                               (state)          rxbytes      txbytes  rhiwat  shiwat          process:pid    state  options           gencnt    flags   flags1 usecnt rtncnt fltrs
+tcp4       0      0  127.0.0.1.8123         *.*                    LISTEN                 0            0  131072  131072        whatleaks:500  00100 00000106 0000000000423af4 00000001 00000800      1      0 000000
+tcp4       0      0  127.0.0.1.60001        127.0.0.1.8123         ESTABLISHED          120         4000  408256  146988             node:601  00102 00000000 0000000000423b01 00000080 01000800      1      0 000000
+tcp4       0      0  127.0.0.1.8123         127.0.0.1.60001        ESTABLISHED         4000          120  408256  146988        whatleaks:500  00102 00000000 0000000000423b02 00000080 01000800      1      0 000000
+tcp4       0      0  192.168.1.20.55800     140.82.112.3.443       ESTABLISHED         9750        15250  131072  131396             node:601  00102 00000008 0000000000413820 00000001 04000900      2      0 000000
+tcp4       0      0  192.168.1.20.55801     140.82.112.3.443       TIME_WAIT            270           21  408256  146988                 :702  02031 00000000 0000000000413d04 00000080 01000800      0      0 000000
+tcp6       0      0  2606:4700:110:88.65109 2a04:4e42:4e::76.443   ESTABLISHED         5520         2860  131072  131072 Google Chrome He:94215  00102 00000008 0000000000423a03 00000000 04000900      2      0 000000
+tcp6       0      0  2606:4700:110:88.53680 2404:6800:4013:8.5228  ESTABLISHED         5520         2860  131072  131072             curl:705  00102 00000008 0000000000423a03 00000000 04000900      2      0 000000
+
+Active Internet connections (including servers)
+Proto Recv-Q Send-Q  Local Address                                 Foreign Address                               (state)          rxbytes      txbytes  rhiwat  shiwat          process:pid    state  options           gencnt    flags   flags1 usecnt rtncnt fltrs
+udp4       0      0  192.168.1.20.61000     192.168.1.1.53                                0            0  786896    9216             node:601  00100 00000000 000000000042389f 00000001 00000800      1      0 000000
+udp4       0      0  192.168.1.20.61001     *.*                                           0            0  786896    9216             node:601  00100 00000000 000000000042389f 00000001 00000800      1      0 000000
+udp6       0      0  2606:4700:110:88.61051 2600:1901:1:388:.443                      13056         6485 1048576   29040             node:601  00102 00000000 0000000000423a00 00000000 00200900      1      0 000002
