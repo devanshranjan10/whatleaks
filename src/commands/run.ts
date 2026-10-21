@@ -11,6 +11,7 @@ import { type Io, emitReport } from './output.js';
 export interface CaptureFlags {
   durationSec?: number;
   lingerSec: number;
+  graceSec?: number;
   env: string[];
   noDecrypt: string[];
   watch: boolean;
@@ -75,6 +76,7 @@ export async function captureToFile(req: CaptureRequest, harPath: string, io: Io
     baseEnv: deps.env ?? process.env,
     ...(req.flags.durationSec !== undefined ? { durationMs: req.flags.durationSec * 1000 } : {}),
     lingerMs: req.flags.lingerSec * 1000,
+    ...(req.flags.graceSec !== undefined ? { graceMs: req.flags.graceSec * 1000 } : {}),
     noDecrypt: req.flags.noDecrypt,
     ...(req.optOut ? { optOut: req.optOut } : {}),
     ...(req.removeEnv ? { removeEnv: req.removeEnv } : {}),

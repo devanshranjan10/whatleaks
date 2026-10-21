@@ -60,6 +60,17 @@ describe('process tree and linger', () => {
     ]);
   });
 
+  it('adopts a detached helper through its proxy connection when its parent exits at once', async () => {
+    // The helper sends, keeps its connection to the proxy open (keep-alive), then sends again later.
+    const helper = "(async () => { await fetch('https://upstream.test/first', { method: 'POST', body: 'a' }); await new Promise((r) => setTimeout(r, 2500)); await fetch('https://upstream.test/second', { method: 'POST', body: 'b' }); process.exit(0); })()";
+    const app = `require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(helper)}], { detached: true, stdio: 'ignore' }).unref(); process.exit(0);`;
+    const { har } = await session(app, { lingerMs: 8000 });
+    expect(har.log.entries.map((e) => [e.request.url, e.response.status])).toEqual([
+      ['https://upstream.test/first', 200],
+      ['https://upstream.test/second', 200],
+    ]);
+  });
+
   it('stops the whole process tree on --duration', async () => {
     const dir = await mkdtemp(join(os.tmpdir(), 'wl-tree-'));
     const pidFile = join(dir, 'pid');

@@ -71,7 +71,7 @@ export type RunLsof = (pids: number[]) => Promise<string>;
 
 export const runLsof: RunLsof = async (pids) => {
   try {
-    const { stdout } = await run('lsof', ['-nP', '-a', '-p', pids.join(','), '-i', '-F', 'pcPnT'], { maxBuffer: 16 * 1024 * 1024 });
+    const { stdout } = await run('lsof', ['-nP', '-a', '-p', pids.join(','), '-i', '-F', 'pcPnT'], { maxBuffer: 16 * 1024 * 1024, timeout: 5000 });
     return stdout;
   } catch (err) {
     // lsof exits 1 when nothing matched; that is not an error here.
@@ -80,6 +80,32 @@ export const runLsof: RunLsof = async (pids) => {
     throw err;
   }
 };
+
+export type RunLsofPort = (port: number) => Promise<string>;
+
+/** `lsof` for every process with a TCP connection involving this local port. */
+export const runLsofPort: RunLsofPort = async (port) => {
+  try {
+    const { stdout } = await run('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:ESTABLISHED', '-F', 'pcPnT'], { maxBuffer: 16 * 1024 * 1024, timeout: 5000 });
+    return stdout;
+  } catch (err) {
+    const e = err as { code?: number | string; stdout?: string };
+    if (e.code === 1) return e.stdout ?? '';
+    throw err;
+  }
+};
+
+/**
+ * Processes connected *to* the proxy (their remote end is 127.0.0.1:port). These carry the
+ * run's proxy settings, so they belong to the run even if their parent already exited.
+ */
+export function proxyClients(lsofOutput: string, port: number, self = process.pid): number[] {
+  const pids = new Set<number>();
+  for (const c of parseLsof(lsofOutput)) {
+    if (c.pid !== self && c.remotePort === port && isLoopback(c.remoteHost)) pids.add(c.pid);
+  }
+  return [...pids];
+}
 
 export type Reverse = (ip: string) => Promise<string[]>;
 

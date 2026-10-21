@@ -1,7 +1,7 @@
-    1     0 /sbin/launchd
-  500     1 /usr/libexec/logd
-94668 94000 -zsh
-94669 94668 /opt/homebrew/bin/node
-94700 94669 /usr/bin/git
-94750 94700 git-remote-https
-94800     1 /opt/homebrew/bin/node
+    1     0 Sat Oct 17 13:28:32 2026     /sbin/launchd
+  500     1 Sat Oct 17 13:28:37 2026     /usr/libexec/logd
+94668 94000 Tue Oct 21 09:00:01 2026     -zsh
+94669 94668 Tue Oct 21 09:10:00 2026     /opt/homebrew/bin/node
+94700 94669 Tue Oct 21 09:10:01 2026     /usr/bin/git
+94750 94700 Tue Oct 21 09:10:01 2026     git-remote-https
+94800     1 Tue Oct 21 09:10:02 2026     /opt/homebrew/bin/node

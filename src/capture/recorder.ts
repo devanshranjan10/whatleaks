@@ -19,6 +19,8 @@ export interface RecordedRequest {
   /** Epoch ms. */
   startedAt: number;
   websocket?: boolean;
+  /** The body was cut (over the capture limit) before it reached the recorder. */
+  truncated?: boolean;
 }
 
 export interface RecordedResponse {
@@ -89,7 +91,9 @@ export class Recorder {
     this.order.push(req.id);
   }
 
-  request(req: RecordedRequest): void {
+  request(input: RecordedRequest): void {
+    // Keep at most MAX_REQUEST_BODY bytes in memory; the rest is only counted.
+    const req = input.body.length > MAX_REQUEST_BODY ? { ...input, body: input.body.subarray(0, MAX_REQUEST_BODY), truncated: true } : input;
     const existing = this.pending.get(req.id);
     if (existing) {
       existing.req = req;
@@ -103,7 +107,8 @@ export class Recorder {
 
   response(res: RecordedResponse): void {
     const p = this.pending.get(res.id);
-    if (p) p.res = res;
+    // Only small response bodies are kept (as text); large ones are dropped at once.
+    if (p) p.res = res.body && res.body.length > MAX_RESPONSE_TEXT ? { ...res, body: undefined } : res;
   }
 
   abort(id: string, reason: string): void {
@@ -154,8 +159,8 @@ export class Recorder {
   private entry(p: Pending): HarEntry {
     const { req, res } = p;
     const url = new URL(req.url);
-    const truncated = req.body.length > MAX_REQUEST_BODY;
-    const body = truncated ? req.body.subarray(0, MAX_REQUEST_BODY) : req.body;
+    const truncated = req.truncated === true;
+    const body = req.body;
     const mimeType = headerOf(req.headers, 'content-type') ?? '';
     let postData: HarEntry['request']['postData'];
     if (body.length > 0) {

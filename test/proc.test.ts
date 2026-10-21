@@ -1,39 +1,68 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DirectWatcher, isLoopback, parseLsof } from '../src/capture/direct.js';
+import { DirectWatcher, isLoopback, parseLsof, proxyClients } from '../src/capture/direct.js';
 import { type ProcRow, ProcessTracker, parsePs } from '../src/capture/proctree.js';
 
 const fixture = (name: string): string => readFileSync(new URL(`fixtures/proc/${name}`, import.meta.url), 'utf8');
 
 describe('parsePs', () => {
-  it('reads pid, ppid and the command basename', () => {
+  it('reads pid, ppid, start time and the command basename', () => {
     const rows = parsePs(fixture('ps.txt'));
     expect(rows).toHaveLength(7);
-    expect(rows[3]).toEqual({ pid: 94669, ppid: 94668, comm: 'node' });
-    expect(rows[2]).toEqual({ pid: 94668, ppid: 94000, comm: '-zsh' });
+    expect(rows[3]).toEqual({ pid: 94669, ppid: 94668, started: 'Tue Oct 21 09:10:00 2026', comm: 'node' });
+    expect(rows[2]).toEqual({ pid: 94668, ppid: 94000, started: 'Tue Oct 21 09:00:01 2026', comm: '-zsh' });
   });
 });
 
+const row = (pid: number, ppid: number, started: string, comm: string): ProcRow => ({ pid, ppid, started, comm });
+
 describe('ProcessTracker', () => {
-  it('tracks descendants, keeps re-parented ones, and ignores reused pids', async () => {
+  it('tracks descendants and keeps re-parented ones', async () => {
     let table: ProcRow[] = parsePs(fixture('ps.txt'));
     const t = new ProcessTracker(94669, () => Promise.resolve(table));
     await t.refresh();
     expect(t.alive().sort()).toEqual([94669, 94700, 94750]);
     // The app exits; its grandchild is re-parented to launchd and keeps running.
-    table = [{ pid: 1, ppid: 0, comm: 'launchd' }, { pid: 94750, ppid: 1, comm: 'git-remote-https' }, { pid: 94700, ppid: 1, comm: 'something-else' }];
+    table = [row(1, 0, 'Sat Oct 17 13:28:32 2026', 'launchd'), row(94750, 1, 'Tue Oct 21 09:10:01 2026', 'git-remote-https')];
     await t.refresh();
     expect(t.alive()).toEqual([94750]);
-    expect(t.trackedCount()).toBe(3);
     expect(t.name(94750)).toBe('git-remote-https');
   });
 
+  it('never adopts a reused pid or the children of one', async () => {
+    let table = [row(10, 1, 'Tue Oct 21 09:00:00 2026', 'app'), row(11, 10, 'Tue Oct 21 09:00:01 2026', 'helper')];
+    const t = new ProcessTracker(10, () => Promise.resolve(table));
+    await t.refresh();
+    expect(t.alive().sort()).toEqual([10, 11]);
+    // Both exit; pid 10 is reused by an unrelated editor, which then starts a child.
+    table = [row(10, 1, 'Tue Oct 21 09:30:00 2026', 'vim'), row(12, 10, 'Tue Oct 21 09:30:05 2026', 'vim-helper')];
+    await t.refresh();
+    expect(t.alive()).toEqual([]);
+  });
+
+  it('keeps tracking a process after it execs a different command', async () => {
+    let table = [row(10, 1, 'Tue Oct 21 09:00:00 2026', 'sh')];
+    const t = new ProcessTracker(10, () => Promise.resolve(table));
+    await t.refresh();
+    table = [row(10, 1, 'Tue Oct 21 09:00:00 2026', 'node')];
+    await t.refresh();
+    expect(t.alive()).toEqual([10]);
+  });
+
+  it('adopts processes reported by the proxy-connection check', async () => {
+    const table = [row(10, 1, 'Tue Oct 21 09:00:00 2026', 'app'), row(77, 1, 'Tue Oct 21 09:00:02 2026', 'flush')];
+    const t = new ProcessTracker(10, () => Promise.resolve(table));
+    await t.refresh();
+    expect(t.alive()).toEqual([10]);
+    t.adopt([77, 999]);
+    await t.refresh();
+    expect(t.alive().sort()).toEqual([10, 77]);
+  });
+
   it('tracks children listed before their parents', async () => {
-    const t = new ProcessTracker(10, () => Promise.resolve([
-      { pid: 30, ppid: 20, comm: 'c' },
-      { pid: 20, ppid: 10, comm: 'b' },
-      { pid: 10, ppid: 1, comm: 'a' },
-    ]));
+    const t = new ProcessTracker(10, () =>
+      Promise.resolve([row(30, 20, 'Tue Oct 21 09:00:02 2026', 'c'), row(20, 10, 'Tue Oct 21 09:00:01 2026', 'b'), row(10, 1, 'Tue Oct 21 09:00:00 2026', 'a')]),
+    );
     await t.refresh();
     expect(t.alive().sort()).toEqual([10, 20, 30]);
   });
@@ -47,6 +76,11 @@ describe('parseLsof', () => {
       { pid: 94700, command: 'git-remote-https', protocol: 'TCP', remoteHost: '2606:4700::6810:84e5', remotePort: 443, state: 'ESTABLISHED' },
       { pid: 94700, command: 'git-remote-https', protocol: 'UDP', remoteHost: '192.168.1.1', remotePort: 53 },
     ]);
+  });
+
+  it('finds processes connected to the proxy port, not the proxy itself', () => {
+    const out = 'p500\ncwhatleaks\nf20\nPTCP\nn127.0.0.1:8123->127.0.0.1:60001\np601\ncnode\nf9\nPTCP\nn127.0.0.1:60001->127.0.0.1:8123\nf10\nPTCP\nn10.0.0.2:5000->1.2.3.4:8123\n';
+    expect(proxyClients(out, 8123, 500)).toEqual([601]);
   });
 
   it('recognises loopback addresses', () => {

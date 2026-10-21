@@ -22,6 +22,7 @@ function collect(value: string, previous: string[]): string[] {
 interface CaptureCliOptions {
   duration?: number;
   linger: number;
+  grace: number;
   env: string[];
   passthrough: string[];
   watch: boolean;
@@ -35,7 +36,8 @@ interface CaptureCliOptions {
 function captureOptions(cmd: Command, output = 'report'): Command {
   return cmd
     .option('-d, --duration <seconds>', 'stop the app after this many seconds (for long-running or GUI apps)', positiveSeconds)
-    .option('--linger <seconds>', 'after the app exits, wait this long for processes it left running', positiveSeconds, 10)
+    .option('--linger <seconds>', 'after the app exits, wait up to this long for processes it left running', positiveSeconds, 10)
+    .option('--grace <seconds>', 'after the app exits, keep recording at least this long for late senders', positiveSeconds, 1)
     .option('-e, --env <KEY=VALUE>', 'extra environment variable for the app (repeatable)', collect, [])
     .option('--passthrough <host>', 'tunnel this host without reading it, e.g. *.mybank.com (repeatable)', collect, [])
     .option('--no-watch', 'do not look for connections that bypass the proxy')
@@ -50,6 +52,7 @@ function captureFlags(o: CaptureCliOptions) {
   return {
     ...(o.duration !== undefined ? { durationSec: o.duration } : {}),
     lingerSec: o.linger,
+    graceSec: o.grace,
     env: o.env,
     noDecrypt: o.passthrough,
     watch: o.watch,

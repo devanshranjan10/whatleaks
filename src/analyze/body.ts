@@ -19,21 +19,25 @@ export interface DecodedBody {
 
 const MIN_STRING_RUN = 6;
 const MAX_STRINGS = 60;
+const MAX_STRING_RUN = 200;
+/** Never inflate past this: a compression bomb must not exhaust memory. */
+const MAX_INFLATED = 16 * 1024 * 1024;
 const utf8 = new TextDecoder('utf-8', { fatal: true });
 
-type ZstdSync = (buf: Uint8Array) => Buffer;
+type ZstdSync = (buf: Uint8Array, opts: { maxOutputLength: number }) => Buffer;
 const zstdDecompressSync = (zlib as unknown as { zstdDecompressSync?: ZstdSync }).zstdDecompressSync;
 
 /** Inflate bodies that are still compressed (the producer did not decode them). */
 function inflate(bytes: Uint8Array): { bytes: Uint8Array; how?: DecodedBody['inflated'] } {
   try {
-    if (bytes[0] === 0x1f && bytes[1] === 0x8b) return { bytes: gunzipSync(bytes), how: 'gzip' };
+    const cap = { maxOutputLength: MAX_INFLATED };
+    if (bytes[0] === 0x1f && bytes[1] === 0x8b) return { bytes: gunzipSync(bytes, cap), how: 'gzip' };
     if (bytes[0] === 0x28 && bytes[1] === 0xb5 && bytes[2] === 0x2f && bytes[3] === 0xfd && zstdDecompressSync) {
-      return { bytes: zstdDecompressSync(bytes), how: 'zstd' };
+      return { bytes: zstdDecompressSync(bytes, cap), how: 'zstd' };
     }
     // zlib header: CMF 0x78 with a valid FCHECK.
     if (bytes[0] === 0x78 && bytes.length > 2 && ((bytes[0] << 8) | bytes[1]!) % 31 === 0) {
-      return { bytes: inflateSync(bytes), how: 'zlib' };
+      return { bytes: inflateSync(bytes, cap), how: 'zlib' };
     }
   } catch {
     // Not actually compressed; fall through and treat as-is.
@@ -104,8 +108,10 @@ export function extractStrings(bytes: Uint8Array): string[] {
     run = '';
   };
   for (const b of bytes) {
-    if (b >= 0x20 && b < 0x7f) run += String.fromCharCode(b);
-    else flush();
+    if (out.length >= MAX_STRINGS) break;
+    if (b >= 0x20 && b < 0x7f) {
+      if (run.length < MAX_STRING_RUN) run += String.fromCharCode(b);
+    } else flush();
   }
   flush();
   return out;

@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { writeFileSafe } from '../har/write.js';
 import { basename } from 'node:path';
 import { buildDiff, strictFailure, type Diff } from '../diff/diff.js';
 import { renderDiffMarkdown, renderDiffTerminal } from '../render/diff.js';
@@ -16,12 +16,13 @@ export interface DiffCommandOptions {
 
 export async function emitDiff(diff: Diff, opts: DiffCommandOptions, io: Io): Promise<number> {
   io.stdout(renderDiffTerminal(diff, { color: opts.color }));
+  const mode = diff.redacted ? 0o644 : 0o600;
   if (opts.md) {
-    await writeFile(opts.md, renderDiffMarkdown(diff));
+    await writeFileSafe(opts.md, renderDiffMarkdown(diff), mode);
     io.stderr(`Markdown diff written to ${opts.md}\n`);
   }
   if (opts.json) {
-    await writeFile(opts.json, renderJson(diff));
+    await writeFileSafe(opts.json, renderJson(diff), mode);
     io.stderr(`JSON diff written to ${opts.json}\n`);
   }
   const failure = opts.strict ? strictFailure(diff) : undefined;

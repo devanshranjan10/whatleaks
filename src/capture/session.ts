@@ -5,7 +5,8 @@ import { createSessionCA } from './ca.js';
 import { buildChildEnv } from './env.js';
 import { launch, type LaunchResult } from './launch.js';
 import { nodeWarning } from './nodecheck.js';
-import { startProxy } from './proxy.js';
+import { startProxy, upstreamFromEnv } from './proxy.js';
+import { CliError } from '../errors.js';
 import { Recorder } from './recorder.js';
 
 export interface SessionOptions {
@@ -17,6 +18,8 @@ export interface SessionOptions {
   durationMs?: number;
   /** After the app exits, wait up to this long for processes it left behind. */
   lingerMs: number;
+  /** After the app exits, keep recording at least this long for late senders. Default 1000. */
+  graceMs?: number;
   noDecrypt: string[];
   optOut?: Record<string, string>;
   removeEnv?: readonly string[];
@@ -48,38 +51,76 @@ export interface SessionResult {
   removedEnv: string[];
 }
 
-const IDLE_MS = 1000;
+const DEFAULT_GRACE_MS = 1000;
 const IDLE_MAX_MS = 5000;
 const POLL_MS = 200;
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
+export interface AfterExit {
+  exitedAt: number;
+  lingerMs: number;
+  graceMs: number;
+  anyAlive: () => Promise<boolean>;
+  isQuiet: () => boolean;
+  lastActivity: () => number;
+  interrupted: () => boolean;
+  onWaiting: () => void;
+}
+
 /**
- * Wait until no request is in flight and nothing has happened for IDLE_MS, counting from
- * whichever is later: the last proxy activity or `since` (when the app exited). Helpers
- * that start sending just after the app exits get that grace period, and requests already
- * in flight get up to IDLE_MAX_MS to finish.
+ * After the app exits, keep recording while either:
+ * - a process it started is still alive (up to `lingerMs`), including helpers adopted
+ *   later because they connected to the proxy; or
+ * - a request is in flight, or less than `graceMs` has passed since the last activity or
+ *   the exit, whichever is later (capped at IDLE_MAX_MS past the grace period).
+ * A signal after the exit ends the wait at once.
  */
-export async function settle(isQuiet: () => boolean, lastActivity: () => number, since: number): Promise<void> {
-  const deadline = Date.now() + IDLE_MAX_MS;
-  while (Date.now() < deadline) {
-    if (isQuiet() && Date.now() - Math.max(lastActivity(), since) >= IDLE_MS) return;
+export async function afterExit(a: AfterExit): Promise<void> {
+  const lingerUntil = a.exitedAt + a.lingerMs;
+  const settleUntil = a.exitedAt + Math.max(IDLE_MAX_MS, a.graceMs + 1000);
+  let announced = false;
+  while (!a.interrupted()) {
+    const now = Date.now();
+    if (now < lingerUntil && (await a.anyAlive())) {
+      if (!announced) {
+        a.onWaiting();
+        announced = true;
+      }
+      await sleep(POLL_MS);
+      continue;
+    }
+    const quiet = a.isQuiet() && Date.now() - Math.max(a.lastActivity(), a.exitedAt) >= a.graceMs;
+    if (quiet || Date.now() >= Math.max(settleUntil, lingerUntil)) return;
     await sleep(POLL_MS);
   }
 }
 
 export async function captureSession(opts: SessionOptions): Promise<SessionResult> {
   const startedAt = Date.now();
+  // Ctrl-C or SIGTERM at any point ends the run cleanly: leftover processes are stopped,
+  // the HAR is still written, and the temp folder is removed. While the app runs, the
+  // launcher also passes the signal on to it.
+  let interrupted = false;
+  // A Ctrl-C while the app runs is how interactive apps are normally stopped; the launcher
+  // handles it, and the usual wait for late senders still happens. Only a signal before the
+  // app starts or after it exits cuts the run short.
+  let appRunning = false;
+  const onSignal = (): void => {
+    if (!appRunning) interrupted = true;
+  };
+  process.on('SIGINT', onSignal);
+  process.on('SIGTERM', onSignal);
   const ca = await createSessionCA();
   const recorder = new Recorder();
   try {
-    const upstream = opts.baseEnv.https_proxy ?? opts.baseEnv.HTTPS_PROXY;
+    const upstream = upstreamFromEnv(opts.baseEnv);
     const proxy = await startProxy({
       key: ca.key,
       cert: ca.cert,
       recorder,
       noDecrypt: opts.noDecrypt,
-      ...(upstream ? { upstreamProxy: upstream } : {}),
+      ...(upstream ? { upstream } : {}),
       ...(opts.testRoutes ? { testRoutes: opts.testRoutes } : {}),
     });
     const notes: string[] = [];
@@ -105,6 +146,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         notes.push(warning);
         opts.log(`whatleaks: warning: ${warning}`);
       }
+      if (interrupted) throw new CliError('interrupted before the app started', 130);
       opts.log(`whatleaks: recording ${opts.command} through ${proxy.url} (loopback only, single-run CA)`);
       launched = await launch({
         command: opts.command,
@@ -115,24 +157,30 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         ...(opts.stdio ? { stdio: opts.stdio } : {}),
         onStop: (signal) => observer?.signalAll(signal),
       });
+      appRunning = true;
       if (opts.observers) observer = opts.observers(launched.pid, proxy.port, opts.watch);
       result = await launched.done;
+      appRunning = false;
 
-      if (observer) {
-        const lingerUntil = Date.now() + opts.lingerMs;
-        let announced = false;
-        while (Date.now() < lingerUntil && (await observer.anyAlive())) {
-          if (!announced) {
-            opts.log(`whatleaks: ${opts.command} exited; waiting up to ${Math.round(opts.lingerMs / 1000)} s for processes it left running`);
-            announced = true;
-          }
-          await sleep(POLL_MS);
-        }
-        if (await observer.anyAlive()) {
-          notes.push(`Some processes started by the app were still running ${Math.round(opts.lingerMs / 1000)} s after it exited; traffic they sent later is not included.`);
-        }
+      await afterExit({
+        exitedAt: Date.now(),
+        lingerMs: opts.lingerMs,
+        graceMs: opts.graceMs ?? DEFAULT_GRACE_MS,
+        anyAlive: () => (observer ? observer.anyAlive() : Promise.resolve(false)),
+        isQuiet: () => recorder.inFlight() === 0,
+        lastActivity: () => proxy.lastActivity(),
+        interrupted: () => interrupted,
+        onWaiting: () => opts.log(`whatleaks: ${opts.command} exited; waiting up to ${Math.round(opts.lingerMs / 1000)} s for processes it left running`),
+      });
+      if (observer && (await observer.anyAlive())) {
+        notes.push(
+          interrupted
+            ? 'Interrupted while waiting for processes the app left running; they were stopped, and traffic they would have sent later is not included.'
+            : `Some processes started by the app were still running ${Math.round(opts.lingerMs / 1000)} s after it exited; they were stopped, and traffic they would have sent later is not included.`,
+        );
+        // They carry this run's proxy settings, which stop working when the proxy closes.
+        observer.signalAll('SIGTERM');
       }
-      await settle(() => recorder.inFlight() === 0, () => proxy.lastActivity(), Date.now());
       if (observer) {
         const seen = await observer.finish();
         watcher = seen.watcher;
@@ -173,5 +221,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
     return { har, launch: result, removedEnv: removed };
   } finally {
     await ca.cleanup();
+    process.off('SIGINT', onSignal);
+    process.off('SIGTERM', onSignal);
   }
 }

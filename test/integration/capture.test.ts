@@ -94,6 +94,15 @@ describe('captureSession (offline, real child processes)', () => {
     expect(har.log._whatleaks?.refused).toEqual([expect.objectContaining({ host: 'upstream.test' })]);
   });
 
+  it('counts an upload too large to buffer and marks it cut off', async () => {
+    const child = "fetch('https://upstream.test/upload', { method: 'POST', body: Buffer.alloc(9 * 1024 * 1024, 120) }).then(() => process.exit(0), () => process.exit(5))";
+    const { har } = await session(process.execPath, ['-e', child]);
+    const e = har.log.entries.find((x) => x.request.url === 'https://upstream.test/upload');
+    expect(e?._whatleaks).toMatchObject({ truncated: true, wireBodySize: 9 * 1024 * 1024 });
+    expect(e?.request.postData).toBeUndefined();
+    expect(e?.response.status).toBe(200);
+  });
+
   it('stops the app after --duration and reports it', async () => {
     const t0 = Date.now();
     const { launch } = await session(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { durationMs: 1200 });

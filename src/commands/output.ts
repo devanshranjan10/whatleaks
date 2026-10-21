@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { writeFileSafe } from '../har/write.js';
 import type { Report } from '../model.js';
 import { renderJson } from '../render/json.js';
 import { renderMarkdown } from '../render/markdown.js';
@@ -23,12 +23,14 @@ export const processIo: Io = {
 
 export async function emitReport(report: Report, opts: OutputOptions, io: Io): Promise<void> {
   if (!opts.quiet) io.stdout(renderTerminal(report, { color: opts.color }));
+  // Unredacted (--raw) reports are as sensitive as the HAR itself.
+  const mode = report.redacted ? 0o644 : 0o600;
   if (opts.md) {
-    await writeFile(opts.md, renderMarkdown(report));
+    await writeFileSafe(opts.md, renderMarkdown(report), mode);
     io.stderr(`Markdown report written to ${opts.md}\n`);
   }
   if (opts.json) {
-    await writeFile(opts.json, renderJson(report));
+    await writeFileSafe(opts.json, renderJson(report), mode);
     io.stderr(`JSON report written to ${opts.json}\n`);
   }
 }
