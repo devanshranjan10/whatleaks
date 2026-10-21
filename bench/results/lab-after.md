@@ -4,7 +4,7 @@ Run 2026-10-21T14:55:25.079Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/t
 
 ## whatleaks
 
-Attempts 564: payload 68 %, request 1 %, host only 24 %, **silently missed 7 %** (42).
+Attempts 564: payload 68 %, request 1 %, host only 26 %, **silently missed 6 %** (32).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -32,16 +32,16 @@ Attempts 564: payload 68 %, request 1 %, host only 24 %, **silently missed 7 %**
 | 9 MiB upload | request | 3 | 0 | 3 | 0 | 0 | 100 % (44–100) | – |
 | client pinning its own trust store | host | 3 | 0 | 0 | 3 | 0 | 100 % (44–100) | – |
 | Node http2 module | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
-| Python aiohttp (trust_env=False) | host | 30 | 0 | 0 | 15 | 15 | 50 % (33–67) | – |
+| Python aiohttp (trust_env=False) | host | 30 | 0 | 0 | 27 | 3 | 90 % (74–97) | – |
 | raw TCP held 10 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP held 100 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP held 2 s | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
-| raw TCP reset by the client after 10 ms | host | 10 | 0 | 0 | 4 | 6 | 40 % (17–69) | – |
+| raw TCP reset by the client after 10 ms | host | 10 | 0 | 0 | 1 | 9 | 10 % (2–40) | – |
 | raw TCP reset by the client after 50 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP reset by the client after 200 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
-| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 2 | 8 | 20 % (6–51) | – |
-| one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 7 | 3 | 70 % (40–89) | – |
+| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 1.5 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
