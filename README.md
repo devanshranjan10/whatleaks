@@ -98,7 +98,7 @@ whatleaks run --label on  -- my-tool
 whatleaks run --label off -- my-tool
 whatleaks diff whatleaks-on-*.har whatleaks-off-*.har
 
-# Already have a capture from browser devtools, mitmproxy, Proxyman, Charles or HTTP Toolkit?
+# Already have a HAR capture from another tool?
 whatleaks report capture.har --md report.md
 ```
 
@@ -227,8 +227,9 @@ The full write-up is in [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
   - curl
   - Python `urllib` (Homebrew build)
   - a Rust binary (turbo)
-  - a detached helper that sends after the app exits
-  - a client that pins certificates (named, contents hidden)
+  - detached helpers that send after the app exits, including `next dev` on shutdown
+  - clients that refuse the CA (Go, Apple's Python, a pinned client): named, contents
+    hidden
   - a direct connection that bypasses the proxy
 - **Identity detection** finds every planted identifier form in tests. On five real
   captures it reported none, and `grep` agreed that none were there.
@@ -238,13 +239,17 @@ The full write-up is in [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
 
 ## Limitations
 
-- **Tested on macOS only.** Linux should work, since it uses the same `ps` and `lsof`
-  calls, but is untested. On Windows, process watching is unavailable.
+- **Tested on macOS only.** Linux uses the same `ps` and `lsof` calls but is
+  untested. Windows is untested and has neither tool, so process watching would be
+  off there.
+- **Imported HAR from other tools:** the reader handles browser-devtools-style and
+  mitmproxy-style HAR (tested with hand-made samples of both formats). It was not
+  tested with real exports from Proxyman, Charles or HTTP Toolkit.
 - **Only processes you launch through whatleaks.** GUI apps, Electron apps, browsers
   and system daemons were not tested.
 - **Apps that ignore proxy variables or the CA cannot be read:**
-  - Go programs on macOS and Apple's `/usr/bin/python3` refuse the CA. They are
-    named, not read.
+  - Go programs on macOS and Apple's `/usr/bin/python3` refuse the CA (both checked).
+    They are named, not read.
   - Node older than 22.21 (or 24.0–24.4 for `http`/`https`) ignores
     `NODE_USE_ENV_PROXY`. whatleaks warns when the `node` on `PATH` is like that.
   - Their connections show up only if the 0.5 s sampler catches them. Short ones are

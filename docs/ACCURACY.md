@@ -24,11 +24,11 @@ Details and outputs: [`docs/e2e/README.md`](e2e/README.md).
 | Node < 22.21, or 24.0–24.4 for `http`/`https` | **bypasses the proxy**; whatleaks prints a warning | version table from nodejs.org docs; warning covered by `test/nodecheck.test.ts` |
 | macOS `/usr/bin/curl` 8.7.1 | captured, http and https | integration test |
 | Python `urllib` (Homebrew 3.14, OpenSSL) | captured | integration test |
-| Apple `/usr/bin/python3` (LibreSSL 2.8.3) | ignores `SSL_CERT_FILE`, so it refuses the CA and is reported by hostname only | research agent's run with the same proxy library; not re-run through whatleaks |
+| Apple `/usr/bin/python3` (LibreSSL 2.8.3) | ignores `SSL_CERT_FILE`, so it refuses the CA and is reported by hostname only | e2e §4, through whatleaks |
 | Rust: Turborepo 2.11.10 | captured | e2e |
-| Go on macOS | ignores `SSL_CERT_FILE` (platform verifier), so it is reported by hostname only | research agent's run with the same proxy library; not re-run through whatleaks |
+| Go 1.26.5 on macOS | ignores `SSL_CERT_FILE` (platform verifier), so it is reported by hostname only | e2e §4, through whatleaks |
 | A client that pins its own trust store | refused and **named** with a count; contents not shown | integration test |
-| Detached helper that sends after the app exits | captured (whatleaks waits up to `--linger`, default 10 s) | integration test: grandchild sends 1.5 s after its parent exits |
+| Detached helper that sends after the app exits | captured (whatleaks waits up to `--linger`, default 10 s, plus a 1 s grace period after exit) | integration tests (a helper sending 1.5 s after exit, and one starting right at exit); `next dev` on SIGTERM (e2e §4) |
 | Program that ignores proxy settings | destination listed under "not visible" if the 0.5 s `lsof` sampler sees the connection | integration test with a connection held for 1.8 s. **Connections shorter than the sampling gap can be missed; the miss rate is not measured.** |
 | Request whose body upload is cut off | listed, marked as cut off | unit test, plus the Turborepo e2e run |
 | WebSockets | messages the app sends are recorded (count and first 3) | **not tested** |

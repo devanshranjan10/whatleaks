@@ -32,15 +32,15 @@ interface CaptureCliOptions {
   json?: string;
 }
 
-function captureOptions(cmd: Command): Command {
+function captureOptions(cmd: Command, output = 'report'): Command {
   return cmd
     .option('-d, --duration <seconds>', 'stop the app after this many seconds (for long-running or GUI apps)', positiveSeconds)
     .option('--linger <seconds>', 'after the app exits, wait this long for processes it left running', positiveSeconds, 10)
     .option('-e, --env <KEY=VALUE>', 'extra environment variable for the app (repeatable)', collect, [])
     .option('--passthrough <host>', 'tunnel this host without reading it, e.g. *.mybank.com (repeatable)', collect, [])
     .option('--no-watch', 'do not look for connections that bypass the proxy')
-    .option('--md <file>', 'also write a Markdown report')
-    .option('--json <file>', 'also write the report as JSON')
+    .option('--md <file>', `also write the ${output} as Markdown`)
+    .option('--json <file>', `also write the ${output} as JSON`)
     .option('--samples <n>', 'payload samples per endpoint', nonNegativeInt, 2)
     .option('--raw', 'do not redact identifiers, secrets or ids', false)
     .option('--no-color', 'plain output');
@@ -97,6 +97,7 @@ captureOptions(
     .option('--no-known-opt-outs', 'only use --off-env, not the documented opt-out list')
     .option('--out-dir <dir>', 'where to write both HAR captures', '.')
     .option('--strict', 'exit 1 if any telemetry endpoint is still contacted after opting out', false),
+  'diff',
 ).action(async (argv: string[], o: CaptureCliOptions & { offEnv: string[]; knownOptOuts: boolean; outDir: string; strict: boolean }) => {
   process.exitCode = await compareCommand(
     argv,

@@ -172,6 +172,28 @@ bypass whatleaks.
 
 ## 4. Smaller checks
 
+- **`next dev --port 3123` with `whatleaks run --duration 15`:**
+  - whatleaks stopped the server after 15 s.
+  - It captured 4 telemetry requests: `NEXT_CLI_SESSION_STARTED`,
+    `NEXT_BUILD_FEATURE_USAGE`, `NEXT_AGENT_UPGRADE_POLICY_DETECTED` and
+    `NEXT_CLI_SESSION_STOPPED`.
+  - The last one is sent by a detached helper that Next starts on SIGTERM. On the
+    first try whatleaks stopped the proxy while that request was in flight; it was
+    recorded as incomplete. That bug was fixed (commit 4cdb839), and on the re-run all
+    4 requests completed with 204.
+- **A Go 1.26.5 program** posting to `https://example.com/`: Go refused the whatleaks
+  CA (`x509: certificate signed by unknown authority`). The report listed
+  `example.com — 1 connection did not accept the whatleaks certificate
+  (cert-rejected)` under "not visible".
+- **Apple's `/usr/bin/python3`** with `urllib`: it refused the CA
+  (`CERTIFICATE_VERIFY_FAILED`), and `example.com` was listed as refused, with a count.
+- **whatleaks itself on Node 22.23.3 and 22.19.0:** it ran and captured. On 22.19.0
+  it printed the warning that `node` on `PATH` ignores `NODE_USE_ENV_PROXY`, and the
+  child's request did bypass the proxy and was not caught by the sampler. That is the
+  documented limit.
+- **Packed install:** `npm pack`, then `npm install ./whatleaks-0.1.0.tgz` into an
+  empty project (195 packages, 41 MB, about 10 s), then `npx whatleaks run -- node -e
+  "fetch(…)"` captured the request.
 - **`node -e "fetch('https://example.com/…')"`** under `whatleaks run`: one request,
   captured with its query string.
 - **Plain `http://`:** `fetch` and `curl` against `http://example.com/plain` were both
