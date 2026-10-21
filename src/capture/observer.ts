@@ -27,6 +27,9 @@ export interface ObserverDeps {
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
+/** How long polling stays fast after the app last did something new. */
+const BUSY_MS = 3000;
+
 function realpath(p: string): string {
   try {
     return realpathSync(p);
@@ -100,7 +103,8 @@ async function withReverse(list: DirectConn[], reverse: Reverse, timeoutMs = 100
  * parent exited, and (unless --no-watch) lists connections that bypassed the proxy.
  * Each part fails soft: a missing or hung `ps`, `netstat` or `lsof` turns it off with a note.
  *
- * macOS: `netstat -anvW` every 100 ms sees every socket with its pid in about 5 ms. Sockets
+ * macOS: `netstat -anvW` every 20 ms sees every socket with its pid in about 5 ms (about
+ * 0.4 ms of CPU, so about 2 % of a core). Sockets
  * are kept by pid and attributed once the pid is known to be the app's, so a child that
  * connects and exits between two process listings still counts, and a final sweep finds
  * connections that already closed (TIME_WAIT keeps the pid).
@@ -119,7 +123,7 @@ export function createObserver(deps: ObserverDeps = {}): SessionObserverFactory 
 
 /**
  * `netstat` (macOS): netstat cuts long IPv6 addresses, so lsof is asked for them.
- * `proc` (Linux): closed sockets lose their owner, so /proc is read every 20 ms instead of 100.
+ * `proc` (Linux): closed sockets lose their owner and there is no sweep.
  */
 function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): SessionObserverFactory {
   const fillsTruncated = backend === 'netstat';
@@ -136,6 +140,14 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
     let stopped = false;
     /** Pids already looked up once and found not to be the app's. */
     const checked = new Set<number>();
+    /** `pid protocol localPort` of every socket of the app's processes seen so far. */
+    const seenSockets = new Set<string>();
+    let busyUntil = Date.now() + BUSY_MS;
+    const busy = (): void => {
+      busyUntil = Date.now() + BUSY_MS;
+    };
+    const isBusy = (): boolean => Date.now() < busyUntil;
+    let tracked = 0;
 
     const refresh = async (): Promise<void> => {
       if (!treeOk) return;
@@ -161,6 +173,13 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
         sockOk = false;
         return;
       }
+      for (const r of rows) {
+        const k = `${r.pid} ${r.protocol} ${r.localPort}`;
+        if (!seenSockets.has(k) && tracker.everTracked(r.pid)) {
+          seenSockets.add(k);
+          busy();
+        }
+      }
       // A row without a process name belongs to a pid that already exited (macOS TIME_WAIT).
       tracker.adopt([...new Set(rows.filter((r) => r.pid !== process.pid && r.process !== '' && r.remotePort === proxyPort && r.remoteHost && isLoopback(r.remoteHost)).map((r) => r.pid))]);
       if (!watch || !treeOk) return;
@@ -174,15 +193,22 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
         }
         for (const pid of fresh) if (!tracker.everTracked(pid)) checked.add(pid);
       }
-    };
-    const loop = async (everyMs: number, step: () => Promise<void>): Promise<void> => {
-      while (!stopped) {
-        await step();
-        await sleep(everyMs);
+      if (tracker.trackedCount() !== tracked) {
+        tracked = tracker.trackedCount();
+        busy();
       }
     };
-    const treeLoop = loop(deps.treeEveryMs ?? 100, refresh);
-    const watchLoop = loop(deps.watchEveryMs ?? (backend === 'proc' ? 20 : 100), sample);
+    const loop = async (everyMs: number | (() => number), step: () => Promise<void>): Promise<void> => {
+      while (!stopped) {
+        await step();
+        await sleep(typeof everyMs === 'number' ? everyMs : everyMs());
+      }
+    };
+    // Fast while the app is busy (the first 3 s, and 3 s after any new socket or process),
+    // slower when it idles: each socket poll costs about 3 ms of CPU and a full process
+    // listing about 20 ms, which at the fast rates is a third of a core.
+    const treeLoop = loop(deps.treeEveryMs ?? (() => (isBusy() ? 100 : 500)), refresh);
+    const watchLoop = loop(deps.watchEveryMs ?? (() => (isBusy() ? 20 : 100)), sample);
 
     /** netstat cuts long IPv6 addresses; ask lsof for the full one while the process lives. */
     const fillTruncated = async (): Promise<void> => {
