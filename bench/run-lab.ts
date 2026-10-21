@@ -414,6 +414,7 @@ async function main(): Promise<void> {
     whatleaks: `${(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { version: string }).version} (${CLI})`,
     mitmproxy: existsSync(join(WLB, 'mitmproxy-version.txt')) ? readFileSync(join(WLB, 'mitmproxy-version.txt'), 'utf8').split('\n')[0] : 'unknown',
     node: process.version,
+    loadavg: os.loadavg().map((x) => Number(x.toFixed(1))),
   };
   mkdirSync(join(root, 'bench/results'), { recursive: true });
   let finalResults = results;
@@ -426,7 +427,7 @@ async function main(): Promise<void> {
     const fresh = new Map(results.map((r) => [key(r), r]));
     const order = SCENARIOS.map((sc) => sc.id);
     finalResults = [...prev.results.filter((r) => !fresh.has(key(r))), ...results].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id) || a.tool.localeCompare(b.tool) * -1);
-    finalMeta = { ...prev.meta, rerun: [...((prev.meta.rerun as unknown[]) ?? []), { date: meta.date, scenarios: [...new Set(results.map((r) => r.id))], why: flags.why, cli: CLI }] };
+    finalMeta = { ...prev.meta, rerun: [...((prev.meta.rerun as unknown[]) ?? []), { date: meta.date, scenarios: [...new Set(results.map((r) => r.id))], why: flags.why, cli: CLI, loadavg: meta.loadavg }] };
   }
   writeFileSync(`${out}.json`, JSON.stringify({ meta: finalMeta, results: finalResults }, null, 2) + '\n');
   writeFileSync(`${out}.md`, markdown(finalResults, finalMeta) + '\n');

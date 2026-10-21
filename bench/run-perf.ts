@@ -90,10 +90,12 @@ async function runWhatleaks(lab: Lab, w: Workload, out: string): Promise<Measure
   const child = spawn('/usr/bin/time', ['-l', process.execPath, CLI, 'run', '--no-color', '-o', join(WLB, 'perf', `${w.id}.har`), '--', process.execPath, CLIENT, ...w.args], {
     env,
     stdio: ['ignore', 'ignore', 'pipe'],
+    detached: true,
   });
   let err = '';
   child.stderr.on('data', (d: Buffer) => (err += d.toString()));
-  await waitExit(child, 300_000);
+  const { timedOut } = await waitExit(child, 300_000, true);
+  if (timedOut) err += '\n(timed out after 300 s; process group killed)';
   writeFileSync(join(WLB, 'perf', `${w.id}-whatleaks.stderr.txt`), err);
   if (!existsSync(out)) throw new Error(`${w.id}: the client wrote no result under whatleaks:\n${err.slice(-2000)}`);
   return summarise('whatleaks', w, JSON.parse(readFileSync(out, 'utf8')) as ClientResult, parseTimeL(err));
@@ -151,8 +153,9 @@ async function main(): Promise<void> {
   const st = await startup(lab, Number(flags.startups));
   await lab.close();
 
-  const meta = { tag: flags.tag, date: new Date().toISOString(), machine: `${os.type()} ${os.release()} ${os.arch()}, ${os.cpus().length} CPUs`, node: process.version, cli: CLI };
-  const lines = [`# Performance: ${flags.tag}`, '', `Run ${meta.date} on ${meta.machine}, Node ${meta.node}. Client: Node https to the lab over the LAN address.`, ''];
+  // Load average at the end: the machine is a working desktop, not an idle bench box.
+  const meta = { tag: flags.tag, date: new Date().toISOString(), machine: `${os.type()} ${os.release()} ${os.arch()}, ${os.cpus().length} CPUs`, node: process.version, cli: CLI, loadavg: os.loadavg().map((x) => Number(x.toFixed(1))) };
+  const lines = [`# Performance: ${flags.tag}`, '', `Run ${meta.date} on ${meta.machine}, Node ${meta.node}, load average ${meta.loadavg.join(' / ')} (1/5/15 min, a working desktop). Client: Node https to the lab over the LAN address.`, ''];
   for (const w of WORKLOADS) {
     lines.push(`## ${w.title}`, '', '| | p50 ms | p95 ms | p99 ms | MiB/s | peak RSS MiB | CPU s | tool CPU s |', '|---|---|---|---|---|---|---|---|');
     const ms = results.filter((r) => r.workload === w.id);

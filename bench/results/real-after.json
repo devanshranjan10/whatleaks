@@ -1,7 +1,7 @@
 {
   "meta": {
     "tag": "after",
-    "date": "2026-10-21T11:47:52.577Z",
+    "date": "2026-10-21T15:12:22.691Z",
     "machine": "Darwin 25.6.0 arm64",
     "cli": "/tmp/wlb/after/dist/cli.js",
     "phonehome": "zyralab/phonehome@946f42d",
@@ -27,7 +27,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 5006,
+            "wallMs": 6536,
             "notes": []
           },
           {
@@ -42,7 +42,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 4520,
+            "wallMs": 9552,
             "notes": []
           }
         ],
@@ -58,7 +58,7 @@
             "stable-id"
           ],
           "exit": 0,
-          "wallMs": 4798,
+          "wallMs": 11027,
           "notes": []
         },
         "optout": {
@@ -70,7 +70,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 4409,
+          "wallMs": 6062,
           "notes": []
         }
       },
@@ -94,15 +94,15 @@
           "telemetry.nextjs.org"
         ],
         "exit": 0,
-        "wallMs": 1507
+        "wallMs": 3564
       },
       "phonehome": {
-        "telemetryDestinationSeen": false,
+        "telemetryDestinationSeen": true,
         "labelledTelemetry": false,
-        "rows": 26,
-        "rowsFromTool": 1,
-        "rowsOther": 25,
-        "wallMs": 1827
+        "rows": 93,
+        "rowsFromTool": 2,
+        "rowsOther": 91,
+        "wallMs": 3405
       }
     },
     {
@@ -124,7 +124,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 4302,
+            "wallMs": 5492,
             "notes": [
               "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
             ]
@@ -141,7 +141,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 4465,
+            "wallMs": 5369,
             "notes": [
               "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
             ]
@@ -159,7 +159,7 @@
             "stable-id"
           ],
           "exit": 0,
-          "wallMs": 4525,
+          "wallMs": 5882,
           "notes": [
             "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
           ]
@@ -173,7 +173,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 4365,
+          "wallMs": 4806,
           "notes": [
             "The node on PATH is v20.20.2, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it."
           ]
@@ -196,15 +196,15 @@
         "events": 0,
         "hostsNamed": [],
         "exit": 0,
-        "wallMs": 1497
+        "wallMs": 2247
       },
       "phonehome": {
-        "telemetryDestinationSeen": false,
+        "telemetryDestinationSeen": true,
         "labelledTelemetry": false,
-        "rows": 26,
+        "rows": 87,
         "rowsFromTool": 2,
-        "rowsOther": 24,
-        "wallMs": 1878
+        "rowsOther": 85,
+        "wallMs": 2921
       }
     },
     {
@@ -223,7 +223,7 @@
             "catalogClassified": true,
             "findings": [],
             "exit": 0,
-            "wallMs": 3090,
+            "wallMs": 3607,
             "notes": []
           },
           {
@@ -235,7 +235,7 @@
             "catalogClassified": true,
             "findings": [],
             "exit": 0,
-            "wallMs": 3019,
+            "wallMs": 3024,
             "notes": []
           }
         ],
@@ -246,7 +246,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 3049,
+          "wallMs": 2806,
           "notes": []
         },
         "optout": {
@@ -256,7 +256,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 3724,
+          "wallMs": 2634,
           "notes": []
         }
       },
@@ -277,7 +277,7 @@
         "events": 0,
         "hostsNamed": [],
         "exit": 0,
-        "wallMs": 142
+        "wallMs": 213
       },
       "phonehome": {
         "telemetryDestinationSeen": false,
@@ -285,7 +285,7 @@
         "rows": 21,
         "rowsFromTool": 0,
         "rowsOther": 21,
-        "wallMs": 227
+        "wallMs": 418
       }
     },
     {
@@ -306,7 +306,7 @@
               "project-path"
             ],
             "exit": 0,
-            "wallMs": 3710,
+            "wallMs": 3819,
             "notes": []
           },
           {
@@ -320,7 +320,7 @@
               "project-path"
             ],
             "exit": 0,
-            "wallMs": 3478,
+            "wallMs": 3832,
             "notes": []
           }
         ],
@@ -335,7 +335,7 @@
             "project-path"
           ],
           "exit": 0,
-          "wallMs": 3646,
+          "wallMs": 5754,
           "notes": []
         },
         "optout": {
@@ -345,7 +345,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 3365,
+          "wallMs": 6723,
           "notes": []
         }
       },
@@ -362,11 +362,13 @@
       "optOutSource": "https://astro.build/telemetry/",
       "dntSource": "@astrojs/telemetry 7.4 dist/index.js reads ASTRO_TELEMETRY_DISABLED and TELEMETRY_DISABLED only",
       "mitmproxy": {
-        "telemetryRequests": 0,
-        "events": 0,
-        "hostsNamed": [],
+        "telemetryRequests": 1,
+        "events": 1,
+        "hostsNamed": [
+          "telemetry.astro.build"
+        ],
         "exit": 0,
-        "wallMs": 600
+        "wallMs": 1764
       },
       "phonehome": {
         "telemetryDestinationSeen": false,
@@ -374,7 +376,7 @@
         "rows": 21,
         "rowsFromTool": 0,
         "rowsOther": 21,
-        "wallMs": 1343
+        "wallMs": 1489
       }
     },
     {
@@ -396,7 +398,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 6990,
+            "wallMs": 8355,
             "notes": []
           },
           {
@@ -411,7 +413,7 @@
               "stable-id"
             ],
             "exit": 0,
-            "wallMs": 6947,
+            "wallMs": 7094,
             "notes": []
           }
         ],
@@ -424,7 +426,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 6159,
+          "wallMs": 7491,
           "notes": []
         },
         "optout": {
@@ -436,7 +438,7 @@
           "catalogClassified": false,
           "findings": [],
           "exit": 0,
-          "wallMs": 5630,
+          "wallMs": 7654,
           "notes": []
         }
       },
@@ -460,7 +462,7 @@
           "sparrow.cloudflare.com"
         ],
         "exit": 0,
-        "wallMs": 3192
+        "wallMs": 4091
       },
       "phonehome": {
         "telemetryDestinationSeen": true,
@@ -468,7 +470,7 @@
         "rows": 27,
         "rowsFromTool": 3,
         "rowsOther": 24,
-        "wallMs": 3340
+        "wallMs": 4202
       }
     }
   ]

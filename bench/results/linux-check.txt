@@ -1,8 +1,8 @@
 PASS  Node fetch captured with body  entries=1 watcher=on
-PASS  node:http2 (ignores the proxy) named as a direct connection, held 600 ms  ["104.20.23.154:443 node ×1"]
+PASS  node:http2 (ignores the proxy) named as a direct connection, held 600 ms  ["172.66.147.243:443 node ×1"]
 PASS  raw TCP held 10 ms named (Linux: a closed socket has no owner, so only live ones count), 20 runs  20/20
 PASS  detached helper sending 2 s after its parent exited  entries=1
-PASS  a finished helper left as a zombie is not waited for  run took 4.2 s
+PASS  a finished helper left as a zombie is not waited for  run took 4.3 s
 PASS  process tree and watcher work without ps/lsof/netstat  watcher=on notes=[]
 {
   "node": "v22.23.3",
@@ -19,7 +19,7 @@ PASS  process tree and watcher work without ps/lsof/netstat  watcher=on notes=[]
       "id": "http2-direct",
       "title": "node:http2 (ignores the proxy) named as a direct connection, held 600 ms",
       "ok": true,
-      "detail": "[\"104.20.23.154:443 node ×1\"]"
+      "detail": "[\"172.66.147.243:443 node ×1\"]"
     },
     {
       "id": "tcp-10ms",
@@ -37,7 +37,7 @@ PASS  process tree and watcher work without ps/lsof/netstat  watcher=on notes=[]
       "id": "zombie",
       "title": "a finished helper left as a zombie is not waited for",
       "ok": true,
-      "detail": "run took 4.2 s"
+      "detail": "run took 4.3 s"
     },
     {
       "id": "no-tools",

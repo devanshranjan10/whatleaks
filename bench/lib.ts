@@ -7,12 +7,21 @@ export const WLB = process.env.WLB ?? '/tmp/wlb';
 
 export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-export function waitExit(child: ChildProcess, timeoutMs: number): Promise<{ code: number | null; signal: string | null; timedOut: boolean }> {
+/**
+ * `group`: the child was spawned detached (its own process group); on timeout the whole
+ * group is killed. Killing only /usr/bin/time once left a hung whatleaks spinning for hours.
+ */
+export function waitExit(child: ChildProcess, timeoutMs: number, group = false): Promise<{ code: number | null; signal: string | null; timedOut: boolean }> {
   return new Promise((resolve) => {
     let timedOut = false;
     const t = setTimeout(() => {
       timedOut = true;
-      child.kill('SIGKILL');
+      try {
+        if (group && child.pid) process.kill(-child.pid, 'SIGKILL');
+        else child.kill('SIGKILL');
+      } catch {
+        child.kill('SIGKILL');
+      }
     }, timeoutMs);
     child.on('exit', (code, signal) => {
       clearTimeout(t);
