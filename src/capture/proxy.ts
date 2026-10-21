@@ -3,6 +3,7 @@ import os from 'node:os';
 import { getLocal, type CompletedRequest, type CompletedResponse, type Mockttp } from 'mockttp';
 import { decodeContent, decodePrefix } from './decode.js';
 import { MAX_REQUEST_BODY, MAX_RESPONSE_TEXT, type Recorder } from './recorder.js';
+import { shareUpstreamTlsContexts } from './tls-contexts.js';
 
 /** Bodies above this are not buffered by the proxy at all (they are counted, not kept). */
 export const MAX_BUFFERED_BODY = 8 * 1024 * 1024;
@@ -121,6 +122,7 @@ async function assertLoopbackOnly(server: Mockttp, port: number): Promise<void> 
 }
 
 export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
+  shareUpstreamTlsContexts();
   const server = getLocal({
     https: {
       key: opts.key,

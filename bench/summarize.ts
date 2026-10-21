@@ -38,7 +38,20 @@ const after = load(flags.after);
 const beforeTag = flags.before ?? (flags.after === 'after' && existsSync(file('before')) ? 'before' : undefined);
 const before = beforeTag ? load(beforeTag) : undefined;
 
-const find = (rows: Row[], id: string, tool: string): Row | undefined => rows.find((r) => r.id === id && r.tool === tool && !r.skipped);
+const ORDER = ['payload', 'request', 'host'] as const;
+/**
+ * A row scored against the current expectation for its scenario, so that a file measured
+ * when the scenario expected less (the before build) is not credited with it.
+ */
+const rescore = (r: Row, expect: string): Row => {
+  const ok = ORDER.slice(0, ORDER.indexOf(expect as (typeof ORDER)[number]) + 1).reduce((n, o) => n + r.total[o], 0);
+  return { ...r, expect, atBest: r.total.attempted ? ok / r.total.attempted : 0 };
+};
+const current = new Map(after.filter((r) => r.tool === 'whatleaks').map((r) => [r.id, r.expect]));
+const find = (rows: Row[], id: string, tool: string): Row | undefined => {
+  const r = rows.find((x) => x.id === id && x.tool === tool && !x.skipped);
+  return r && current.has(id) ? rescore(r, current.get(id)!) : r;
+};
 const pct = (x: number): string => `${Math.round(x * 100)} %`;
 const cell = (r: Row | undefined): string => (r && r.total.attempted ? pct(r.atBest) : '–');
 const sum = (rows: Array<Row | undefined>): Tally => {
