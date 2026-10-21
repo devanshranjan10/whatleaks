@@ -42,7 +42,7 @@ function captureOptions(cmd: Command, output = 'report'): Command {
     .option('-e, --env <KEY=VALUE>', 'extra environment variable for the app (repeatable)', collect, [])
     .option('--passthrough <host>', 'tunnel this host without reading it, e.g. *.mybank.com (repeatable)', collect, [])
     .option('--no-watch', 'do not look for connections that bypass the proxy')
-    .option('--no-node-preload', 'do not add the preload that routes Node < 22.21 through the proxy (NODE_OPTIONS)')
+    .option('--no-node-preload', 'do not add the Node preload (NODE_OPTIONS) that proxies Node < 22.21 and agents an app creates itself')
     .option('--md <file>', `also write the ${output} as Markdown`)
     .option('--json <file>', `also write the ${output} as JSON`)
     .option('--samples <n>', 'payload samples per endpoint', nonNegativeInt, 2)

@@ -180,18 +180,33 @@ and where it appeared. This line is from the test suite's synthetic capture:
    - CA: `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`, `REQUESTS_CA_BUNDLE`,
      `CURL_CA_BUNDLE`, `GIT_SSL_CAINFO`, `DENO_CERT`
 
+   - Java: `JAVA_TOOL_OPTIONS` with the proxy and a truststore file whatleaks writes
+     itself (the JVM ignores the variables above).
+   - Node: a small preload (`NODE_OPTIONS=--require`). On Node older than 22.21 it
+     routes `http`, `https` and `fetch` through the proxy. On newer Node it gives agents
+     the app creates itself the proxy settings. Node's built-in support covers only the
+     global agent. `--no-node-preload` turns it off.
+
    Trust reaches only the app's own process tree. **Nothing is installed in your
    system's trust store, and no system proxy settings change.**
 4. **Process tree.**
    - whatleaks follows the processes the app starts, identified by pid and start time.
    - It also adopts any process connected to the proxy, which catches detached
      helpers whose parent already exited.
+   - A process that was re-parented to launchd, started during the run, in the app's
+     folder, is treated as a likely helper. whatleaks waits for it but never signals
+     it unless it connects to the proxy.
    - So it can wait for late telemetry, and stop everything on `--duration`, on
      Ctrl-C, or when the wait ends.
 5. **Not-visible traffic.** An app that refuses the CA, such as one that pins
    certificates, fails that request. whatleaks lists the host by name, with a count,
    under "not visible". It does not try to get around pinning. Connections that ignore
-   the proxy are sampled with `lsof` every 0.5 s and listed by address.
+   the proxy are listed by address and process:
+   - **macOS:** `netstat -anvW` every 20 ms while the app is busy and every 100 ms
+     when it idles. A closing sweep finds connections that already closed, because
+     macOS keeps the owner of a TIME_WAIT socket.
+   - **Linux:** `/proc` at the same rates, so no `ps`, `lsof` or `netstat` is needed.
+   - **Elsewhere:** `lsof` every 0.5 s.
 6. **Analysis.**
    - Requests are grouped into endpoints, with path ids templated
      (`/users/123` → `/users/:id`).
@@ -248,35 +263,46 @@ The full write-up is in [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
 
 ## Limitations
 
-- **Tested on macOS only.** Linux uses the same `ps` and `lsof` calls but is
-  untested. Windows is untested and has neither tool, so process watching would be
-  off there.
-- **Imported HAR from other tools:** the reader handles browser-devtools-style and
-  mitmproxy-style HAR (tested with hand-made samples of both formats). It was not
-  tested with real exports from Proxyman, Charles or HTTP Toolkit.
+Measured limits are in [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
+
+- **Platforms.**
+  - macOS is benchmarked.
+  - Linux is checked in a slim container (`bench/linux/check.mjs`) with no `ps`,
+    `lsof` or `netstat`.
+  - Windows is untested and has no backend: process watching would be off there.
 - **Only processes you launch through whatleaks.** GUI apps, Electron apps, browsers
   and system daemons were not tested.
-- **Late helpers.** A detached helper is caught when it is still connected to the
-  proxy, or was seen as a child of the app. One whose parent exits at once, and which
-  first connects more than `--grace` seconds later, is missed: raise `--grace` for
-  tools like that.
-- **Apps that ignore proxy variables or the CA cannot be read:**
-  - Go programs on macOS and Apple's `/usr/bin/python3` refuse the CA (both checked).
-    They are named, not read.
-  - Node older than 22.21 (or 24.0–24.4 for `http`/`https`) ignores
-    `NODE_USE_ENV_PROXY`. whatleaks warns when the `node` on `PATH` is like that.
-  - Their connections show up only if the 0.5 s sampler catches them. Short ones are
-    missed.
+- **Apps that refuse the CA cannot be read, only named.**
+  - Go programs on macOS, Apple's `/usr/bin/python3`, the macOS system Ruby and
+    pinned clients refuse the CA.
+  - whatleaks names the host and counts the refusals. It does not try to get around
+    pinning.
+- **Connections that bypass the proxy are named, not read.**
+  - Examples: `node:http2`, raw sockets, Python `aiohttp` (which ignores proxy
+    variables by default), UDP.
+  - They are found by polling, which misses very short ones:
+    - a socket closed by the app is found afterwards on macOS (TIME_WAIT keeps its
+      owner);
+    - one reset by the app, or closed first by the server, must be seen while open.
+      In the lab, resets after 10 ms were caught in 3 to 30 % of runs and resets
+      after 50 ms in 80 to 100 %.
+  - UDP sent with `sendto()` on an unconnected socket leaves no address for any watcher
+    and is never seen.
+  - On Linux a closed socket has no owner, so only open ones count.
+- **Not covered by the Node preload:** the `undici` npm package with its own dispatcher,
+  and `node:http2`. Their connections are named as direct connections.
+- **Late helpers outside the project folder.** A detached helper whose parent exits at
+  once is waited for when it runs in the app's folder. One that runs from `/` or your
+  home folder, and first connects more than `--grace` seconds after the exit, is
+  missed. Raise `--grace` for tools like that.
 - **Node 22 prints a warning.** On Node 22, the app prints an `UNDICI-EHPA`
   experimental warning when it starts. That is Node's built-in proxy support, which
   whatleaks turns on.
-- **Not tested:**
-  - WebSockets
-  - HTTP/2-only clients
-  - HTTP/3 (QUIC)
-  - forwarding through a proxy you already use. If `HTTPS_PROXY`, `HTTP_PROXY` or
-    `ALL_PROXY` is set, whatleaks sends its upstream traffic through it and honours
-    `NO_PROXY`.
+- **Uploads over 8 MiB** are counted and marked cut off. The first MiB is kept and
+  scanned.
+- **Imported HAR from other tools:** the reader handles browser-devtools-style and
+  mitmproxy-style HAR, including their WebSocket messages. It was tested with
+  hand-made samples, not real exports from Proxyman, Charles or HTTP Toolkit.
 - **`compare` runs defaults first.** Events a tool sends only on first use can make a
   "stopped" result look better than it is. A "still sending" result is always a direct
   observation. Repeat a comparison before trusting a stop.
