@@ -39,7 +39,7 @@ export interface SessionObserver {
   /** Stop sampling and return what was seen. */
   finish(): Promise<{ direct: DirectConn[]; watcher: SessionMeta['watcher']; notes: string[] }>;
 }
-export type SessionObserverFactory = (rootPid: number, proxyPort: number) => SessionObserver;
+export type SessionObserverFactory = (rootPid: number, proxyPort: number, watch: boolean) => SessionObserver;
 
 export interface SessionResult {
   har: Har;
@@ -104,7 +104,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         ...(opts.stdio ? { stdio: opts.stdio } : {}),
         onStop: (signal) => observer?.signalAll(signal),
       });
-      if (opts.watch && opts.observers) observer = opts.observers(launched.pid, proxy.port);
+      if (opts.observers) observer = opts.observers(launched.pid, proxy.port, opts.watch);
       result = await launched.done;
 
       if (observer) {
@@ -153,7 +153,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
       refused: recorder.refused(),
       passthrough: recorder.passthroughs(),
       direct,
-      watcher: opts.watch ? watcher : 'off',
+      watcher,
       notes,
     };
     const har: Har = {

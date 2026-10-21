@@ -1,0 +1,7 @@
+    1     0 /sbin/launchd
+  500     1 /usr/libexec/logd
+94668 94000 -zsh
+94669 94668 /opt/homebrew/bin/node
+94700 94669 /usr/bin/git
+94750 94700 git-remote-https
+94800     1 /opt/homebrew/bin/node

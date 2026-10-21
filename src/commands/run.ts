@@ -3,6 +3,7 @@ import { parseHar } from '../har/read.js';
 import { serializeHar, writeHarFile } from '../har/write.js';
 import { captureSession, type SessionObserverFactory, type SessionResult } from '../capture/session.js';
 import { optOutEnv } from '../catalog/optouts.js';
+import { createObserver } from '../capture/observer.js';
 import { CliError } from '../errors.js';
 import { reportFor } from './report.js';
 import { type Io, emitReport } from './output.js';
@@ -80,7 +81,7 @@ export async function captureToFile(req: CaptureRequest, harPath: string, io: Io
     extraEnv: parseEnvPairs(req.flags.env),
     watch: req.flags.watch,
     log: (line) => io.stderr(`${line}\n`),
-    ...(deps.observers ? { observers: deps.observers } : {}),
+    observers: deps.observers ?? createObserver(),
     ...(deps.testRoutes ? { testRoutes: deps.testRoutes } : {}),
     ...(deps.stdio ? { stdio: deps.stdio } : {}),
   });
