@@ -17,23 +17,21 @@ Decisions: `docs/DECISIONS.md`. Research: `docs/RESEARCH.md`.
 | M3 renderers and the `report` command | done | a438b69 |
 | Catalogs: 69 hosts and 32 opt-outs, all sourced | done | 7d5a82b |
 | M4 diff and the `diff` command (`--strict`) | done | be6f148 |
-| M5 capture core and `run` | next | |
-| M6 process tree, linger, direct watcher | | |
-| M7 `compare` and `opt-outs` | | |
-| M8 real end to end and accuracy | | |
+| M5 capture core and `run` | done | 02446d0 |
+| M6 process tree, linger, direct watcher | done | 497cc4f |
+| M7 `compare` and `opt-outs` | done | fc9c14c |
+| M8 real end to end and accuracy | next | |
 | M9 docs, review, summary | | |
 
-Gate at the last commit: typecheck, lint, 97 tests.
+Gate at the last commit: typecheck, lint, 123 tests. Run `./scripts/gate.sh` before committing. It returns npm's real exit code, which a `| grep` pipe used to hide.
 
 ## Next
 
-M5: `src/capture/{ca,env,proxy,recorder,launch,session}.ts` and `src/commands/run.ts`.
-Points to keep in mind:
-- The proxy URL for the child is `http://127.0.0.1:PORT`. Never use mockttp's
-  `server.url`, which is https and makes clients hang (RESEARCH §5).
-- Force the loopback bind by wrapping `net.Server.prototype.listen` while `start()`
-  runs (D-08).
-- Set `NODE_USE_ENV_PROXY=1` as an env var only. Never put it in `NODE_OPTIONS`.
+M8, real end to end:
+- Scratch Next.js app in `/tmp/wl-e2e/next-app`.
+- Ground truth from `NEXT_TELEMETRY_DEBUG=1` (it prints the events and sends nothing).
+- `whatleaks compare` with the known opt-outs, and with `DO_NOT_TRACK` only.
+- Save the outputs under `docs/e2e/`, and a scrubbed HAR under `test/fixtures/real/`.
 
 ## Blocked
 
