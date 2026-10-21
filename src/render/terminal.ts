@@ -85,10 +85,11 @@ export function renderTerminal(report: Report, options: TerminalOptions = {}): s
   if (cap.stoppedBy && cap.stoppedBy !== 'exit') head.push(`stopped by ${cap.stoppedBy}`);
   out.push(head.join(' · '));
   if (cap.optOutEnv.length) out.push(c.dim(`opt-out variables set: ${clip(cap.optOutEnv.join(' '), 160)}`));
+  const guessed = t.guessedTelemetryRequests ? ` · ${t.guessedTelemetryRequests} more to endpoints guessed to be telemetry` : '';
   out.push(
     `${plural(t.requests, 'request')} to ${plural(t.destinations, 'destination')} · ≈${bytes(t.approxBytes)} sent · ${c.bold(
-      `${t.telemetryRequests} to telemetry endpoints`,
-    )}`,
+      `${t.telemetryRequests} to known telemetry endpoints`,
+    )}${guessed}`,
   );
   if (t.requests > 0) out.push(c.dim(`activity |${sparkline(report.timeline)}| over ${duration(cap.durationMs)}`));
 
@@ -135,6 +136,6 @@ export function renderTerminal(report: Report, options: TerminalOptions = {}): s
     out.push('', c.bold('NOTES'));
     for (const n of report.caveats) out.push(`  • ${n}`);
   }
-  if (report.redacted) out.push('', c.dim('Redacted: ‹labels› replace local identifiers and secrets; ids are masked. Use --raw to see everything.'));
+  if (report.redacted) out.push('', c.dim('Redacted: ‹labels› replace local identifiers and secrets; ids are replaced by aliases. Use --raw to see everything.'));
   return `${out.join('\n')}\n`;
 }

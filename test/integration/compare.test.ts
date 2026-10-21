@@ -46,9 +46,11 @@ describe('compare', () => {
       // The parent environment already opts out; run 1 must remove it to get real defaults.
       { testRoutes: { 'upstream.test': upstream.url }, stdio: 'ignore', cwd: dir, env: { ...process.env, DO_NOT_TRACK: '1' }, observers: createObserver({ reverse: () => Promise.resolve([]) }) },
     );
-    expect(code).toBe(1); // --strict: the ping is still sent
+    // The fake endpoints are only *guessed* to be telemetry (not in the catalog), so --strict
+    // passes; they are listed under POSSIBLY TELEMETRY instead of being counted.
+    expect(code).toBe(0);
     const stdout = out.join('');
-    expect(stdout).toContain('STILL SENDING AFTER OPT-OUT');
+    expect(stdout).toContain('POSSIBLY TELEMETRY');
     expect(stdout).toContain('POST upstream.test/v1/ping');
     expect(err.join('')).toContain('run 2 of 2');
 

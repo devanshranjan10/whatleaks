@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
-import { buildDiff, stillSendsTelemetry, type Diff } from '../diff/diff.js';
+import { buildDiff, strictFailure, type Diff } from '../diff/diff.js';
 import { renderDiffMarkdown, renderDiffTerminal } from '../render/diff.js';
 import { renderJson } from '../render/json.js';
 import { loadCapture, reportFor } from './report.js';
@@ -24,8 +24,9 @@ export async function emitDiff(diff: Diff, opts: DiffCommandOptions, io: Io): Pr
     await writeFile(opts.json, renderJson(diff));
     io.stderr(`JSON diff written to ${opts.json}\n`);
   }
-  if (opts.strict && stillSendsTelemetry(diff)) {
-    io.stderr('whatleaks: --strict: telemetry endpoints were still contacted in the second run\n');
+  const failure = opts.strict ? strictFailure(diff) : undefined;
+  if (failure) {
+    io.stderr(`whatleaks: --strict: ${failure}\n`);
     return 1;
   }
   return 0;
@@ -33,7 +34,8 @@ export async function emitDiff(diff: Diff, opts: DiffCommandOptions, io: Io): Pr
 
 export async function diffCommand(beforePath: string, afterPath: string, opts: DiffCommandOptions, io: Io): Promise<number> {
   const [before, after] = await Promise.all([loadCapture(beforePath), loadCapture(afterPath)]);
-  const ro = { samples: 0, raw: opts.raw };
+  // One alias table for both reports, so an id has the same alias on both sides.
+  const ro = { samples: 0, raw: opts.raw, aliases: new Map<string, string>() };
   const diff = buildDiff(
     await reportFor(before, { ...ro, label: basename(beforePath) }),
     await reportFor(after, { ...ro, label: basename(afterPath) }),

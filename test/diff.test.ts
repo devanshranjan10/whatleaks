@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
-import { buildDiff, stillSendsTelemetry } from '../src/diff/diff.js';
+import { buildDiff, stillSendsTelemetry, strictFailure } from '../src/diff/diff.js';
 import { buildMatchers } from '../src/analyze/identity.js';
 import { buildReport } from '../src/analyze/report.js';
 import { parseHar } from '../src/har/read.js';
@@ -41,20 +41,22 @@ describe('buildDiff', () => {
       ['still', 'POST flags.example.com/sdk/evalx/abc', '1→1'],
       ['still', 'GET registry.npmjs.org/left-pad', '2→1'],
       ['new', 'POST telemetry.example-tool.dev/v2/ping', '0→1'],
+      ['stopped', 'POST o123.ingest.sentry.io/api/:id/envelope/', '1→0'],
       ['stopped', 'POST collector.example.net/v1/traces', '1→0'],
       ['stopped', 'POST telemetry.example-tool.dev/v1/events', '1→0'],
-      ['stopped', 'POST o123.ingest.sentry.io/api/:id/envelope/', '1→0'],
     ]);
   });
 
-  it('computes the headline over telemetry endpoints only', () => {
+  it('computes the headline over known (catalog) telemetry endpoints only', () => {
     expect(diff.headline).toEqual({
-      telemetryEndpointsBefore: 5,
-      telemetryEndpointsStill: 2,
-      telemetryEndpointsNew: 1,
-      telemetryRequestsBefore: 7,
-      telemetryRequestsAfter: 4,
+      telemetryEndpointsBefore: 2,
+      telemetryEndpointsStill: 1,
+      telemetryEndpointsNew: 0,
+      telemetryRequestsBefore: 4,
+      telemetryRequestsAfter: 2,
+      guessedStill: 2,
     });
+    expect(diff.inconclusive).toBe(false);
     expect(stillSendsTelemetry(diff)).toBe(true);
   });
 
@@ -68,7 +70,7 @@ describe('buildDiff', () => {
 
   it('finds identifiers that persist across runs and findings that remain', () => {
     expect(diff.persistentIds).toEqual([
-      { fingerprint: expect.stringMatching(/^[0-9a-f]{12}$/) as string, display: '0f8f…950e', locations: ['batch[].anonymousId'], endpoints: ['POST api.segment.io/v1/batch'] },
+      { fingerprint: expect.stringMatching(/^[0-9a-f]{16}$/) as string, display: '‹id-1›', locations: ['batch[].anonymousId'], endpoints: ['POST api.segment.io/v1/batch'] },
     ]);
     expect(diff.findingsStill.map((f) => f.kind)).toEqual(['hostname', 'stable-id']);
     expect(diff.findingsStopped).toEqual(expect.arrayContaining(['mac', 'home', 'username', 'git-email']));
@@ -84,10 +86,20 @@ describe('buildDiff', () => {
   it('reports a clean opt-out', () => {
     const clean = buildDiff(rep(chattyHar()), rep(makeHar([{ at: 0, url: 'https://registry.npmjs.org/left-pad' }])));
     expect(stillSendsTelemetry(clean)).toBe(false);
-    expect(renderDiffTerminal(clean)).toContain('All 5 telemetry endpoints stopped after opting out.');
+    expect(renderDiffTerminal(clean)).toContain('All 2 telemetry endpoints stopped after opting out.');
     const same = buildDiff(rep(chattyHar()), rep(chattyHar()));
-    expect(renderDiffTerminal(same)).toContain('All 5 telemetry endpoints were still contacted after opting out.');
+    expect(renderDiffTerminal(same)).toContain('All 2 telemetry endpoints were still contacted after opting out.');
+    expect(renderDiffTerminal(same)).toContain('POSSIBLY TELEMETRY');
     expect(renderDiffTerminal(clean)).toContain("nothing identifying in the second run's visible traffic");
+  });
+
+  it('marks a second run that failed as inconclusive, and --strict fails on it', () => {
+    const crashed = makeHar([{ at: 0, url: 'https://registry.npmjs.org/x' }], { exitCode: 3 });
+    const d = buildDiff(rep(chattyHar()), rep(crashed));
+    expect(stillSendsTelemetry(d)).toBe(false);
+    expect(d.inconclusive).toBe(true);
+    expect(strictFailure(d)).toBe('the second run did not exit cleanly, so the result is inconclusive');
+    expect(d.caveats[0]).toContain('The second run exited with code 3');
   });
 });
 

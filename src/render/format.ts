@@ -63,7 +63,7 @@ export function table(rows: string[][], aligns: Array<'l' | 'r'>, indent = '  ')
 }
 
 export function commandLine(argv: string[]): string {
-  return argv.map((a) => (/^[\w@%+=:,./-]+$/.test(a) ? a : `'${a.replaceAll("'", "'\\''")}'`)).join(' ');
+  return argv.map((a) => (/^[\w@%+=:,./‹›()-]+$/.test(a) ? a : `'${a.replaceAll("'", "'\\''")}'`)).join(' ');
 }
 
 export function clip(s: string, max: number): string {

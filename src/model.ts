@@ -2,8 +2,18 @@ import type { BodyFormat } from './analyze/body.js';
 import type { DirectConn, PassthroughHost, RefusedHost } from './har/types.js';
 
 export type Category = 'analytics' | 'errors' | 'flags' | 'updates' | 'other';
-/** Categories that count as telemetry in headlines and `--strict`. */
+/** Categories that count as telemetry. */
 export const TELEMETRY_CATEGORIES: readonly Category[] = ['analytics', 'errors', 'flags'];
+
+/** Telemetry from the sourced host catalog: counted in headlines and `--strict`. */
+export function isKnownTelemetry(c: Classification): boolean {
+  return c.basis === 'catalog' && TELEMETRY_CATEGORIES.includes(c.category);
+}
+
+/** Telemetry guessed from URL keywords: shown, marked "?", never counted as fact. */
+export function isGuessedTelemetry(c: Classification): boolean {
+  return c.basis === 'heuristic' && TELEMETRY_CATEGORIES.includes(c.category);
+}
 
 export interface Classification {
   category: Category;
@@ -122,7 +132,10 @@ export interface Report {
     destinations: number;
     endpoints: number;
     approxBytes: number;
+    /** Requests to telemetry endpoints from the host catalog. */
     telemetryRequests: number;
+    /** Requests to endpoints guessed to be telemetry from their URL. */
+    guessedTelemetryRequests: number;
     refusedConnections: number;
     directConnections: number;
   };

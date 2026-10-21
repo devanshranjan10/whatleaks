@@ -1,7 +1,8 @@
-import { type Diff, type EndpointDiff, isTelemetry } from '../diff/diff.js';
+import type { Diff, EndpointDiff } from '../diff/diff.js';
+import { isGuessedTelemetry, isKnownTelemetry } from '../model.js';
 import { VERSION } from '../version.js';
 import { type Colors, bytes, clip, colors, commandLine, duration, plural } from './format.js';
-import { cell } from './markdown.js';
+import { cell, code } from './markdown.js';
 
 function catLabel(e: EndpointDiff): string {
   const c = e.classification;
@@ -30,7 +31,7 @@ function headlineText(d: Diff): string {
 }
 
 function endpointLines(e: EndpointDiff, c: Colors): string[] {
-  const icon = e.status === 'stopped' ? c.green('✓') : e.status === 'new' ? c.red('+') : isTelemetry(e.classification.category) ? c.red('●') : c.dim('·');
+  const icon = e.status === 'stopped' ? c.green('✓') : e.status === 'new' ? c.red('+') : isKnownTelemetry(e.classification) ? c.red('●') : c.yellow('?');
   const lines = [`  ${icon} ${e.method} ${e.host}${e.pathTemplate}  ${c.dim(catLabel(e))}  ${counts(e)} requests`];
   if (e.status === 'still' && e.fieldsStill.length) {
     lines.push(`      still sent: ${clip(e.fieldsStill.slice(0, 10).join(', '), 300)}${e.fieldsStill.length > 10 ? ` …+${e.fieldsStill.length - 10}` : ''}`);
@@ -49,7 +50,7 @@ export function renderDiffTerminal(d: Diff, opts: { color?: boolean } = {}): str
   out.push('', c.bold(headlineText(d)));
   out.push(`Telemetry requests: ${d.headline.telemetryRequestsBefore} → ${d.headline.telemetryRequestsAfter} · all requests: ${d.before.requests} → ${d.after.requests}`);
 
-  const tel = (s: EndpointDiff['status']): EndpointDiff[] => d.endpoints.filter((e) => e.status === s && isTelemetry(e.classification.category));
+  const tel = (s: EndpointDiff['status']): EndpointDiff[] => d.endpoints.filter((e) => e.status === s && isKnownTelemetry(e.classification));
   const sections: Array<[string, EndpointDiff[]]> = [
     ['STILL SENDING AFTER OPT-OUT', tel('still')],
     ['NEW AFTER OPT-OUT', tel('new')],
@@ -60,7 +61,12 @@ export function renderDiffTerminal(d: Diff, opts: { color?: boolean } = {}): str
     out.push('', c.bold(title));
     for (const e of eps) out.push(...endpointLines(e, c));
   }
-  const other = d.endpoints.filter((e) => !isTelemetry(e.classification.category));
+  const guessed = d.endpoints.filter((e) => isGuessedTelemetry(e.classification));
+  if (guessed.length) {
+    out.push('', c.bold('POSSIBLY TELEMETRY'), c.dim('  (guessed from the URL, not in the known-host catalog; not counted above)'));
+    for (const e of guessed) out.push(...endpointLines(e, c));
+  }
+  const other = d.endpoints.filter((e) => !isKnownTelemetry(e.classification) && !isGuessedTelemetry(e.classification));
   if (other.length) {
     out.push('', c.bold('OTHER TRAFFIC'), c.dim('  (not identified as telemetry; check it yourself)'));
     for (const e of other) out.push(`  ${e.status === 'stopped' ? '-' : e.status === 'new' ? '+' : '='} ${e.method} ${e.host}${e.pathTemplate}  ${c.dim(catLabel(e))}  ${counts(e)}`);
@@ -76,7 +82,7 @@ export function renderDiffTerminal(d: Diff, opts: { color?: boolean } = {}): str
     if (d.findingsStopped.length) out.push(c.dim(`  no longer sent: ${d.findingsStopped.join(', ')}`));
   }
   if (d.persistentIds.length) {
-    out.push('', c.bold('PERSISTENT IDENTIFIERS'), c.dim('  same value in both runs, so it is stored on disk and survives a restart'));
+    out.push('', c.bold('PERSISTENT IDENTIFIERS'), c.dim('  same value in both runs: stored by the app or built into it, so it can link runs together'));
     for (const p of d.persistentIds.slice(0, 12)) out.push(`  ${c.yellow('○')} ${p.display} at ${clip(p.locations.join(', '), 80)} → ${clip(p.endpoints.join(', '), 80)}`);
     if (d.persistentIds.length > 12) out.push(c.dim(`  …+${d.persistentIds.length - 12} more (see --md)`));
   }
@@ -89,32 +95,32 @@ export function renderDiffTerminal(d: Diff, opts: { color?: boolean } = {}): str
 
 export function renderDiffMarkdown(d: Diff): string {
   const out: string[] = [];
-  const cmd = d.after.command.length ? `: \`${commandLine(d.after.command)}\`` : '';
+  const cmd = d.after.command.length ? `: ${code(commandLine(d.after.command))}` : '';
   out.push(`# whatleaks diff${cmd}`, '');
-  out.push(`- Before: \`${d.before.label}\`, ${duration(d.before.durationMs)}, ${plural(d.before.requests, 'request')}`);
-  out.push(`- After: \`${d.after.label}\`, ${duration(d.after.durationMs)}, ${plural(d.after.requests, 'request')}`);
-  if (d.after.optOutEnv.length) out.push(`- Opt-out variables in the second run: ${d.after.optOutEnv.map((n) => `\`${n}\``).join(' ')}`);
+  out.push(`- Before: ${code(d.before.label)}, ${duration(d.before.durationMs)}, ${plural(d.before.requests, 'request')}`);
+  out.push(`- After: ${code(d.after.label)}, ${duration(d.after.durationMs)}, ${plural(d.after.requests, 'request')}`);
+  if (d.after.optOutEnv.length) out.push(`- Opt-out variables in the second run: ${d.after.optOutEnv.map((n) => code(n)).join(' ')}`);
   out.push('', `**${headlineText(d)}** Telemetry requests went from ${d.headline.telemetryRequestsBefore} to ${d.headline.telemetryRequestsAfter}.`, '');
 
   out.push('## Endpoints', '');
   out.push('| | Endpoint | Category | Requests before → after | Fields still sent | Fields no longer sent |', '|---|---|---|---|---|---|');
   for (const e of d.endpoints) {
-    const icon = e.status === 'stopped' ? '✅ stopped' : e.status === 'new' ? '🆕 new' : isTelemetry(e.classification.category) ? '🔴 still' : 'still';
-    const fmt = (xs: string[]): string => (xs.length ? xs.map((x) => `\`${cell(x)}\``).join(', ') : '');
-    out.push(`| ${icon} | \`${cell(`${e.method} ${e.host}${e.pathTemplate}`)}\` | ${cell(catLabel(e))} | ${counts(e)} | ${fmt(e.fieldsStill)} | ${fmt(e.fieldsDropped)} |`);
+    const icon = e.status === 'stopped' ? '✅ stopped' : e.status === 'new' ? '🆕 new' : isKnownTelemetry(e.classification) ? '🔴 still' : 'still';
+    const fmt = (xs: string[]): string => (xs.length ? xs.map((x) => cell(code(x))).join(', ') : '');
+    out.push(`| ${icon} | ${cell(code(`${e.method} ${e.host}${e.pathTemplate}`))} | ${cell(catLabel(e))} | ${counts(e)} | ${fmt(e.fieldsStill)} | ${fmt(e.fieldsDropped)} |`);
   }
   out.push('');
   out.push('## Still sent about you', '');
   if (d.findingsStill.length === 0) out.push('Nothing identifying was found in the second run\'s visible traffic.', '');
   else {
     out.push('| Finding | Requests | Where | Form |', '|---|---:|---|---|');
-    for (const f of d.findingsStill) out.push(`| ${cell(f.title)} | ${f.requests} | ${f.locations.map((l) => `\`${cell(l)}\``).join(', ')} | ${f.forms.join(', ')} |`);
+    for (const f of d.findingsStill) out.push(`| ${cell(f.title)} | ${f.requests} | ${f.locations.map((l) => cell(code(l))).join(', ')} | ${f.forms.join(', ')} |`);
     out.push('');
   }
   if (d.findingsStopped.length) out.push(`No longer sent: ${d.findingsStopped.join(', ')}.`, '');
   if (d.persistentIds.length) {
-    out.push('## Persistent identifiers', '', 'The same value was sent in both runs, so it is stored on disk and identifies this machine or install across restarts.', '');
-    for (const p of d.persistentIds) out.push(`- \`${cell(p.display)}\` at ${p.locations.map((l) => `\`${cell(l)}\``).join(', ')} (${p.endpoints.map((x) => `\`${cell(x)}\``).join(', ')})`);
+    out.push('## Persistent identifiers', '', 'The same value was sent in both runs. It is stored by the app or built into it (an install id, a project hash, or a vendor key), so it can link runs together.', '');
+    for (const p of d.persistentIds) out.push(`- ${code(p.display)} at ${p.locations.map((l) => code(l)).join(', ')} (${p.endpoints.map((x) => code(x)).join(', ')})`);
     out.push('');
   }
   if (d.caveats.length) {
@@ -122,6 +128,6 @@ export function renderDiffMarkdown(d: Diff): string {
     for (const n of d.caveats) out.push(`- ${n}`);
     out.push('');
   }
-  out.push('---', '', `Generated by whatleaks ${VERSION}.${d.redacted ? ' Redacted: identifiers are labelled and ids masked.' : ' **Not redacted.**'} Sizes are approximate (${bytes(0)} = empty).`);
+  out.push('---', '', `Generated by whatleaks ${VERSION}.${d.redacted ? ' Redacted: identifiers are labelled and ids replaced by aliases.' : ' **Not redacted.**'} Sizes are approximate (${bytes(0)} = empty).`);
   return `${out.join('\n')}\n`;
 }

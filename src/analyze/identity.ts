@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import type { IdentityKind } from '../model.js';
 
 export interface Identity {
@@ -21,8 +21,10 @@ export interface Matcher {
   kind: IdentityKind;
   /** `raw`, `lowercase`, `no-separators`, `md5`, `sha1`, `sha256`, `base64`, `json-escaped`. */
   form: string;
-  /** Lowercased needle; matching is case-insensitive. */
+  /** The text to find: lowercased unless `caseSensitive`. */
   needle: string;
+  /** File paths and base64 differ by case; hex hashes, names and hosts do not. */
+  caseSensitive: boolean;
   /** Required character class that must NOT touch the match on either side. */
   boundary: RegExp | null;
 }
@@ -57,11 +59,12 @@ export function buildMatchers(identities: Identity[]): Matcher[] {
   const seen = new Set<string>();
   const out: Matcher[] = [];
   const add = (kind: IdentityKind, form: string, needle: string, boundary: RegExp | null): void => {
-    const n = needle.toLowerCase();
+    const caseSensitive = form === 'base64' || ((kind === 'home' || kind === 'project-path') && !/^(md5|sha1|sha256)$/.test(form));
+    const n = caseSensitive ? needle : needle.toLowerCase();
     const key = `${kind}\0${n}`;
     if (n.length < 4 || seen.has(key)) return;
     seen.add(key);
-    out.push({ kind, form, needle: n, boundary });
+    out.push({ kind, form, needle: n, boundary, caseSensitive });
   };
 
   const sorted = identities.filter(usable).sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind));
@@ -127,7 +130,7 @@ export function scanIdentity(text: string, matchers: Matcher[]): ScanResult {
     let from = 0;
     let found = false;
     for (;;) {
-      const at = lower.indexOf(m.needle, from);
+      const at = (m.caseSensitive ? work : lower).indexOf(m.needle, from);
       if (at === -1) break;
       const end = at + m.needle.length;
       if (bounded(work, at, end, m.boundary)) {
@@ -154,10 +157,10 @@ export function findPaths(text: string): string[] {
   return text.match(PATH_RE) ?? [];
 }
 
-export function maskId(value: string): string {
-  return value.length <= 10 ? `${value.slice(0, 2)}…` : `${value.slice(0, 4)}…${value.slice(-4)}`;
-}
+/** Random per process, so fingerprints cannot be brute-forced or matched across reports. */
+const FINGERPRINT_KEY = randomBytes(32);
 
+/** Compares ids between reports built in the same process (diff, compare) without revealing them. */
 export function fingerprint(value: string): string {
-  return hash('sha256', value).slice(0, 12);
+  return createHmac('sha256', FINGERPRINT_KEY).update(value, 'utf8').digest('hex').slice(0, 16);
 }

@@ -44,7 +44,7 @@ export async function compareCommand(argv: string[], opts: CompareOptions, io: I
   for (const [n, r] of [[1, first], [2, second]] as const) {
     if (r.launch.stoppedBy === 'exit' && r.launch.exitCode !== 0) io.stderr(`whatleaks: note: run ${n} exited with code ${r.launch.exitCode ?? r.launch.signal}\n`);
   }
-  const ro = { samples: opts.samples, raw: opts.raw };
+  const ro = { samples: opts.samples, raw: opts.raw, aliases: new Map<string, string>() };
   const before = await reportFor(parseHar(serializeHar(first.har)), ro);
   const after = await reportFor(parseHar(serializeHar(second.har)), ro);
   io.stdout('\n');

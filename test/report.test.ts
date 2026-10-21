@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { buildMatchers } from '../src/analyze/identity.js';
 import { buildReport } from '../src/analyze/report.js';
@@ -15,13 +16,15 @@ describe('buildReport', () => {
     expect(r.totals).toMatchObject({ requests: 9, endpoints: 6, destinations: 6 });
     expect(r.endpoints.map((e) => [e.key, e.count, e.classification.category, e.classification.basis])).toEqual([
       ['POST api.segment.io/v1/batch', 3, 'analytics', 'catalog'],
+      ['POST o123.ingest.sentry.io/api/:id/envelope/', 1, 'errors', 'catalog'],
       ['POST collector.example.net/v1/traces', 1, 'analytics', 'heuristic'],
       ['POST telemetry.example-tool.dev/v1/events', 1, 'analytics', 'heuristic'],
-      ['POST o123.ingest.sentry.io/api/:id/envelope/', 1, 'errors', 'catalog'],
       ['POST flags.example.com/sdk/evalx/abc', 1, 'flags', 'heuristic'],
       ['GET registry.npmjs.org/left-pad', 2, 'other', 'none'],
     ]);
-    expect(r.totals.telemetryRequests).toBe(7);
+    // Only catalog hosts count as telemetry; URL guesses are counted separately.
+    expect(r.totals.telemetryRequests).toBe(4);
+    expect(r.totals.guessedTelemetryRequests).toBe(3);
   });
 
   it('computes timing and rates', () => {
@@ -56,10 +59,13 @@ describe('buildReport', () => {
     expect(r.findings.at(-1)?.severity).toBe('medium');
   });
 
-  it('lists repeated identifiers with a fingerprint, masked', () => {
-    const anon = r.ids.find((x) => x.display === '0f8f…950e');
-    expect(anon).toMatchObject({ requests: 3, locations: ['batch[].anonymousId'] });
-    expect(anon?.fingerprint).toMatch(/^[0-9a-f]{12}$/);
+  it('lists repeated identifiers under an alias, with a keyed fingerprint', () => {
+    const anon = r.ids.find((x) => x.locations.includes('batch[].anonymousId'));
+    expect(anon).toMatchObject({ requests: 3, display: '‹id-1›' });
+    expect(anon?.fingerprint).toMatch(/^[0-9a-f]{16}$/);
+    // The fingerprint is an HMAC with a per-process key, not a plain hash of the value.
+    expect(anon?.fingerprint).not.toBe(createHash('sha256').update(ANON_ID).digest('hex').slice(0, 16));
+    expect(r.ids.find((x) => x.locations.includes('batch[].context.device.id'))?.display).toBe('‹sha256(mac)›');
     // Ids seen once are kept too (needed to find ids that persist across runs).
     expect(r.ids.find((x) => x.locations.includes('?machine'))).toMatchObject({ requests: 1, display: '‹machine-id›' });
   });

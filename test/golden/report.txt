@@ -1,5 +1,5 @@
 whatleaks · fake-tool build · 1m 00s · exit 0
-9 requests to 6 destinations · ≈2.3 KB sent · 7 to telemetry endpoints
+9 requests to 6 destinations · ≈2.3 KB sent · 4 to known telemetry endpoints · 3 more to endpoints guessed to be telemetry
 activity |▅█▅▃   ▃            | over 1m 00s
 
 WHAT IT SENT ABOUT YOU
@@ -19,7 +19,7 @@ WHAT IT SENT ABOUT YOU
       in [].contact
   ● Your git user name — 1 request to collector.example.net
       in body:strings
-  ○ Repeated identifiers: 2 ids reused across requests (0f8f…950e ×3, ‹sha256(mac)› ×3)
+  ○ Repeated identifiers: 2 ids reused across requests (‹id-1› ×3, ‹sha256(mac)› ×3)
       in batch[].anonymousId, batch[].context.device.id
 
 WHERE IT WENT
@@ -42,7 +42,7 @@ ENDPOINTS
             {
               "type": "track",
               "event": "Build Completed",
-              "anonymousId": "0f8f…950e",
+              "anonymousId": "‹id-1›",
               "context": {
                 "os": {
                   "name": "macOS"
@@ -52,6 +52,11 @@ ENDPOINTS
                 }
               },
         … 7 more lines (see --md)
+  POST o123.ingest.sentry.io/api/:id/envelope/  errors · Sentry
+      1 request · first +2.0s · 1/min · ≈172 B · status 200
+      fields: body
+      sample (+2.0s):
+        event from host ‹hostname› crashed
   POST collector.example.net/v1/traces  analytics?
       1 request · first +7.0s · 1/min · ≈155 B · status 200
       fields: body:strings
@@ -72,11 +77,6 @@ ENDPOINTS
             "contact": "‹email›"
           }
         ]
-  POST o123.ingest.sentry.io/api/:id/envelope/  errors · Sentry
-      1 request · first +2.0s · 1/min · ≈172 B · status 200
-      fields: body
-      sample (+2.0s):
-        event from host ‹hostname› crashed
   POST flags.example.com/sdk/evalx/abc  flags?
       1 request · first +6.0s · 1/min · ≈165 B · status 200
       fields: user.key (id)
@@ -97,4 +97,4 @@ NOT VISIBLE TO WHATLEAKS
 NOTES
   • 3 connections to 1 host did not accept the whatleaks certificate, so their contents are not in this report.
 
-Redacted: ‹labels› replace local identifiers and secrets; ids are masked. Use --raw to see everything.
+Redacted: ‹labels› replace local identifiers and secrets; ids are replaced by aliases. Use --raw to see everything.

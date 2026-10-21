@@ -134,3 +134,43 @@ before/after with `whatleaks diff` for those.
 parses any `--no-*` flag as a boolean negation, so it cannot take a value.
 `--passthrough` matches mockttp's own term (`tlsPassthrough`). Tunnelled hosts are
 counted and listed under "not visible".
+
+**D-19 — The `basic-ftp` override does not reach installed copies; this needs an owner
+decision before publishing.** npm applies `overrides` only in the root project. A
+packed install (`npm install whatleaks-0.1.0.tgz`) pulls `basic-ftp@5.3.1`, and
+`npm audit` there reports it. The vulnerable path is mockttp → pac-proxy-agent →
+get-uri, which fetches PAC files over `ftp://`. whatleaks never configures a PAC file,
+so the path is unreachable. Options before publishing:
+- (a) accept it and document it
+- (b) bundle mockttp into `dist/` (`noExternal`), which keeps the same code but hides
+  it from audit, so this is not recommended
+- (c) ask mockttp upstream to bump pac-proxy-agent
+
+Recommendation: (a) now, (c) as a follow-up.
+
+**D-20 — Warn when the `node` on PATH cannot use the proxy, instead of injecting a
+preload.**
+- Node earlier than 22.21, and 24.0–24.4 for `http`/`https`, ignores
+  `NODE_USE_ENV_PROXY`.
+- A `NODE_OPTIONS=--require` preload could patch the global dispatcher, which is how
+  HTTP Toolkit does it. But it would edit the app's own `NODE_OPTIONS` and depend on
+  Node internals.
+- whatleaks instead checks `node --version` on the child's PATH, prints a warning, and
+  adds a report note.
+
+Revisit if many users run old Node.
+
+**D-21 — Idle time after exit counts from the exit, and requests are recorded at
+request-initiated.** Both came from real runs:
+- `next dev` hands its last telemetry event to a detached helper on SIGTERM. The helper
+  started 0.3 s after exit, after the old idle check (1 s since last activity) had
+  already passed.
+- Turborepo exits before its telemetry responses arrive.
+
+A request is now kept from its headers, and marked if its body never completed.
+
+**D-22 — The end-to-end demo uses Node 22.23.3 for the child.** Next.js 16.4.2's
+telemetry throws inside the process on Node 24.22 and 26.0 (e2e §3), so nothing would
+be sent. Node 22.21+ has both working Next telemetry and `NODE_USE_ENV_PROXY`. The
+official binary was downloaded to `/tmp` and checksum-verified; nothing was installed
+system-wide. whatleaks itself ran on the machine's Node 26.0.0.

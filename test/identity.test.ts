@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMatchers, findEmails, findPaths, maskId, scanIdentity } from '../src/analyze/identity.js';
+import { buildMatchers, findEmails, findPaths, scanIdentity } from '../src/analyze/identity.js';
 import { FAKE_IDS, md5, sha256 } from './helpers/fixtures.js';
 
 const matchers = buildMatchers(FAKE_IDS);
@@ -10,6 +10,12 @@ describe('identity matching', () => {
     expect(kinds('user=JaneDoe;')).toEqual(['username:raw']);
     expect(kinds('janedoe2')).toEqual([]);
     expect(kinds('host janes-mbp up')).toEqual(['hostname:raw']);
+  });
+
+  it('matches paths and base64 case-sensitively, names and hashes case-insensitively', () => {
+    expect(kinds('GET /api/users/janedoe/x')).toEqual(['username:raw']);
+    expect(kinds('cwd=/Users/janedoe/x')).toEqual(['home:raw']);
+    expect(kinds(Buffer.from('jane@doe.dev').toString('base64').toLowerCase())).toEqual([]);
   });
 
   it('reports a username inside the home path once, as the home path', () => {
@@ -55,8 +61,4 @@ describe('generic detectors', () => {
     expect(findPaths('/api/v1/record')).toEqual([]);
   });
 
-  it('masks ids for display', () => {
-    expect(maskId('0f8fad5b-d9cb-469f-a165-70867728950e')).toBe('0f8f…950e');
-    expect(maskId('short')).toBe('sh…');
-  });
 });

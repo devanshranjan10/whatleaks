@@ -2,24 +2,25 @@ whatleaks diff · before "on" (1m 00s, 9 requests) → after "opted-out" (50.0 s
 command: fake-tool build
 opted out with: DO_NOT_TRACK NEXT_TELEMETRY_DISABLED
 
-3 telemetry endpoints still contacted after opting out: 2 of the 5 from the first run, plus 1 new.
-Telemetry requests: 7 → 4 · all requests: 9 → 5
+1 telemetry endpoint still contacted after opting out: 1 of the 2 from the first run.
+Telemetry requests: 4 → 2 · all requests: 9 → 5
 
 STILL SENDING AFTER OPT-OUT
   ● POST api.segment.io/v1/batch  analytics · Segment  3 → 2 requests
       still sent: batch[].anonymousId, batch[].event, batch[].type
       no longer sent: batch[].context.device.id, batch[].context.os.name, batch[].properties.cwd, batch[].properties.durationMs, header:authorization
       newly sent: batch[].optedOut
-  ● POST flags.example.com/sdk/evalx/abc  flags?  1 → 1 requests
-      still sent: user.key
-
-NEW AFTER OPT-OUT
-  + POST telemetry.example-tool.dev/v2/ping  analytics?  0 → 1 requests
 
 STOPPED
+  ✓ POST o123.ingest.sentry.io/api/:id/envelope/  errors · Sentry  1 → 0 requests
+
+POSSIBLY TELEMETRY
+  (guessed from the URL, not in the known-host catalog; not counted above)
+  ? POST flags.example.com/sdk/evalx/abc  flags?  1 → 1 requests
+      still sent: user.key
+  + POST telemetry.example-tool.dev/v2/ping  analytics?  0 → 1 requests
   ✓ POST collector.example.net/v1/traces  analytics?  1 → 0 requests
   ✓ POST telemetry.example-tool.dev/v1/events  analytics?  1 → 0 requests
-  ✓ POST o123.ingest.sentry.io/api/:id/envelope/  errors · Sentry  1 → 0 requests
 
 OTHER TRAFFIC
   (not identified as telemetry; check it yourself)
@@ -31,8 +32,8 @@ STILL SENT ABOUT YOU
   no longer sent: mac, home, username, machine-id, git-email, email, git-name
 
 PERSISTENT IDENTIFIERS
-  same value in both runs, so it is stored on disk and survives a restart
-  ○ 0f8f…950e at batch[].anonymousId → POST api.segment.io/v1/batch
+  same value in both runs: stored by the app or built into it, so it can link runs together
+  ○ ‹id-1› at batch[].anonymousId → POST api.segment.io/v1/batch
 
 NOTES
   • "Stopped" means not seen in the second run. Some tools send certain events only on first use, or upload on a later run, so repeat the comparison before relying on a stop.

@@ -1,5 +1,5 @@
-import type { Category, Classification, Endpoint, Finding, FindingKind, Report } from '../model.js';
-import { TELEMETRY_CATEGORIES } from '../model.js';
+import type { Classification, Endpoint, Finding, FindingKind, Report } from '../model.js';
+import { isGuessedTelemetry, isKnownTelemetry } from '../model.js';
 import { categoryRank } from '../analyze/classify.js';
 import { duration } from '../render/format.js';
 
@@ -33,6 +33,8 @@ export interface RunSummary {
   requests: number;
   telemetryRequests: number;
   optOutEnv: string[];
+  exitCode: number | null;
+  stoppedBy: string | null;
 }
 
 export interface Diff {
@@ -45,7 +47,11 @@ export interface Diff {
     telemetryEndpointsNew: number;
     telemetryRequestsBefore: number;
     telemetryRequestsAfter: number;
+    /** Endpoints guessed (not known) to be telemetry that were contacted in the second run. */
+    guessedStill: number;
   };
+  /** The second run did not exit cleanly, so "stopped" may just mean "crashed". */
+  inconclusive: boolean;
   endpoints: EndpointDiff[];
   /** Findings present in the second run, with the second run's counts. */
   findingsStill: Finding[];
@@ -59,7 +65,6 @@ export interface Diff {
   redacted: boolean;
 }
 
-export const isTelemetry = (c: Category): boolean => TELEMETRY_CATEGORIES.includes(c);
 
 function summary(r: Report): RunSummary {
   return {
@@ -69,6 +74,8 @@ function summary(r: Report): RunSummary {
     requests: r.totals.requests,
     telemetryRequests: r.totals.telemetryRequests,
     optOutEnv: r.capture.optOutEnv,
+    exitCode: r.capture.exitCode,
+    stoppedBy: r.capture.stoppedBy,
   };
 }
 
@@ -106,7 +113,8 @@ export function buildDiff(before: Report, after: Report): Diff {
   endpoints.sort(
     (x, y) =>
       STATUS_ORDER[x.status] - STATUS_ORDER[y.status] ||
-      Number(isTelemetry(y.classification.category)) - Number(isTelemetry(x.classification.category)) ||
+      Number(isKnownTelemetry(y.classification)) - Number(isKnownTelemetry(x.classification)) ||
+      Number(isGuessedTelemetry(y.classification)) - Number(isGuessedTelemetry(x.classification)) ||
       categoryRank(y.classification.category) - categoryRank(x.classification.category) ||
       (y.after?.count ?? y.before?.count ?? 0) - (x.after?.count ?? x.before?.count ?? 0) ||
       x.key.localeCompare(y.key),
@@ -123,19 +131,25 @@ export function buildDiff(before: Report, after: Report): Diff {
     }));
 
   const afterKinds = new Set(after.findings.map((f) => f.kind));
-  const tel = (r: Report): Endpoint[] => r.endpoints.filter((e) => isTelemetry(e.classification.category));
+  const tel = (r: Report): Endpoint[] => r.endpoints.filter((e) => isKnownTelemetry(e.classification));
   const headline = {
     telemetryEndpointsBefore: tel(before).length,
-    telemetryEndpointsStill: endpoints.filter((e) => e.status === 'still' && isTelemetry(e.classification.category)).length,
-    telemetryEndpointsNew: endpoints.filter((e) => e.status === 'new' && isTelemetry(e.classification.category)).length,
+    telemetryEndpointsStill: endpoints.filter((e) => e.status === 'still' && isKnownTelemetry(e.classification)).length,
+    telemetryEndpointsNew: endpoints.filter((e) => e.status === 'new' && isKnownTelemetry(e.classification)).length,
     telemetryRequestsBefore: before.totals.telemetryRequests,
     telemetryRequestsAfter: after.totals.telemetryRequests,
+    guessedStill: endpoints.filter((e) => e.status !== 'stopped' && isGuessedTelemetry(e.classification)).length,
   };
+  const inconclusive = after.capture.stoppedBy === 'interrupt' || (after.capture.stoppedBy === 'exit' && after.capture.exitCode !== 0 && after.capture.exitCode !== null);
 
   const caveats: string[] = [];
+  if (inconclusive) {
+    const how = after.capture.stoppedBy === 'interrupt' ? 'was interrupted' : `exited with code ${after.capture.exitCode}`;
+    caveats.push(`The second run ${how}. An app that fails early also stops sending, so a "stopped" result here does not show the opt-out worked.`);
+  }
   if (before.totals.requests === 0) caveats.push('The first run made no requests whatleaks could see, so there was nothing to compare against.');
   else if (headline.telemetryEndpointsBefore === 0) {
-    caveats.push('The first run contacted no known or guessed telemetry endpoints; check the full endpoint list before concluding nothing is sent.');
+    caveats.push('The first run contacted no known telemetry endpoints; check the full endpoint list before concluding nothing is sent.');
   }
   if (endpoints.some((e) => e.status === 'stopped')) {
     caveats.push(
@@ -162,12 +176,20 @@ export function buildDiff(before: Report, after: Report): Diff {
     findingsStopped: before.findings.map((f) => f.kind).filter((k) => !afterKinds.has(k)),
     persistentIds,
     hiddenAfter,
+    inconclusive,
     caveats,
     redacted: before.redacted && after.redacted,
   };
 }
 
-/** `--strict`: any telemetry endpoint contacted in the second run. */
+/** `--strict`: any known telemetry endpoint contacted in the second run. */
 export function stillSendsTelemetry(diff: Diff): boolean {
-  return diff.endpoints.some((e) => e.status !== 'stopped' && isTelemetry(e.classification.category));
+  return diff.endpoints.some((e) => e.status !== 'stopped' && isKnownTelemetry(e.classification));
+}
+
+/** Why `--strict` fails, if it does. */
+export function strictFailure(diff: Diff): string | undefined {
+  if (stillSendsTelemetry(diff)) return 'known telemetry endpoints were still contacted in the second run';
+  if (diff.inconclusive) return 'the second run did not exit cleanly, so the result is inconclusive';
+  return undefined;
 }

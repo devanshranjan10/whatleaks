@@ -28,12 +28,16 @@ export async function loadCapture(path: string): Promise<Capture> {
   }
 }
 
-export async function reportFor(capture: Capture, opts: { samples: number; raw: boolean; label?: string }): Promise<Report> {
+export async function reportFor(
+  capture: Capture,
+  opts: { samples: number; raw: boolean; label?: string; aliases?: Map<string, string> },
+): Promise<Report> {
   return buildReport(capture, {
     matchers: await matchersFor(capture),
     samples: opts.samples,
     raw: opts.raw,
     ...(opts.label ? { label: opts.label } : {}),
+    ...(opts.aliases ? { aliases: opts.aliases } : {}),
   });
 }
 
