@@ -76,3 +76,24 @@ count, even though its payload is not visible.
 **Safety issue found:** `MockttpServer.start()` calls `this.server.listen(port)` with
 no host, so the proxy would listen on every interface. whatleaks must force
 `127.0.0.1` (see D-08).
+
+## 5. Capture facts verified against official docs (agent run, 2026-10-21)
+
+Each fact was checked against official docs, and most were also run on this Mac with
+Node 26.0.0, Node 22.19.0, Apple curl 8.7.1, Python 3.14/3.13/Apple 3.9, Go 1.26.5
+and Bun 1.3.11.
+
+| Fact | Source | Consequence for whatleaks |
+|---|---|---|
+| `NODE_USE_ENV_PROXY=1` was added in v24.0.0 and v22.21.0. It covers `fetch`, plus `http`/`https` since 24.5.0 and 22.21.0. It reads `HTTP(S)_PROXY`/`NO_PROXY`, with lowercase taking precedence. Stability 1.1 (experimental). | nodejs.org/api/http.html#built-in-proxy-support, nodejs.org/api/cli.html#node_use_env_proxy1 | Set the env var and **never** put `--use-env-proxy` in `NODE_OPTIONS`: Node 22.19 refuses to start (exit 9). Node older than 22.21 ignores it, so its traffic goes direct and is caught by the direct watcher. |
+| `NODE_EXTRA_CA_CERTS` *extends* the bundled roots and is read once at startup. `fetch` honours it (observed). | nodejs.org/api/cli.html#node_extra_ca_certsfile | Point it at `ca.pem` (just the CA). |
+| `REQUESTS_CA_BUNDLE`, `CURL_CA_BUNDLE`, httpx/urllib `SSL_CERT_FILE` and Go on Linux all *replace* the default roots. | requests docs (advanced#proxies), python-httpx.org/environment_variables, curl.se/docs/manpage.html | Point them at `bundle.pem` (CA plus Node's root store), so any request that goes direct still verifies. |
+| curl ignores uppercase `HTTP_PROXY`. Go and reqwest read uppercase first; Node, Python and curl prefer lowercase. | curl manpage, pkg.go.dev/net/http#ProxyFromEnvironment, nodejs docs | Set both cases to the same value. |
+| Go on macOS ignores `SSL_CERT_FILE` (platform verifier since 1.18). reqwest 0.13 on macOS uses rustls-platform-verifier. | pkg.go.dev/crypto/x509#SystemCertPool, go.dev/doc/go1.18, reqwest 0.13.0 changelog | These apps refuse the CA. whatleaks reports them by SNI hostname as "not inspectable" (consistent with D-04). |
+| Apple `/usr/bin/python3` (LibreSSL 2.8.3) ignored `SSL_CERT_FILE` (observed). Homebrew and python.org builds honour it. | observed | A limitation to document. |
+| Deno: `HTTP(S)_PROXY`, `DENO_CERT`, and `NODE_EXTRA_CA_CERTS` in Deno 2.8+. Bun: `HTTP(S)_PROXY`, and `SSL_CERT_FILE` is additive. | docs.deno.com/runtime/reference/env_variables, bun.com/docs | Set `DENO_CERT=ca.pem`. Bun is covered by the existing variables. |
+| mockttp's `server.url`/`proxyEnv` return `https://localhost:PORT` when HTTPS is configured, and clients then hang doing TLS to the proxy. | observed | Give the child `http://127.0.0.1:PORT`. |
+| mockttp `tls-client-error` events carry no `destination`, only `tlsMetadata.sniHostname`. | observed | Name refused hosts by SNI. |
+| HAR 1.2: `postData.text` and `params` are mutually exclusive, and `postData` has no `encoding` field. Custom fields must start with `_`. | softwareishard.com/blog/har-12-spec | Use `_encoding: "base64"` for binary request bodies (already in the types). |
+| `lsof -F` output: `p` pid, `c` command, `f` fd, `t` type, `P` protocol, `n` `local->remote`, `T` `ST=…`. Without `-a`, selections are ORed. On macOS, users can see their own processes. | lsof.readthedocs.io (manpage, "Output for other programs") | `lsof -a -p <pids> -i -n -P -F pcPnT`. Linux availability is not guaranteed; fail soft. |
+| Next.js: `NEXT_TELEMETRY_DISABLED=1` opts out. With `NEXT_TELEMETRY_DEBUG=1`, data "will **not be sent**" and is printed instead. | nextjs.org/telemetry | Ground truth needs a separate debug run. |

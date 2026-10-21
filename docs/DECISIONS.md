@@ -95,3 +95,23 @@ configures.
 - The override clears the audit, and `get-uri` and `mockttp` still load.
 - If a later get-uri breaks on basic-ftp 6, drop the override. The FTP path is
   unreachable in whatleaks.
+
+**D-14 — Redacted reports also mask app-generated ids.** In the default (shareable)
+report:
+- local identifiers become labels such as `‹home›` or `‹sha256(mac)›`
+- secret-named headers, fields and query params become `‹redacted›`
+- other emails become `‹email›`
+- every id-shaped value (UUID, long hex, opaque token) is masked to `0f8f…950e`
+
+Why: an install id or anonymous id in a public report links the report to its
+author's telemetry stream. The test suite caught this: the first build printed an
+`authorization` header and an `anonymousId` in field examples. The mask keeps four
+characters at each end, so the same id is still recognisable within one report.
+`--raw` shows everything.
+
+**D-15 — Identity matching includes hashes.** Each local identifier (username,
+hostname, home, MAC, machine id, git email and name) is also matched as md5, sha1 and
+sha256 hex, plus base64 for the longer ones. Telemetry SDKs commonly send
+`sha256(MAC)` as a "machine id". Short or generic names (`root`, `admin`, anything
+under 4 characters) are skipped to avoid noise. Matches are blanked as they are found,
+so a username inside a matched home path counts once, as the home path.
