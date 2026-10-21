@@ -33,7 +33,7 @@ export function htkMissing(): string | undefined {
 }
 
 /** The server, in its own process group: its launcher is a shell script that starts node. */
-export async function startHtkServer(): Promise<{ stop: () => void }> {
+export async function startHtkServer(): Promise<{ stop: () => void; pgid: number }> {
   mkdirSync(HTK_CONFIG, { recursive: true });
   const proc = spawn(HTK_BIN, ['start', '--config', HTK_CONFIG], { stdio: ['ignore', 'pipe', 'pipe'], detached: true });
   let log = '';
@@ -51,7 +51,24 @@ export async function startHtkServer(): Promise<{ stop: () => void }> {
     stop();
     throw new Error(`HTTP Toolkit server did not start:\n${log}`);
   }
-  return { stop };
+  return { stop, pgid: proc.pid! };
+}
+
+/** CPU seconds and resident memory of a process group (the server and the node it starts). */
+export async function groupUsage(pgid: number): Promise<{ cpuSec: number; rssBytes: number }> {
+  const { execFileSync } = await import('node:child_process');
+  const out = execFileSync('ps', ['-A', '-o', 'pgid=,time=,rss='], { encoding: 'utf8' });
+  let cpuSec = 0;
+  let rssBytes = 0;
+  for (const line of out.split('\n')) {
+    const [g, time, rss] = line.trim().split(/\s+/);
+    if (Number(g) !== pgid || !time) continue;
+    // [[dd-]hh:]mm:ss[.cc]
+    const parts = time.replace(/^(\d+)-/, (_, d: string) => `${Number(d) * 24}:`).split(':').map(Number);
+    cpuSec += parts.reduce((acc, x) => acc * 60 + x, 0);
+    rssBytes += Number(rss) * 1024;
+  }
+  return { cpuSec, rssBytes };
 }
 
 export interface HtkObserved {

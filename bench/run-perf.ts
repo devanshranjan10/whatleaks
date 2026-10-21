@@ -1,5 +1,6 @@
 /**
- * Cost of capturing: the same client run directly, under whatleaks, and under mitmproxy.
+ * Cost of capturing: the same client run directly, under whatleaks, under mitmproxy and
+ * under HTTP Toolkit (when its server is set up; see bench/htk.ts).
  *
  *   npx tsx bench/run-perf.ts [--cli dist/cli.js] [--tag after]
  *
@@ -13,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { buildChildEnv } from '../src/capture/env.js';
 import { type Lab, startLab } from './lab/server.js';
+import { groupUsage, htkMissing, spawnIntercepted, startHtkServer, startHtkSession } from './htk.js';
 import { WLB, mitmBundle, parseTimeL, percentile, sleep, startMitm, waitExit } from './lib.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -21,7 +23,7 @@ const CLI = resolve(flags.cli ?? join(root, 'dist/cli.js'));
 const CLIENT = join(root, 'bench/lab/clients/perf-client.mjs');
 const PROXY_VARS = ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'NODE_USE_ENV_PROXY'];
 
-type Tool = 'direct' | 'whatleaks' | 'mitmproxy';
+type Tool = 'direct' | 'whatleaks' | 'mitmproxy' | 'httptoolkit';
 interface Workload {
   id: string;
   title: string;
@@ -113,6 +115,31 @@ async function runMitm(lab: Lab, w: Workload, out: string): Promise<Measured> {
   return summarise('mitmproxy', w, JSON.parse(readFileSync(out, 'utf8')) as ClientResult, parseTimeL(mitm.log()));
 }
 
+/**
+ * HTTP Toolkit: a session as its app starts one, the client run through its terminal
+ * setup script. Its server runs all the time, so CPU is the server's usage during the
+ * workload and memory its peak resident size, sampled every 100 ms.
+ */
+async function runHtk(lab: Lab, w: Workload, out: string, pgid: number): Promise<Measured> {
+  const session = await startHtkSession(readFileSync(lab.caPath, 'utf8'));
+  const before = await groupUsage(pgid);
+  let peak = before.rssBytes;
+  let sampling = true;
+  const sampler = (async () => {
+    while (sampling) {
+      peak = Math.max(peak, (await groupUsage(pgid)).rssBytes);
+      await sleep(100);
+    }
+  })();
+  const child = spawnIntercepted(session.setupScript, [process.execPath, CLIENT, ...w.args], { cwd: WLB, env: cleanEnv(lab, out) });
+  await waitExit(child, 300_000);
+  sampling = false;
+  await sampler;
+  const after = await groupUsage(pgid);
+  await session.stop();
+  return summarise('httptoolkit', w, JSON.parse(readFileSync(out, 'utf8')) as ClientResult, { maxRssBytes: peak, userSec: after.cpuSec - before.cpuSec, sysSec: 0 });
+}
+
 /** Wall time of a one-request app, bare and under whatleaks (default flags). */
 async function startup(lab: Lab, n: number): Promise<{ directMs: number[]; whatleaksMs: number[] }> {
   const res = { directMs: [] as number[], whatleaksMs: [] as number[] };
@@ -139,12 +166,14 @@ const f = (n: number | undefined, d = 1): string => (n === undefined || Number.i
 async function main(): Promise<void> {
   mkdirSync(join(WLB, 'perf'), { recursive: true });
   const lab = await startLab(join(WLB, 'lab-certs'));
+  const htk = htkMissing() ? undefined : await startHtkServer();
   const results: Measured[] = [];
   for (const w of WORKLOADS) {
-    for (const tool of ['direct', 'whatleaks', 'mitmproxy'] as Tool[]) {
+    for (const tool of ['direct', 'whatleaks', 'mitmproxy', ...(htk ? ['httptoolkit'] : [])] as Tool[]) {
       const out = join(WLB, 'perf', `${w.id}-${tool}.json`);
       rmSync(out, { force: true });
-      const m = tool === 'direct' ? await runDirect(lab, w, out) : tool === 'whatleaks' ? await runWhatleaks(lab, w, out) : await runMitm(lab, w, out);
+      const m =
+        tool === 'direct' ? await runDirect(lab, w, out) : tool === 'whatleaks' ? await runWhatleaks(lab, w, out) : tool === 'mitmproxy' ? await runMitm(lab, w, out) : await runHtk(lab, w, out, htk!.pgid);
       results.push(m);
       console.error(`${w.id.padEnd(10)} ${tool.padEnd(10)} p50 ${f(m.p50)} ms  p95 ${f(m.p95)} ms  ${m.mbPerSec ? `${f(m.mbPerSec)} MiB/s  ` : ''}rss ${f(m.maxRssMiB, 0)} MiB  cpu ${f(m.cpuSec, 2)} s`);
       await sleep(500);
@@ -152,6 +181,7 @@ async function main(): Promise<void> {
   }
   const st = await startup(lab, Number(flags.startups));
   await lab.close();
+  htk?.stop();
 
   // Load average at the end: the machine is a working desktop, not an idle bench box.
   const meta = { tag: flags.tag, date: new Date().toISOString(), machine: `${os.type()} ${os.release()} ${os.arch()}, ${os.cpus().length} CPUs`, node: process.version, cli: CLI, loadavg: os.loadavg().map((x) => Number(x.toFixed(1))) };
@@ -163,7 +193,7 @@ async function main(): Promise<void> {
       // "tool CPU": whatleaks' total minus the bare client's (it includes the app it runs);
       // mitmproxy's own process only; the client itself for "direct".
       const bare = ms.find((x) => x.tool === 'direct')?.cpuSec;
-      const tool = m.tool === 'whatleaks' && m.cpuSec !== undefined && bare !== undefined ? m.cpuSec - bare : m.tool === 'mitmproxy' ? m.cpuSec : undefined;
+      const tool = m.tool === 'whatleaks' && m.cpuSec !== undefined && bare !== undefined ? m.cpuSec - bare : m.tool === 'mitmproxy' || m.tool === 'httptoolkit' ? m.cpuSec : undefined;
       lines.push(`| ${m.tool} | ${f(m.p50)} | ${f(m.p95)} | ${f(m.p99)} | ${f(m.mbPerSec)} | ${f(m.maxRssMiB, 0)} | ${f(m.cpuSec, 2)} | ${f(tool, 2)} |`);
     }
     lines.push('');
