@@ -1,0 +1,42 @@
+PASS  Node fetch captured with body  entries=1 watcher=on
+PASS  node:http2 (ignores the proxy) named as a direct connection, held 600 ms  ["104.20.23.154:443 node ×1"]
+PASS  raw TCP held 10 ms named (Linux: a closed socket has no owner, so only live ones count), 20 runs  20/20
+PASS  detached helper sending 2 s after its parent exited  entries=1
+PASS  process tree and watcher work without ps/lsof/netstat  watcher=on notes=[]
+{
+  "node": "v22.23.3",
+  "platform": "linux",
+  "arch": "arm64",
+  "results": [
+    {
+      "id": "fetch",
+      "title": "Node fetch captured with body",
+      "ok": true,
+      "detail": "entries=1 watcher=on"
+    },
+    {
+      "id": "http2-direct",
+      "title": "node:http2 (ignores the proxy) named as a direct connection, held 600 ms",
+      "ok": true,
+      "detail": "[\"104.20.23.154:443 node ×1\"]"
+    },
+    {
+      "id": "tcp-10ms",
+      "title": "raw TCP held 10 ms named (Linux: a closed socket has no owner, so only live ones count), 20 runs",
+      "ok": true,
+      "detail": "20/20"
+    },
+    {
+      "id": "helper-2s",
+      "title": "detached helper sending 2 s after its parent exited",
+      "ok": true,
+      "detail": "entries=1"
+    },
+    {
+      "id": "no-tools",
+      "title": "process tree and watcher work without ps/lsof/netstat",
+      "ok": true,
+      "detail": "watcher=on notes=[]"
+    }
+  ]
+}

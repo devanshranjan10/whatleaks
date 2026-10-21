@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { NetstatWatcher, maybeTruncated, parseNetstat } from '../src/capture/netstat.js';
+import { NetstatWatcher, maybeTruncated, netstatSource, parseNetstat } from '../src/capture/netstat.js';
 import { createObserver } from '../src/capture/observer.js';
 import type { ProcRow } from '../src/capture/proctree.js';
 
@@ -34,7 +34,7 @@ describe('parseNetstat (macOS netstat -anvW)', () => {
 describe('NetstatWatcher', () => {
   it('attributes sockets by pid, including closed ones, counts connections, skips loopback and DNS', async () => {
     let t = Date.parse('2026-10-21T10:00:00Z');
-    const w = new NetstatWatcher(() => Promise.resolve(fixture()), () => (t += 100));
+    const w = new NetstatWatcher(netstatSource(() => Promise.resolve(fixture())), () => (t += 100));
     await w.poll(() => true);
     await w.poll(() => true);
     const app = new Set([601, 702]);
@@ -48,7 +48,7 @@ describe('NetstatWatcher', () => {
   });
 
   it('uses a full address from lsof when netstat cut it', async () => {
-    const w = new NetstatWatcher(() => Promise.resolve(fixture()));
+    const w = new NetstatWatcher(netstatSource(() => Promise.resolve(fixture())));
     await w.poll(() => true);
     expect(w.truncated(new Set([705]))).toEqual([{ pid: 705, localPort: 53680 }]);
     w.setFullRemote(705, 53680, '2404:6800:4013:806::200e');
@@ -57,7 +57,7 @@ describe('NetstatWatcher', () => {
   });
 
   it('does not remember sockets it is told to ignore', async () => {
-    const w = new NetstatWatcher(() => Promise.resolve(fixture()));
+    const w = new NetstatWatcher(netstatSource(() => Promise.resolve(fixture())));
     await w.poll((pid) => pid !== 94215);
     expect(w.pids().sort()).toEqual([601, 702, 705]);
   });

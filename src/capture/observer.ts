@@ -1,5 +1,7 @@
 import { DirectWatcher, type Reverse, type RunLsof, type RunLsofPort, isLoopback, parseLsof, proxyClients, runLsof, runLsofPort } from './direct.js';
-import { NetstatWatcher, type RunNetstat, runNetstat } from './netstat.js';
+import { NetstatWatcher, type RunNetstat, type SocketSource, netstatSource } from './netstat.js';
+import { cwdOfProc, listProcessesProc, listSomeProc, procSocketSource } from './procfs.js';
+import { existsSync } from 'node:fs';
 import { realpathSync } from 'node:fs';
 import { type CwdOf, type ListProcesses, type ListSome, ProcessTracker, cwdOf, listProcesses, listSome } from './proctree.js';
 import type { SessionObserver, SessionObserverFactory } from './session.js';
@@ -11,7 +13,10 @@ export interface ObserverDeps {
   listSome?: ListSome;
   lsof?: RunLsof;
   lsofPort?: RunLsofPort;
+  /** macOS netstat text (tests); ignored when `sockets` is given. */
   netstat?: RunNetstat;
+  /** Socket source; defaults to netstat on macOS and /proc on Linux. */
+  sockets?: SocketSource;
   cwdOf?: CwdOf;
   reverse?: Reverse;
   treeEveryMs?: number;
@@ -99,18 +104,30 @@ async function withReverse(list: DirectConn[], reverse: Reverse, timeoutMs = 100
  * are kept by pid and attributed once the pid is known to be the app's, so a child that
  * connects and exits between two process listings still counts, and a final sweep finds
  * connections that already closed (TIME_WAIT keeps the pid).
- * Elsewhere: `lsof` for the tracked pids every 500 ms.
+ * Linux: the same from /proc every 20 ms (a closed socket keeps no owner there, so there
+ * is no sweep). Elsewhere: `lsof` for the tracked pids every 500 ms.
  */
 export function createObserver(deps: ObserverDeps = {}): SessionObserverFactory {
   const platform = deps.platform ?? process.platform;
-  return platform === 'darwin' ? netstatObserver(deps) : lsofObserver(deps);
+  if (platform === 'darwin') return netstatObserver(deps, 'netstat');
+  // Linux: /proc needs no tools at all (slim containers have no ps, lsof or netstat).
+  if (platform === 'linux' && (deps.sockets || existsSync('/proc/net/tcp'))) {
+    return netstatObserver({ list: listProcessesProc, listSome: listSomeProc, cwdOf: cwdOfProc, ...deps }, 'proc');
+  }
+  return lsofObserver(deps);
 }
 
-function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
+/**
+ * `netstat` (macOS): netstat cuts long IPv6 addresses, so lsof is asked for them.
+ * `proc` (Linux): closed sockets lose their owner, so /proc is read every 20 ms instead of 100.
+ */
+function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): SessionObserverFactory {
+  const fillsTruncated = backend === 'netstat';
   return (rootPid, proxyPort, watch, cwd): SessionObserver => {
     const tracker = new ProcessTracker(rootPid, deps.list ?? listProcesses);
     const judge = orphanJudge(tracker, cwd, deps.cwdOf ?? cwdOf);
-    const watcher = new NetstatWatcher(deps.netstat ?? runNetstat);
+    const sockets = deps.sockets ?? (backend === 'proc' ? procSocketSource() : netstatSource(deps.netstat));
+    const watcher = new NetstatWatcher(sockets, Date.now, fillsTruncated);
     const some = deps.listSome ?? listSome;
     const lsof = deps.lsof ?? runLsof;
     const notes: string[] = [];
@@ -133,12 +150,13 @@ function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
     };
     // Children get higher pids than the app (until the pid counter wraps), so other
     // processes' sockets are not even remembered.
-    const keep = (pid: number): boolean => watch && pid !== process.pid && (pid > rootPid || tracker.everTracked(pid));
+    const interest = (pid: number): boolean => pid !== process.pid && (pid > rootPid || tracker.everTracked(pid));
+    const keep = (pid: number): boolean => watch && interest(pid);
     const sample = async (): Promise<void> => {
       if (!sockOk) return;
       let rows;
       try {
-        rows = await watcher.poll(keep, (pid) => tracker.everTracked(pid));
+        rows = await watcher.poll(keep, (pid) => tracker.everTracked(pid), interest);
       } catch {
         sockOk = false;
         return;
@@ -163,10 +181,11 @@ function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
       }
     };
     const treeLoop = loop(deps.treeEveryMs ?? 100, refresh);
-    const watchLoop = loop(deps.watchEveryMs ?? 100, sample);
+    const watchLoop = loop(deps.watchEveryMs ?? (backend === 'proc' ? 20 : 100), sample);
 
     /** netstat cuts long IPv6 addresses; ask lsof for the full one while the process lives. */
     const fillTruncated = async (): Promise<void> => {
+      if (!fillsTruncated) return;
       const alive = new Set(tracker.alive());
       const cut = watcher.truncated(alive);
       if (!cut.length) return;
@@ -195,7 +214,7 @@ function netstatObserver(deps: ObserverDeps): SessionObserverFactory {
         const isApp = (pid: number): boolean => tracker.everTracked(pid);
         const direct = watch && sockOk ? await withReverse(watcher.results(isApp, (pid) => tracker.name(pid)), deps.reverse ?? dns.reverse) : [];
         notes.push(...likelyNote(tracker));
-        if (watch && !sockOk) notes.push('Could not run netstat, so connections that bypassed the proxy are not listed.');
+        if (watch && !sockOk) notes.push(`Could not ${fillsTruncated ? 'run netstat' : 'read /proc'}, so connections that bypassed the proxy are not listed.`);
         if (watch && sockOk && watcher.dnsSamples(isApp) > 0) notes.push('The app talked to a DNS server directly; DNS lookups are not listed.');
         return { direct, watcher: watch ? (sockOk ? 'on' : 'unavailable') : 'off', notes };
       },

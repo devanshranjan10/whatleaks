@@ -84,22 +84,30 @@ const MAX_PENDING = 5000;
  * sockets can be attributed to the app's processes once those are known, including
  * processes found only later and connections already closed (TIME_WAIT keeps the pid).
  */
+/** Every socket worth a look, with its pid: from netstat (macOS) or /proc (Linux). */
+export type SocketSource = (keep: (pid: number) => boolean) => Promise<SockRow[]>;
+
+export const netstatSource = (run: RunNetstat = runNetstat): SocketSource => async () => parseNetstat(await run());
+
 export class NetstatWatcher {
   private readonly seen = new Map<string, Seen>();
   /** Full IPv6 addresses learned from lsof, by `pid localPort`. */
   private readonly fullRemote = new Map<string, string>();
 
   constructor(
-    private readonly netstat: RunNetstat = runNetstat,
+    private readonly sockets: SocketSource = netstatSource(),
     private readonly now: () => number = Date.now,
+    /** netstat cuts long IPv6 addresses; /proc does not. */
+    private readonly mayTruncate = true,
   ) {}
 
   /**
-   * Take one sample. `keep` says which pids' sockets to remember; when memory is full,
-   * the oldest sockets of pids that are not (yet) the app's are dropped first.
+   * Take one sample. `interest` says which pids a source that can filter (/proc) should
+   * look at; `keep` which pids' sockets to remember. When memory is full, the oldest
+   * sockets of pids that are not (yet) the app's are dropped first.
    */
-  async poll(keep: (pid: number) => boolean, isApp: (pid: number) => boolean = () => false): Promise<SockRow[]> {
-    const rows = parseNetstat(await this.netstat());
+  async poll(keep: (pid: number) => boolean, isApp: (pid: number) => boolean = () => false, interest: (pid: number) => boolean = keep): Promise<SockRow[]> {
+    const rows = await this.sockets(interest);
     const at = this.now();
     for (const r of rows) {
       if (r.remoteHost === undefined || isLoopback(r.remoteHost) || !keep(r.pid)) continue;
@@ -131,7 +139,7 @@ export class NetstatWatcher {
     const out: Array<{ pid: number; localPort: number }> = [];
     for (const s of this.seen.values()) {
       const r = s.row;
-      if (pids.has(r.pid) && r.remoteHost && maybeTruncated(r.remoteHost) && !this.fullRemote.has(`${r.pid} ${r.localPort}`)) {
+      if (this.mayTruncate && pids.has(r.pid) && r.remoteHost && maybeTruncated(r.remoteHost) && !this.fullRemote.has(`${r.pid} ${r.localPort}`)) {
         out.push({ pid: r.pid, localPort: r.localPort });
       }
     }
@@ -176,7 +184,7 @@ export class NetstatWatcher {
           lastAt: new Date(s.lastAt).toISOString(),
           samples: s.samples,
           locals: new Set([r.localPort]),
-          ...(maybeTruncated(remote) && remote === r.remoteHost ? { truncated: true } : {}),
+          ...(this.mayTruncate && maybeTruncated(remote) && remote === r.remoteHost ? { truncated: true } : {}),
         });
       }
     }

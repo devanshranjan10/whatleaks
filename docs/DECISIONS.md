@@ -241,3 +241,15 @@ of tracked pids. macOS keeps the last owner's pid on TIME_WAIT and FIN_WAIT sock
 a connection the app already closed is still attributed at the end of the run. A socket
 from an unknown pid higher than the app's is looked up once (`ps -p`) while it is alive,
 which catches short-lived children. lsof remains the backend on other platforms.
+
+**D-28 — Linux backend on `/proc`, polled every 20 ms.** Slim containers and CI images
+often have no `ps`, `lsof` or `netstat`, which left the process tree and the direct
+watcher off. Everything they gave is in `/proc`: `<pid>/stat` for the tree,
+`<pid>/cwd` for helper adoption, and `net/{tcp,tcp6,udp,udp6}` joined to the
+`socket:[inode]` links in `<pid>/fd` for sockets. Linux drops the owner of a closed
+socket (TIME_WAIT has inode 0), so there is no closing sweep as on macOS. Instead the
+poll is cheap enough to run every 20 ms: the tables are re-read only when a process holds
+an inode not seen before. Start times come from `/proc/uptime`, not `btime`; `btime` is
+whole seconds and drifts after a VM sleeps, which rejected helpers as "started before
+the run". Checked in `node:22-slim` (`bench/linux/check.mjs`): a 10 ms raw TCP connection
+was named in 20 of 20 runs.
