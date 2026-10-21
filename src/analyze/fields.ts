@@ -55,10 +55,11 @@ export function isIdLike(value: unknown): boolean {
   if (UUID_RE.test(v) && v.length <= 64) return true;
   if (HEX_RE.test(v)) return true;
   if (!TOKEN_RE.test(v)) return false;
-  // Opaque tokens mix letters and digits and are not dates, versions, URLs or paths.
-  if (!/\d/.test(v) || !/[A-Za-z]/.test(v)) return false;
+  // Not dates, versions, URLs or paths.
   if (/^\d{4}-\d{2}-\d{2}/.test(v) || v.includes('://') || v.startsWith('/') || /^\d+(\.\d+)+/.test(v)) return false;
-  return true;
+  // Opaque tokens mix letters and digits inside one long run; slugs like
+  // `claude-code_2-1-306_agent` are words and short numbers joined by separators.
+  return v.split(/[-_.:/+=]/).some((part) => part.length >= 8 && /\d/.test(part) && /[A-Za-z]/.test(part));
 }
 
 function typeOf(v: Leaf['value']): string {

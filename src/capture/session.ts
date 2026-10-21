@@ -4,6 +4,7 @@ import { PACKAGE_NAME, VERSION } from '../version.js';
 import { createSessionCA } from './ca.js';
 import { buildChildEnv } from './env.js';
 import { launch, type LaunchResult } from './launch.js';
+import { nodeWarning } from './nodecheck.js';
 import { startProxy } from './proxy.js';
 import { Recorder } from './recorder.js';
 
@@ -94,6 +95,11 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         ...(opts.extraEnv ? { extra: opts.extraEnv } : {}),
       });
       removed = childEnv.removed;
+      const warning = await nodeWarning(childEnv.env, opts.cwd);
+      if (warning) {
+        notes.push(warning);
+        opts.log(`whatleaks: warning: ${warning}`);
+      }
       opts.log(`whatleaks: recording ${opts.command} through ${proxy.url} (loopback only, single-run CA)`);
       launched = await launch({
         command: opts.command,
