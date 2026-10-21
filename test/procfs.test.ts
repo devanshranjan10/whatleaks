@@ -4,7 +4,7 @@ import { type ProcSocket, bootEpoch, parseHexAddr, parseNetTable, parseStat, pro
 describe('/proc parsers (Linux backend)', () => {
   it('reads pid, comm with spaces and parentheses, ppid and start ticks from /proc/<pid>/stat', () => {
     const stat = '4242 (node (worker) x) S 4100 4242 4100 34816 4242 4194304 1 0 0 0 5 1 0 0 20 0 11 0 987654 1234 56 18446744073709551615';
-    expect(parseStat(stat)).toEqual({ pid: 4242, comm: 'node (worker) x', ppid: 4100, startTicks: 987654 });
+    expect(parseStat(stat)).toEqual({ pid: 4242, comm: 'node (worker) x', state: 'S', ppid: 4100, startTicks: 987654 });
     expect(parseStat('garbage')).toBeUndefined();
   });
 

@@ -30,8 +30,28 @@ function install() {
   } catch {
     return;
   }
-  const isLocal = (h) => h === 'localhost' || h === '::1' || h === '[::1]' || /^127\./.test(h);
-  const bare = (h) => String(h).replace(/^\[|\]$/g, '');
+  const bare = (h) => String(h).replace(/^\[|\]$/g, '').toLowerCase();
+  const loopback = (h) => h === 'localhost' || h.endsWith('.localhost') || h === '::1' || h === '0.0.0.0' || h === '::' || /^(::ffff:)?127\./.test(h);
+  // NO_PROXY as curl and Node read it: '*', hosts (a leading '.' or '*.' matches
+  // subdomains too), optionally with ':port'.
+  const noProxy = String(env.NO_PROXY || env.no_proxy || '')
+    .split(/[,\s]+/)
+    .filter(Boolean)
+    .map((e) => {
+      e = e.toLowerCase();
+      // "[::1]:8080", "host:8080"; a bare IPv6 address has no port.
+      const m = /^\[([^\]]+)\](?::(\d+))?$/.exec(e) || (e.split(':').length === 2 ? /^([^:]*):(\d+)$/.exec(e) : null);
+      return { host: bare(m ? m[1] : e).replace(/^\*?\./, '.'), port: m && m[2] ? Number(m[2]) : 0 };
+    });
+  const isLocal = (h, port) => {
+    h = bare(h);
+    if (loopback(h)) return true;
+    return noProxy.some((e) => {
+      if (e.host === '*') return true;
+      if (e.port && e.port !== Number(port)) return false;
+      return e.host.startsWith('.') ? h.endsWith(e.host) || h === e.host.slice(1) : h === e.host;
+    });
+  };
   const authority = (h, p) => (net.isIPv6(bare(h)) ? `[${bare(h)}]:${p}` : `${h}:${p}`);
 
   /** A TCP socket to host:port through the proxy (HTTP CONNECT), or an error. */
@@ -44,11 +64,14 @@ function install() {
       done = true;
       s.removeListener('data', onData);
       s.removeListener('error', finish);
+      s.removeListener('close', onClose);
+      s.setTimeout(0);
       if (err) {
         s.destroy();
         cb(err);
       } else cb(null, s);
     };
+    const onClose = () => finish(new Error(`whatleaks proxy closed before answering CONNECT ${authority(host, port)}`));
     const onData = (d) => {
       head += d.toString('latin1');
       const end = head.indexOf('\r\n\r\n');
@@ -58,6 +81,8 @@ function install() {
     };
     s.on('data', onData);
     s.on('error', finish);
+    s.on('close', onClose);
+    s.setTimeout(30000, () => finish(new Error(`whatleaks proxy did not answer CONNECT ${authority(host, port)} within 30 s`)));
     const a = authority(host, port);
     s.write(`CONNECT ${a} HTTP/1.1\r\nHost: ${a}\r\n\r\n`);
   }
@@ -70,14 +95,15 @@ function install() {
     const httpCreate = http.Agent.prototype.createConnection;
     http.Agent.prototype.createConnection = function (opts, cb) {
       const host = opts.host || opts.hostname || 'localhost';
-      if (isLocal(bare(host)) || opts.socketPath) return httpCreate.call(this, opts, cb);
+      // Without a callback the caller wants a socket back at once; a tunnel cannot give one.
+      if (typeof cb !== 'function' || opts.socketPath || isLocal(host, opts.port || 80)) return httpCreate.call(this, opts, cb);
       tunnel(host, opts.port || 80, cb);
       return undefined;
     };
     const httpsCreate = https.Agent.prototype.createConnection;
     https.Agent.prototype.createConnection = function (opts, cb) {
       const host = opts.host || opts.hostname || 'localhost';
-      if (isLocal(bare(host)) || opts.socketPath) return httpsCreate.call(this, opts, cb);
+      if (typeof cb !== 'function' || opts.socketPath || isLocal(host, opts.port || 443)) return httpsCreate.call(this, opts, cb);
       tunnel(host, opts.port || 443, (err, sock) => {
         if (err) return cb(err);
         cb(null, tls.connect({ ...opts, socket: sock, servername: sni(host, opts.servername) }));
@@ -94,7 +120,17 @@ function install() {
     try {
       const s1 = Symbol.for('undici.globalDispatcher.1');
       const s2 = Symbol.for('undici.globalDispatcher.2');
-      globalThis.fetch('data:,').catch(() => {});
+      // Node 18 warns that fetch is experimental on first use; this call is ours, not the app's.
+      const emit = process.emitWarning;
+      process.emitWarning = function (w, ...rest) {
+        if (/fetch/i.test(String(w && w.message ? w.message : w))) return;
+        return emit.call(this, w, ...rest);
+      };
+      try {
+        globalThis.fetch('data:,').catch(() => {});
+      } finally {
+        process.emitWarning = emit;
+      }
       const current = globalThis[s2] || globalThis[s1];
       const Agent = current && current.constructor;
       if (typeof Agent === 'function') {
@@ -110,7 +146,7 @@ function install() {
               t.once('secureConnect', () => cb(null, t));
               t.once('error', cb);
             };
-            if (isLocal(bare(host))) {
+            if (isLocal(host, port)) {
               const s = net.connect({ host: bare(host), port });
               s.once('connect', () => upgrade(null, s));
               s.once('error', cb);

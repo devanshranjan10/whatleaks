@@ -12,6 +12,14 @@ describe('parsePs', () => {
     expect(rows[3]).toEqual({ pid: 94669, ppid: 94668, started: 'Tue Oct 21 09:10:00 2026', comm: 'node' });
     expect(rows[2]).toEqual({ pid: 94668, ppid: 94000, started: 'Tue Oct 21 09:00:01 2026', comm: '-zsh' });
   });
+
+  it('reads the optional stat column and leaves zombies out', () => {
+    const out = ['  501     1 Ss   Wed Oct 21 13:43:15 2026     /bin/zsh', '  502   501 Z+   Wed Oct 21 13:43:16 2026     node', '  503   501 R+   Wed Oct 21 13:43:17 2026     /usr/bin/curl'].join('\n');
+    expect(parsePs(out).map((r) => [r.pid, r.comm, r.started])).toEqual([
+      [501, 'zsh', 'Wed Oct 21 13:43:15 2026'],
+      [503, 'curl', 'Wed Oct 21 13:43:17 2026'],
+    ]);
+  });
 });
 
 const row = (pid: number, ppid: number, started: string, comm: string): ProcRow => ({ pid, ppid, started, comm });
@@ -88,6 +96,38 @@ describe('ProcessTracker: likely orphans and short-lived children', () => {
     await t.refresh();
     expect(t.alive().sort()).toEqual([10, 20]);
     expect(t.likelyCount()).toBe(0);
+  });
+
+  it('keeps a proxy client to adopt for a few listings, in case it started after the listing was taken', async () => {
+    let table = [row(10, 1, at(0), 'app')];
+    const t = new ProcessTracker(10, () => Promise.resolve(table));
+    t.adopt([77]);
+    await t.refresh();
+    table = [...table, row(77, 1, at(1), 'flush')];
+    await t.refresh();
+    expect(t.alive().sort()).toEqual([10, 77]);
+  });
+
+  it('does not adopt children of a tracked pid that has exited (the pid may be reused)', async () => {
+    let table = [row(10, 1, at(0), 'app'), row(11, 10, at(1), 'helper')];
+    const t = new ProcessTracker(10, () => Promise.resolve(table));
+    await t.refresh();
+    table = [row(10, 1, at(0), 'app')];
+    await t.refresh(); // 11 exited
+    t.consider([row(12, 11, at(9), 'stranger')]);
+    expect(t.everTracked(12)).toBe(false);
+    // Nor a later process holding the app's pid once the app is gone.
+    const late = new ProcessTracker(50, () => Promise.resolve([row(1, 0, at(-99), 'init')]));
+    for (let i = 0; i < 4; i++) await late.refresh();
+    expect(late.alive()).toEqual([]);
+  });
+
+  it('offers orphans re-parented to a subreaper above whatleaks (systemd --user), not its own children', async () => {
+    // init 1 → systemd --user 900 (subreaper) → shell 901 → whatleaks 902 → app 10 (exited)
+    const table = [row(1, 0, at(-99), 'init'), row(900, 1, at(-90), 'systemd'), row(901, 900, at(-80), 'bash'), row(902, 901, at(-1), 'node'), row(20, 900, at(2), 'helper'), row(21, 902, at(2), 'ps'), row(22, 77, at(2), 'unrelated')];
+    const t = new ProcessTracker(10, () => Promise.resolve(table), 902);
+    await t.refresh();
+    expect(t.orphanCandidates(startedSec(at(0))).map((r) => r.pid)).toEqual([20]);
   });
 
   it('adopts a child seen only once, through a targeted listing, and remembers exited pids', async () => {

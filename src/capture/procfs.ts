@@ -25,7 +25,7 @@ const TCP_STATES: Record<string, string> = {
  * `/proc/<pid>/stat`: "pid (comm) state ppid … starttime …". The command name can hold
  * spaces and parentheses, so the fields are read after the last ')'.
  */
-export function parseStat(text: string): { pid: number; comm: string; ppid: number; startTicks: number } | undefined {
+export function parseStat(text: string): { pid: number; comm: string; state: string; ppid: number; startTicks: number } | undefined {
   const open = text.indexOf('(');
   const close = text.lastIndexOf(')');
   if (open < 0 || close < open) return undefined;
@@ -35,7 +35,7 @@ export function parseStat(text: string): { pid: number; comm: string; ppid: numb
   const startTicks = Number(rest[19]);
   const pid = Number(text.slice(0, open).trim());
   if (!Number.isInteger(pid) || !Number.isInteger(ppid)) return undefined;
-  return { pid, comm: text.slice(open + 1, close), ppid, startTicks };
+  return { pid, comm: text.slice(open + 1, close), state: rest[0] ?? '', ppid, startTicks };
 }
 
 /**
@@ -59,13 +59,24 @@ function row(stat: NonNullable<ReturnType<typeof parseStat>>, boot: number): Pro
   return { pid: stat.pid, ppid: stat.ppid, started: lstart, comm: stat.comm };
 }
 
+let bootCache: number | undefined;
+/**
+ * Computed once per whatleaks process: start times feed process identities (pid plus
+ * start second), which must not change from one listing to the next.
+ */
+async function boot(): Promise<number> {
+  bootCache ??= bootEpoch(await readFile('/proc/uptime', 'utf8'), Date.now());
+  return bootCache;
+}
+
 async function stats(pids: number[]): Promise<ProcRow[]> {
-  const boot = bootEpoch(await readFile('/proc/uptime', 'utf8'), Date.now());
+  const bootAt = await boot();
   const rows = await Promise.all(
     pids.map(async (pid) => {
       try {
         const s = parseStat(await readFile(`/proc/${pid}/stat`, 'utf8'));
-        return s ? row(s, boot) : undefined;
+        // Zombies have exited; a container init that never reaps them would keep them forever.
+        return s && s.state !== 'Z' && s.state !== 'X' ? row(s, bootAt) : undefined;
       } catch {
         return undefined; // exited, or not ours to read
       }

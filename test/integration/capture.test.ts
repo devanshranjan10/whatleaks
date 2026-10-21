@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import net from 'node:net';
 import os from 'node:os';
@@ -117,6 +117,23 @@ describe('captureSession (offline, real child processes)', () => {
     ]);
   });
 
+  it('the Node preload honours NO_PROXY and leaves createConnection without a callback alone', async () => {
+    const child = `
+      const https = await import('node:https');
+      const s = new https.Agent().createConnection({ host: 'upstream.test', port: 443 });
+      s.on('error', () => {});
+      const kind = s && typeof s.on === 'function' ? 'socket' : String(s);
+      const skipped = await fetch('https://skip.test/x').then(() => 'reached', (e) => 'direct:' + (e.cause?.code ?? e.code));
+      await fetch('https://upstream.test/kept');
+      (await import('node:fs')).writeFileSync(process.env.OUT, JSON.stringify({ kind, skipped }));
+      process.exit(0);`;
+    const out = join(mkdtempSync(join(os.tmpdir(), 'wl-np-')), 'out.json');
+    const { har, launch } = await session(process.execPath, ['--input-type=module', '-e', child], { extraEnv: { WHATLEAKS_PRELOAD: 'force', NODE_USE_ENV_PROXY: '', NO_PROXY: 'localhost,.skip.test', OUT: out } });
+    expect(launch.exitCode).toBe(0);
+    expect(JSON.parse(readFileSync(out, 'utf8')) as unknown).toEqual({ kind: 'socket', skipped: 'direct:ENOTFOUND' });
+    expect(har.log.entries.map((e) => e.request.url)).toEqual(['https://upstream.test/kept']);
+  });
+
   it('does not load the preload with nodePreload: false', async () => {
     const { har } = await session(process.execPath, ['-e', "process.stdout.write(process.env.NODE_OPTIONS ?? ''); fetch('https://upstream.test/x').finally(() => process.exit(0))"], { nodePreload: false });
     expect(har.log.entries).toHaveLength(1);
@@ -139,6 +156,21 @@ describe('captureSession (offline, real child processes)', () => {
     // The first MiB is kept from the stream so the start of the body can still be read.
     expect(e?.request.postData?.text).toBe('x'.repeat(1024 * 1024));
     expect(e?.response.status).toBe(200);
+  });
+
+  it('counts a chunked upload too large to buffer to its real size, holding only the first MiB', async () => {
+    // No Content-Length: the size can only come from counting what streams in after
+    // mockttp has already handed the request over.
+    const child = `
+      const req = require('node:https').request('https://upstream.test/chunked', { method: 'POST' }, (res) => { res.resume(); res.on('end', () => process.exit(0)); });
+      req.on('error', () => process.exit(6));
+      const chunk = Buffer.alloc(1024 * 1024, 121);
+      let n = 0;
+      (function next() { while (n < 20) { n++; if (!req.write(chunk)) return req.once('drain', next); } req.end(); })();`;
+    const { har } = await session(process.execPath, ['-e', child]);
+    const e = har.log.entries.find((x) => x.request.url === 'https://upstream.test/chunked');
+    expect(e?._whatleaks).toMatchObject({ truncated: true, wireBodySize: 20 * 1024 * 1024 });
+    expect(e?.request.postData?.text).toBe('y'.repeat(1024 * 1024));
   });
 
   it('keeps the start of an upload the client abandoned, decoded', async () => {

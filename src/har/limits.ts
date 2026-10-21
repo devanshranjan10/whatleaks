@@ -9,8 +9,9 @@ export const MAX_WS_TOTAL_CHARS = 1024 * 1024;
 
 /** The text kept for one WebSocket message, or undefined once the connection's budget is spent. */
 export function keepWsMessage(kept: { samples: string[]; chars?: number }, text: string): string | undefined {
+  if (kept.samples.length >= MAX_WS_MESSAGES) return undefined;
   const t = text.slice(0, MAX_WS_MESSAGE_CHARS);
   const used = kept.chars ?? kept.samples.reduce((n, s) => n + s.length, 0);
-  if (kept.samples.length >= MAX_WS_MESSAGES || used + t.length > MAX_WS_TOTAL_CHARS) return undefined;
+  if (used + t.length > MAX_WS_TOTAL_CHARS) return undefined;
   return t;
 }

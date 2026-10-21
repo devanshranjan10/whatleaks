@@ -134,6 +134,12 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
    * whole body never reaches us: over the buffering cap, or abandoned by the client.
    */
   const prefixes = new Map<string, { chunks: Buffer[]; size: number }>();
+  /**
+   * Over MAX_BUFFERED_BODY, mockttp emits the request while the body is still streaming.
+   * Later chunks of those requests are only counted (when no Content-Length gave the size),
+   * never collected again. Value: whether to count.
+   */
+  const overflowed = new Map<string, boolean>();
   const prefixOf = (id: string): Buffer | undefined => {
     const p = prefixes.get(id);
     prefixes.delete(id);
@@ -167,6 +173,7 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
         // Over MAX_BUFFERED_BODY, mockttp hands us an empty body: keep the prefix we
         // collected while it streamed, count the rest, mark it cut.
         const dropped = raw.length === 0 && onWire > 0;
+        if (dropped) overflowed.set(req.id, declared === 0);
         let body: Uint8Array = raw;
         let decodedFrom: string | undefined;
         const encoding = req.headers['content-encoding'];
@@ -224,6 +231,11 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
     }),
     server.on('request-body-data', (d) => {
       touch();
+      const late = overflowed.get(d.id);
+      if (late !== undefined) {
+        if (late) rec.moreWireBytes(d.id, d.content.length);
+        return;
+      }
       wireBytes.set(d.id, (wireBytes.get(d.id) ?? 0) + d.content.length);
       let p = prefixes.get(d.id);
       if (!p) prefixes.set(d.id, (p = { chunks: [], size: 0 }));
@@ -244,6 +256,7 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
         rec.partialBody(r.id, body, wireBytes.get(r.id) ?? prefix.length, decodedFrom);
       }
       wireBytes.delete(r.id);
+      overflowed.delete(r.id);
       rec.abort(r.id, r.error?.code ?? r.error?.message ?? 'aborted');
     }),
     // From mockttp's point of view, "received" messages are the ones the app sent.

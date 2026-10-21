@@ -74,16 +74,19 @@ function sessionMeta(v: unknown): SessionMeta | undefined {
  */
 function devtoolsWebSocket(v: unknown): { sent: number; samples: string[] } | undefined {
   if (!Array.isArray(v)) return undefined;
-  const ws = { sent: 0, samples: [] as string[] };
+  const ws = { sent: 0, samples: [] as string[], chars: 0 };
   for (const m of v) {
     if (!isObj(m) || m.type !== 'send') continue;
     ws.sent++;
     const data = str(m.data);
-    const text = m.opcode === 2 ? `‹binary, ${Buffer.from(data, 'base64').length} bytes›` : data;
+    const text = m.opcode === 2 ? `‹binary, ${Buffer.byteLength(data, 'base64')} bytes›` : data;
     const kept = keepWsMessage(ws, text);
-    if (kept !== undefined) ws.samples.push(kept);
+    if (kept !== undefined) {
+      ws.samples.push(kept);
+      ws.chars += kept.length;
+    }
   }
-  return ws;
+  return { sent: ws.sent, samples: ws.samples };
 }
 
 /**

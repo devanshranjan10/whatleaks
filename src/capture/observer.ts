@@ -161,7 +161,8 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
         sockOk = false;
         return;
       }
-      tracker.adopt([...new Set(rows.filter((r) => r.pid !== process.pid && r.remotePort === proxyPort && r.remoteHost && isLoopback(r.remoteHost)).map((r) => r.pid))]);
+      // A row without a process name belongs to a pid that already exited (macOS TIME_WAIT).
+      tracker.adopt([...new Set(rows.filter((r) => r.pid !== process.pid && r.process !== '' && r.remotePort === proxyPort && r.remoteHost && isLoopback(r.remoteHost)).map((r) => r.pid))]);
       if (!watch || !treeOk) return;
       // A new process with an outside connection: find its parent while it is still alive.
       const fresh = [...new Set(rows.filter((r) => r.remoteHost && !isLoopback(r.remoteHost) && keep(r.pid) && !tracker.everTracked(r.pid) && !checked.has(r.pid)).map((r) => r.pid))];

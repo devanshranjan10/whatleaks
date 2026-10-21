@@ -51,9 +51,14 @@ function check(id, title, ok, detail) {
 }
 {
   const helper = "setTimeout(() => fetch('https://example.com/wl-linux-late', { method: 'POST', body: 'late' }).finally(() => process.exit(0)), 2000)";
+  const t0 = Date.now();
   const c = capture('helper', `require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(helper)}], { detached: true, stdio: 'ignore' }).unref(); process.exit(0);`);
+  const secs = (Date.now() - t0) / 1000;
   const e = c.har.log.entries.find((x) => x.request.url.includes('wl-linux-late'));
   check('helper-2s', 'detached helper sending 2 s after its parent exited', e?.request.postData?.text === 'late', `entries=${c.har.log.entries.length}`);
+  // PID 1 here (this script) never reaps orphans, so the finished helper stays a zombie.
+  // whatleaks must not wait --linger (10 s) for it.
+  check('zombie', 'a finished helper left as a zombie is not waited for', secs < 8, `run took ${secs.toFixed(1)} s`);
 }
 {
   const c = capture('meta', 'process.exit(0)');

@@ -110,6 +110,12 @@ export class Recorder {
     if (p) p.res = res.body && res.body.length > MAX_RESPONSE_TEXT ? { ...res, body: undefined } : res;
   }
 
+  /** More body bytes of a request already recorded (one too large to buffer, still streaming). */
+  moreWireBytes(id: string, n: number): void {
+    const p = this.pending.get(id);
+    if (p) p.req = { ...p.req, wireBodySize: p.req.wireBodySize + n };
+  }
+
   /** The start of a body whose upload never completed; only used if no full body arrived. */
   partialBody(id: string, body: Uint8Array, wireBodySize: number, decodedFrom?: string): void {
     const p = this.pending.get(id);

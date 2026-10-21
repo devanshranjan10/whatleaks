@@ -120,9 +120,15 @@ export class NetstatWatcher {
         continue;
       }
       if (this.seen.size >= MAX_PENDING) {
-        const victim = [...this.seen].find(([, v]) => !isApp(v.row.pid));
-        if (!victim) continue;
-        this.seen.delete(victim[0]);
+        let victim: string | undefined;
+        for (const [k, v] of this.seen) {
+          if (!isApp(v.row.pid)) {
+            victim = k;
+            break;
+          }
+        }
+        if (victim === undefined) continue;
+        this.seen.delete(victim);
       }
       this.seen.set(key, { row: r, firstAt: at, lastAt: at, samples: 1 });
     }
