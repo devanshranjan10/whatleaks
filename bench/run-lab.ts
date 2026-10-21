@@ -19,7 +19,7 @@ import { parseHar } from '../src/har/read.js';
 import type { Capture } from '../src/har/types.js';
 import { localIdentities } from '../src/identity-local.js';
 import type { Report } from '../src/model.js';
-import { type Lab, type LabEvent, startLab } from './lab/server.js';
+import { type Lab, type LabEvent, lanAddress, startLab } from './lab/server.js';
 import { type Scenario, SCENARIOS } from './lab/scenarios.js';
 import { type LedgerEntry, type Named, type RunScore, type Tally, namedFromCapture, scoreRun, tally, wilson } from './lab/score.js';
 
@@ -65,6 +65,14 @@ async function labUp(lab: Lab): Promise<boolean> {
 
 async function waitForLab(lab: Lab): Promise<void> {
   for (let i = 0; !(await labUp(lab)); i++) {
+    // On another network the lab's address is gone for good: start over with --resume.
+    let now: string | undefined;
+    try {
+      now = lanAddress();
+    } catch {
+      now = undefined;
+    }
+    if (now && now !== lab.ip) throw new Error(`LAN address changed (${lab.ip} -> ${now}); rerun with --resume`);
     if (i === 0) console.error('lab unreachable (network down?); waiting');
     if (i > 360) throw new Error('lab unreachable for 30 minutes');
     await sleep(5000);

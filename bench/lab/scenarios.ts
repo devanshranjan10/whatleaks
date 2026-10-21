@@ -103,8 +103,13 @@ export const SCENARIOS: Scenario[] = [
   { id: 'tcp-100ms', group: 'proxy-ignoring', title: 'raw TCP held 100 ms', argv: node(RUNTIMES.node26, 'tcp', '100'), repeat: 10, expect: 'host', why: 'not HTTP' },
   { id: 'tcp-500ms', group: 'proxy-ignoring', title: 'raw TCP held 500 ms', argv: node(RUNTIMES.node26, 'tcp', '500'), repeat: 10, expect: 'host', why: 'not HTTP' },
   { id: 'tcp-2s', group: 'proxy-ignoring', title: 'raw TCP held 2 s', argv: node(RUNTIMES.node26, 'tcp', '2000'), repeat: 10, expect: 'host', why: 'not HTTP' },
+  // A reset leaves no TIME_WAIT behind, so only live sampling can see these (aiohttp and
+  // other clients that abort their transports close like this).
+  { id: 'tcp-rst-10ms', group: 'proxy-ignoring', title: 'raw TCP reset by the client after 10 ms', argv: node(RUNTIMES.node26, 'tcp', '10', 'reset'), repeat: 10, expect: 'host', why: 'not HTTP' },
+  { id: 'tcp-rst-50ms', group: 'proxy-ignoring', title: 'raw TCP reset by the client after 50 ms', argv: node(RUNTIMES.node26, 'tcp', '50', 'reset'), repeat: 10, expect: 'host', why: 'not HTTP' },
+  { id: 'tcp-rst-200ms', group: 'proxy-ignoring', title: 'raw TCP reset by the client after 200 ms', argv: node(RUNTIMES.node26, 'tcp', '200', 'reset'), repeat: 10, expect: 'host', why: 'not HTTP' },
   {
-    id: 'tcp-server-closes', group: 'proxy-ignoring', title: 'raw TCP, server closes first (100 ms)', argv: node(RUNTIMES.node26, 'tcp', '100', 'server-closes'), repeat: 10,
+    id: 'tcp-server-closes', group: 'proxy-ignoring', title: 'raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT)', argv: node(RUNTIMES.node26, 'tcp', '100', 'server-closes'), repeat: 10,
     expect: 'host', why: 'not HTTP',
   },
   { id: 'udp', group: 'proxy-ignoring', title: 'one UDP datagram, connected socket (like QUIC)', argv: node(RUNTIMES.node26, 'udp', '50'), repeat: 10, expect: 'host', why: 'UDP is never proxied' },

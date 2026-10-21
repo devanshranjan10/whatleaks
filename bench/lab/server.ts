@@ -60,16 +60,18 @@ export function labCerts(dir: string, host: string, ip: string): { caPath: strin
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   const p = (f: string): string => join(dir, f);
   const tag = p(`leaf-${host}.pem`);
+  // One key per host: a shared key file would be overwritten when the LAN address changes.
+  const key = p(`leaf-${host}.key`);
   if (!existsSync(p('ca.pem'))) {
     execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', p('ca.key'), '-out', p('ca.pem'), '-days', '60',
       '-subj', '/CN=whatleaks bench lab CA', '-addext', 'basicConstraints=critical,CA:TRUE', '-addext', 'keyUsage=critical,keyCertSign,cRLSign'], { stdio: 'ignore' });
   }
-  if (!existsSync(tag)) {
+  if (!existsSync(tag) || !existsSync(key)) {
     writeFileSync(p('leaf.ext'), `subjectAltName=DNS:${host},IP:${ip}\nextendedKeyUsage=serverAuth\nbasicConstraints=CA:FALSE\n`);
-    execFileSync('openssl', ['req', '-newkey', 'rsa:2048', '-nodes', '-keyout', p('leaf.key'), '-out', p('leaf.csr'), '-subj', `/CN=${host}`], { stdio: 'ignore' });
+    execFileSync('openssl', ['req', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', p('leaf.csr'), '-subj', `/CN=${host}`], { stdio: 'ignore' });
     execFileSync('openssl', ['x509', '-req', '-in', p('leaf.csr'), '-CA', p('ca.pem'), '-CAkey', p('ca.key'), '-CAcreateserial', '-out', tag, '-days', '60', '-extfile', p('leaf.ext')], { stdio: 'ignore' });
   }
-  return { caPath: p('ca.pem'), key: readFileSync(p('leaf.key'), 'utf8'), cert: readFileSync(tag, 'utf8') };
+  return { caPath: p('ca.pem'), key: readFileSync(key, 'utf8'), cert: readFileSync(tag, 'utf8') };
 }
 
 interface WsSocket {

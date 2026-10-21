@@ -132,16 +132,19 @@ const modes = {
       r.end(body);
     });
   },
-  // Raw TCP held open for <ms>, then closed by the client ("close" = the server closes first).
+  // Raw TCP held open for <ms>, then closed by the client ("server-closes": the server
+  // closes at once; "reset": the client resets instead of closing, leaving no TIME_WAIT).
   async tcp() {
     const holdMs = Number(args[0] ?? 100);
     const serverCloses = args[1] === 'server-closes';
+    const reset = args[1] === 'reset';
     ledger({ seq: SEQ0, kind: 'tcp', path: path(SEQ0), port: Number(E.LAB_TCP_PORT), holdMs, direct: true });
     await new Promise((resolve) => {
       const s = net.connect({ host: E.LAB_IP, port: Number(E.LAB_TCP_PORT) }, () => {
         s.write(`${path(SEQ0)}${serverCloses ? ' close' : ''}\n`);
         setTimeout(() => {
-          s.end();
+          if (reset) s.resetAndDestroy();
+          else s.end();
           resolve();
         }, holdMs);
       });

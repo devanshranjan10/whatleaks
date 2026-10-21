@@ -104,8 +104,8 @@ async function mitmRun(tool: RealTool, dir: string): Promise<Observed> {
   tool.reset?.();
   const har = join(dir, `${tool.id}-mitm.har`);
   rmSync(har, { force: true });
-  // Upstream: the real internet, verified against mitmproxy's own bundle (no lab CA here).
-  const mitm = await startMitm(join(WLB, 'mitmconf', 'mitmproxy-ca-cert.pem'), har);
+  // Upstream: the real internet, verified against mitmproxy's default roots (no lab CA here).
+  const mitm = await startMitm(undefined, har);
   const { caPath, bundlePath } = mitmBundle(mitm.confdir);
   const { env } = buildChildEnv({ base: baseEnv(tool), proxyUrl: `http://127.0.0.1:${mitm.port}`, caPath, bundlePath });
   const t0 = Date.now();
@@ -156,7 +156,7 @@ async function phonehomeRun(tool: RealTool, dir: string): Promise<{ telemetryDes
   await waitExit(ph, 60_000);
   writeFileSync(join(work, 'log.txt'), log);
   const rows = existsSync(join(work, 'phonehome_report.json'))
-    ? ((JSON.parse(readFileSync(join(work, 'phonehome_report.json'), 'utf8')) as { records?: PhonehomeRow[] }).records ?? [])
+    ? ((JSON.parse(readFileSync(join(work, 'phonehome_report.json'), 'utf8')) as { connections?: PhonehomeRow[] }).connections ?? [])
     : [];
   const telIps = new Set<string>();
   for (const h of tool.telemetryHosts) {
@@ -169,7 +169,7 @@ async function phonehomeRun(tool: RealTool, dir: string): Promise<{ telemetryDes
     }
   }
   const fromTool = rows.filter((r) => tool.processNames.some((n) => r.process.toLowerCase().startsWith(n)));
-  const tel = fromTool.filter((r) => telIps.has(r.ip));
+  const tel = fromTool.filter((r) => telIps.has(r.ip) || tool.telemetryHosts.some((h) => r.server === h));
   return {
     telemetryDestinationSeen: tel.length > 0,
     labelledTelemetry: tel.some((r) => /telemetry/i.test(r.kind)),
