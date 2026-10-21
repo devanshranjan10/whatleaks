@@ -57,9 +57,11 @@ describe('buildReport', () => {
   });
 
   it('lists repeated identifiers with a fingerprint, masked', () => {
-    const anon = r.repeatedIds.find((x) => x.display === '0f8f…950e');
+    const anon = r.ids.find((x) => x.display === '0f8f…950e');
     expect(anon).toMatchObject({ requests: 3, locations: ['batch[].anonymousId'] });
     expect(anon?.fingerprint).toMatch(/^[0-9a-f]{12}$/);
+    // Ids seen once are kept too (needed to find ids that persist across runs).
+    expect(r.ids.find((x) => x.locations.includes('?machine'))).toMatchObject({ requests: 1, display: '‹machine-id›' });
   });
 
   it('redacts samples by default and keeps them raw with raw: true', () => {

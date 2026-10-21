@@ -1,6 +1,6 @@
 import type { Endpoint, FieldStat, Finding, Report } from '../model.js';
 import { TELEMETRY_CATEGORIES } from '../model.js';
-import { destinationCategory } from './labels.js';
+import { destinationCategory, repeatedIds } from './labels.js';
 import { type Colors, bytes, clip, colors, commandLine, duration, offset, plural, sparkline, table } from './format.js';
 
 export interface TerminalOptions {
@@ -28,10 +28,10 @@ function fieldTag(f: FieldStat): string {
 function findingLine(f: Finding, c: Colors, report: Report): string[] {
   const bullet = f.severity === 'high' ? c.red('●') : c.yellow('○');
   if (f.kind === 'stable-id') {
-    const ids = report.repeatedIds.slice(0, 3).map((r) => `${r.display} ×${r.requests}`);
-    const more = report.repeatedIds.length > 3 ? `, +${report.repeatedIds.length - 3} more` : '';
+    const ids = repeatedIds(report).slice(0, 3).map((r) => `${r.display} ×${r.requests}`);
+    const more = repeatedIds(report).length > 3 ? `, +${repeatedIds(report).length - 3} more` : '';
     return [
-      `  ${bullet} ${c.bold(f.title)}: ${plural(report.repeatedIds.length, 'id')} reused across requests (${ids.join(', ')}${more})`,
+      `  ${bullet} ${c.bold(f.title)}: ${plural(repeatedIds(report).length, 'id')} reused across requests (${ids.join(', ')}${more})`,
       `      ${c.dim(`in ${clip(f.locations.join(', '), 100)}`)}`,
     ];
   }

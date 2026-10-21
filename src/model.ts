@@ -93,8 +93,8 @@ export interface Finding {
   locations: string[];
 }
 
-/** An id-shaped value repeated across requests. Compared across runs by fingerprint. */
-export interface RepeatedId {
+/** An id-shaped value seen in the traffic. Compared across runs by fingerprint. */
+export interface IdValue {
   /** First 12 hex chars of sha256(value). Lets two reports be compared without the value. */
   fingerprint: string;
   /** Masked for display (`6f96…64ff`), or the full value with --raw. */
@@ -129,7 +129,8 @@ export interface Report {
   destinations: Destination[];
   endpoints: Endpoint[];
   findings: Finding[];
-  repeatedIds: RepeatedId[];
+  /** Every id-shaped value seen (at most 500), most-repeated first. */
+  ids: IdValue[];
   refused: RefusedHost[];
   passthrough: PassthroughHost[];
   direct: DirectConn[];

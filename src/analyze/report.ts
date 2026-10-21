@@ -7,7 +7,7 @@ import type {
   Finding,
   FindingKind,
   Report,
-  RepeatedId,
+  IdValue,
   Sample,
 } from '../model.js';
 import { TELEMETRY_CATEGORIES } from '../model.js';
@@ -33,6 +33,7 @@ const SAMPLE_CHARS = 4000;
 const TEXT_LEAF_CHARS = 200;
 const TIMELINE_BUCKETS = 20;
 const MAX_LOCATIONS = 8;
+const MAX_IDS = 500;
 
 /** Headers every client sends; they are not "fields" of the payload. */
 const STANDARD_HEADERS = new Set([
@@ -298,8 +299,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
     (a, b) => categoryRank(b.category) - categoryRank(a.category) || b.requests - a.requests || a.host.localeCompare(b.host),
   );
 
-  const repeatedIds: RepeatedId[] = [...ids.entries()]
-    .filter(([, e]) => e.requests.size >= 2)
+  const idList: IdValue[] = [...ids.entries()]
     .map(([value, e]) => ({
       fingerprint: fingerprint(value),
       display: redactor.leaf('id', value),
@@ -307,8 +307,10 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
       endpoints: [...e.endpoints].sort(),
       locations: [...e.locations].slice(0, MAX_LOCATIONS),
     }))
-    .sort((a, b) => b.requests - a.requests || a.fingerprint.localeCompare(b.fingerprint));
-  if (repeatedIds.length > 0) {
+    .sort((a, b) => b.requests - a.requests || a.fingerprint.localeCompare(b.fingerprint))
+    .slice(0, MAX_IDS);
+  const repeated = idList.filter((x) => x.requests >= 2);
+  if (repeated.length > 0) {
     const f: FindingAcc = { forms: new Set(['raw']), requests: new Set(), endpoints: new Set(), locations: new Set() };
     for (const [, e] of [...ids.entries()].filter(([, x]) => x.requests.size >= 2)) {
       e.requests.forEach((r) => f.requests.add(r));
@@ -384,7 +386,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
     destinations,
     endpoints: endpointList,
     findings: findingList,
-    repeatedIds,
+    ids: idList,
     refused,
     passthrough: meta?.passthrough ?? [],
     direct: meta?.direct ?? [],

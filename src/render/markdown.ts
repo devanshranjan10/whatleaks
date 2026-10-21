@@ -2,6 +2,7 @@ import type { Endpoint, Report } from '../model.js';
 import { destinationCategory } from './labels.js';
 import { bytes, commandLine, duration, offset, plural, sparkline } from './format.js';
 import { VERSION } from '../version.js';
+import { repeatedIds } from './labels.js';
 
 /** Escape text for a Markdown table cell. */
 export function cell(s: string): string {
@@ -88,9 +89,9 @@ export function renderMarkdown(report: Report): string {
       out.push(`| ${icon} | ${cell(f.title)} | ${f.requests} | ${f.locations.map((l) => code(cell(l))).join(', ')} | ${f.forms.join(', ')} |`);
     }
     out.push('');
-    if (report.repeatedIds.length) {
+    if (repeatedIds(report).length) {
       out.push('Repeated identifiers (same value in several requests; compare two runs with `whatleaks diff` to see which survive a restart):', '');
-      for (const r of report.repeatedIds.slice(0, 20)) {
+      for (const r of repeatedIds(report).slice(0, 20)) {
         out.push(`- ${code(r.display)} in ${plural(r.requests, 'request')}, at ${r.locations.map(code).join(', ')}`);
       }
       out.push('');

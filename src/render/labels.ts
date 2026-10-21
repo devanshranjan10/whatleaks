@@ -1,4 +1,9 @@
-import type { Destination, Report } from '../model.js';
+import type { Destination, IdValue, Report } from '../model.js';
+
+/** Ids seen in two or more requests of one run. */
+export function repeatedIds(report: Report): IdValue[] {
+  return report.ids.filter((x) => x.requests >= 2);
+}
 
 /** `analytics · Segment` for catalog hosts, `analytics?` for guesses, `other` otherwise. */
 export function destinationCategory(report: Report, d: Destination): string {
