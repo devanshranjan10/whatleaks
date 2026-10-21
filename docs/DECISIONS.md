@@ -268,7 +268,8 @@ dispatchers.
 server closes, leave no TIME_WAIT, so only a live poll sees them. Polling runs every
 20 ms while the app is busy (its first 3 s, and 3 s after any new socket or process of
 its own), and every 100 ms otherwise. The process tree is listed every 100 ms while busy
-and every 500 ms otherwise. UDP is read on every 4th poll. Measured on the dev Mac:
+and every 500 ms otherwise. UDP is read on every 2nd poll; every 4th missed most
+one-datagram sockets in the lab (30 %). Measured on the dev Mac:
 - a 20 s run costs 5.6 s of CPU (6.4 s for the build before the benchmark work);
 - resets after 50 ms or more were all caught;
 - resets after 10 ms were caught in 1 of 10 runs, which is the floor of sampling.

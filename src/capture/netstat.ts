@@ -83,12 +83,13 @@ const MAX_PENDING = 5000;
 export type SocketSource = (keep: (pid: number) => boolean) => Promise<SockRow[]>;
 
 /**
- * TCP on every poll, UDP on every 4th: short TCP connections are what fast polling is
- * for, and the UDP sockets worth naming (QUIC) live long. Halves the cost of a poll.
+ * TCP on every poll, UDP on every 2nd: short TCP connections are what fast polling is
+ * for, and UDP sockets that matter (QUIC) mostly live longer. Every 4th poll missed most
+ * one-datagram sockets in the lab (30 %).
  */
 export const netstatSource = (run: RunNetstat = runNetstat): SocketSource => {
   let n = 0;
-  return async () => parseNetstat(await run(n++ % 4 === 0));
+  return async () => parseNetstat(await run(n++ % 2 === 0));
 };
 
 /**
