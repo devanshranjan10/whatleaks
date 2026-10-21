@@ -15,8 +15,18 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.js', '**/*.mjs'],
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    // The Node preload is plain CommonJS loaded by NODE_OPTIONS=--require.
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      parserOptions: { projectService: false },
+      globals: { process: 'readonly', require: 'readonly', globalThis: 'readonly', URL: 'readonly', Symbol: 'readonly' },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     // Benchmark lab clients are plain Node scripts.

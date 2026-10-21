@@ -15,6 +15,8 @@ export interface CaptureFlags {
   env: string[];
   noDecrypt: string[];
   watch: boolean;
+  /** Default true; `--no-node-preload` turns it off. */
+  nodePreload?: boolean;
   samples: number;
   raw: boolean;
   color: boolean;
@@ -82,6 +84,7 @@ export async function captureToFile(req: CaptureRequest, harPath: string, io: Io
     ...(req.removeEnv ? { removeEnv: req.removeEnv } : {}),
     extraEnv: parseEnvPairs(req.flags.env),
     watch: req.flags.watch,
+    ...(req.flags.nodePreload === false ? { nodePreload: false } : {}),
     log: (line) => io.stderr(`${line}\n`),
     observers: deps.observers ?? createObserver(),
     ...(deps.testRoutes ? { testRoutes: deps.testRoutes } : {}),

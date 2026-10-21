@@ -96,6 +96,32 @@ describe('captureSession (offline, real child processes)', () => {
     expect(har.log.entries[0]?.request).toMatchObject({ url: 'https://upstream.test/java', postData: { text: '{"jvm":1}' } });
   });
 
+  it('the Node preload tunnels http, https, fetch and app-made agents (forced on this Node, built-in proxy support off)', async () => {
+    const child = `
+      const https = require('node:https'), http = require('node:http');
+      const get = (mod, url, opts = {}) => new Promise((res, rej) => mod.request(url, { method: 'POST', ...opts }, (r) => { r.resume(); r.on('end', res); }).on('error', rej).end('b'));
+      (async () => {
+        await fetch('https://upstream.test/pre-fetch', { method: 'POST', body: 'f' });
+        await get(https, 'https://upstream.test/pre-https');
+        await get(http, 'http://upstream.test/pre-http');
+        await get(https, 'https://upstream.test/pre-agent', { agent: new https.Agent({ keepAlive: true }) });
+        process.exit(0);
+      })().catch((e) => { console.error(e); process.exit(9); });`;
+    const { har, launch } = await session(process.execPath, ['-e', child], { extraEnv: { WHATLEAKS_PRELOAD: 'force', NODE_USE_ENV_PROXY: '' } });
+    expect(launch.exitCode).toBe(0);
+    expect(har.log.entries.map((e) => [e.request.url, e.response.status])).toEqual([
+      ['https://upstream.test/pre-fetch', 200],
+      ['https://upstream.test/pre-https', 200],
+      ['http://upstream.test/pre-http', 200],
+      ['https://upstream.test/pre-agent', 200],
+    ]);
+  });
+
+  it('does not load the preload with nodePreload: false', async () => {
+    const { har } = await session(process.execPath, ['-e', "process.stdout.write(process.env.NODE_OPTIONS ?? ''); fetch('https://upstream.test/x').finally(() => process.exit(0))"], { nodePreload: false });
+    expect(har.log.entries).toHaveLength(1);
+  });
+
   it('names a host whose client refuses the certificate, without its contents', async () => {
     // A client that pins its own trust store, like an app with certificate pinning.
     const child = "require('node:https').get('https://upstream.test/secret', { ca: require('node:tls').rootCertificates }, () => process.exit(0)).on('error', () => process.exit(4))";

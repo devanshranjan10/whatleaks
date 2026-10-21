@@ -5,6 +5,7 @@ import { createSessionCA } from './ca.js';
 import { buildChildEnv } from './env.js';
 import { launch, type LaunchResult } from './launch.js';
 import { nodeWarning } from './nodecheck.js';
+import { nodePreloadPath } from './preload.js';
 import { startProxy, upstreamFromEnv } from './proxy.js';
 import { CliError } from '../errors.js';
 import { Recorder } from './recorder.js';
@@ -25,6 +26,8 @@ export interface SessionOptions {
   removeEnv?: readonly string[];
   extraEnv?: Record<string, string>;
   watch: boolean;
+  /** Load the Node preload for old Node versions (default true). */
+  nodePreload?: boolean;
   /** Progress messages (stderr). */
   log: (line: string) => void;
   /** Test only. */
@@ -130,6 +133,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
     let result: LaunchResult;
     let watcher: SessionMeta['watcher'] = 'off';
     let direct: DirectConn[] = [];
+    const preload = opts.nodePreload === false ? undefined : nodePreloadPath();
     try {
       const childEnv = buildChildEnv({
         base: opts.baseEnv,
@@ -137,15 +141,16 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         caPath: ca.caPath,
         bundlePath: ca.bundlePath,
         javaTrustPath: ca.javaTrustPath,
+        ...(preload ? { nodePreload: preload } : {}),
         ...(opts.optOut ? { optOut: opts.optOut } : {}),
         ...(opts.removeEnv ? { remove: opts.removeEnv } : {}),
         ...(opts.extraEnv ? { extra: opts.extraEnv } : {}),
       });
       removed = childEnv.removed;
-      const warning = await nodeWarning(childEnv.env, opts.cwd);
+      const warning = await nodeWarning(childEnv.env, opts.cwd, !!preload);
       if (warning) {
         notes.push(warning);
-        opts.log(`whatleaks: warning: ${warning}`);
+        opts.log(`whatleaks: ${preload ? 'note' : 'warning'}: ${warning}`);
       }
       if (interrupted) throw new CliError('interrupted before the app started', 130);
       opts.log(`whatleaks: recording ${opts.command} through ${proxy.url} (loopback only, single-run CA)`);

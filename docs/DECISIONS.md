@@ -210,3 +210,34 @@ and two real baselines (mitmproxy, zyralab/phonehome). Spec:
 - Baselines run from pinned sources: mitmproxy through `uvx` (no global install),
   phonehome at commit `946f42d`, read before it was run.
 - Publishing stays out of scope.
+
+**D-25 — Load a Node preload for old Node, superseding D-20.** D-20 chose a warning over
+editing `NODE_OPTIONS` and said to revisit if old Node mattered. The benchmark made the
+cost concrete: on Node 20 (still common after its April 2026 end of life) every `fetch`
+and `https` request bypassed whatleaks and was at best named by address.
+- `NODE_OPTIONS=--require dist/preload.cjs` (quoted, prepended, the user's options kept)
+  plus `WHATLEAKS_PRELOAD=1`. The preload does nothing unless that variable is set, and
+  nothing on Node versions that honour `NODE_USE_ENV_PROXY`.
+- On old Node it patches `http.Agent`/`https.Agent` prototypes (so app-made agents are
+  covered) and replaces undici's global dispatcher with an Agent whose connector opens a
+  CONNECT tunnel. TLS stays inside the app against `NODE_EXTRA_CA_CERTS`, as with the
+  built-in proxy support. Loopback hosts stay direct.
+- Everything is wrapped so a failure leaves the app running as if whatleaks were not
+  there. Newer undici keeps its Agent under `globalDispatcher.2`; both layouts are handled.
+- `--no-node-preload` turns it off and restores the D-20 warning.
+- Not covered: the `undici` package with its own dispatcher, `node:http2`, raw sockets.
+  Those are caught only as direct connections.
+
+**D-26 — Java through `JAVA_TOOL_OPTIONS` and an in-process JKS truststore.** The JVM
+ignores proxy variables and `SSL_CERT_FILE`. `keytool` would start a JVM (about 0.2 s)
+on every run, Java or not, so whatleaks writes the JKS file itself: a documented format
+with a SHA-1 keyed digest, verified by `keytool -list`. User options come after ours so
+theirs win. The JVM prints "Picked up JAVA_TOOL_OPTIONS" on stderr; that is visible but
+harmless.
+
+**D-27 — macOS direct watcher on `netstat -anvW`, every 100 ms, plus a closing sweep.**
+`netstat` lists every socket with its pid in about 5 ms, against lsof's 500 ms sampling
+of tracked pids. macOS keeps the last owner's pid on TIME_WAIT and FIN_WAIT sockets, so
+a connection the app already closed is still attributed at the end of the run. A socket
+from an unknown pid higher than the app's is looked up once (`ps -p`) while it is alive,
+which catches short-lived children. lsof remains the backend on other platforms.

@@ -20,8 +20,11 @@ export function nodeProxySupport(version: string): ProxySupport {
   return 'none';
 }
 
-/** A warning when the `node` the app will find on PATH cannot be pointed at the proxy. */
-export async function nodeWarning(env: NodeJS.ProcessEnv, cwd: string): Promise<string | undefined> {
+/**
+ * A note when the `node` the app will find on PATH cannot be pointed at the proxy by
+ * NODE_USE_ENV_PROXY: covered by the preload when it is on, a warning when it is off.
+ */
+export async function nodeWarning(env: NodeJS.ProcessEnv, cwd: string, preload = false): Promise<string | undefined> {
   let version: string;
   try {
     ({ stdout: version } = await run('node', ['--version'], { env, cwd, timeout: 5000 }));
@@ -31,7 +34,10 @@ export async function nodeWarning(env: NodeJS.ProcessEnv, cwd: string): Promise<
   const support = nodeProxySupport(version);
   if (support === 'full') return undefined;
   const v = version.trim();
+  if (preload) {
+    return `The node on PATH is ${v}, which ignores NODE_USE_ENV_PROXY; whatleaks loaded its preload (NODE_OPTIONS=--require) so that Node's http, https and fetch still went through the proxy. Clients that bring their own connection code (the undici package with its own dispatcher, node:http2) can still bypass it.`;
+  }
   return support === 'fetch-only'
     ? `The node on PATH is ${v}: its http/https modules ignore NODE_USE_ENV_PROXY (fixed in 24.5), so some Node requests may have bypassed whatleaks.`
-    : `The node on PATH is ${v}, which ignores NODE_USE_ENV_PROXY (needs Node ≥ 22.21 or ≥ 24.5), so Node programs may have bypassed whatleaks; only their destinations can show up, under "not visible".`;
+    : `The node on PATH is ${v}, which ignores NODE_USE_ENV_PROXY (needs Node ≥ 22.21 or ≥ 24.5), and the preload was turned off (--no-node-preload), so Node programs may have bypassed whatleaks; only their destinations can show up, under "not visible".`;
 }

@@ -1,3 +1,5 @@
+import { withPreload } from './preload.js';
+
 export interface ChildEnvInput {
   base: NodeJS.ProcessEnv;
   /** `http://127.0.0.1:PORT`. */
@@ -6,6 +8,8 @@ export interface ChildEnvInput {
   bundlePath: string;
   /** JKS truststore with the CA and the normal roots; enables the JVM settings when given. */
   javaTrustPath?: string;
+  /** Node preload for versions that ignore NODE_USE_ENV_PROXY (added to NODE_OPTIONS). */
+  nodePreload?: string;
   /** Opt-out variables to set (compare's second run, or run --opt-out). */
   optOut?: Record<string, string>;
   /** Variables to remove so a "default" run really is default (compare's first run). */
@@ -49,6 +53,10 @@ export function buildChildEnv(input: ChildEnvInput): ChildEnv {
   env.REQUESTS_CA_BUNDLE = input.bundlePath;
   env.CURL_CA_BUNDLE = input.bundlePath;
   env.GIT_SSL_CAINFO = input.bundlePath;
+  if (input.nodePreload) {
+    env.NODE_OPTIONS = withPreload(input.base.NODE_OPTIONS, input.nodePreload);
+    env.WHATLEAKS_PRELOAD = '1';
+  }
   if (input.javaTrustPath) env.JAVA_TOOL_OPTIONS = javaToolOptions(input.base.JAVA_TOOL_OPTIONS, input.proxyUrl, input.javaTrustPath);
   Object.assign(env, input.optOut ?? {}, input.extra ?? {});
   return { env, removed };

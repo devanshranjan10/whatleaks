@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { nodeProxySupport, nodeWarning } from '../src/capture/nodecheck.js';
 
@@ -26,4 +28,12 @@ describe('nodeProxySupport', () => {
     else expect(warning).toContain(process.version);
     expect(await nodeWarning({ PATH: '/nonexistent' }, process.cwd())).toBeUndefined();
   });
+
+  it.skipIf(!existsSync(OLD_NODE))('says the preload covers an old node, and warns when it is off', async () => {
+    const env = { ...process.env, PATH: `${dirname(OLD_NODE)}:${process.env.PATH ?? ''}` };
+    expect(await nodeWarning(env, process.cwd(), true)).toMatch(/loaded its preload/);
+    expect(await nodeWarning(env, process.cwd(), false)).toMatch(/preload was turned off/);
+  });
 });
+
+const OLD_NODE = process.env.WLB_NODE20 ?? '/opt/homebrew/opt/node@20/bin/node';
