@@ -27,13 +27,16 @@ export interface Scenario {
 const here = dirname(fileURLToPath(import.meta.url));
 const C = (f: string): string => join(here, 'clients', f);
 const WLB = process.env.WLB ?? '/tmp/wlb';
+const isMac = process.platform === 'darwin';
+const macOnly = isMac ? undefined : 'macOS only';
 
 export const RUNTIMES = {
   node26: process.execPath,
   node22: process.env.WLB_NODE22 ?? '/tmp/wl-e2e/node22-bin/node',
   node20: process.env.WLB_NODE20 ?? '/opt/homebrew/opt/node@20/bin/node',
   bun: process.env.WLB_BUN ?? join(process.env.HOME ?? '', '.bun/bin/bun'),
-  brewPython: '/opt/homebrew/bin/python3',
+  // The platform's own OpenSSL-linked Python: Homebrew on macOS, the distribution's on Linux.
+  brewPython: isMac ? '/opt/homebrew/bin/python3' : '/usr/bin/python3',
   applePython: '/usr/bin/python3',
   venvPython: join(WLB, 'venv/bin/python'),
   ruby: '/usr/bin/ruby',
@@ -69,24 +72,26 @@ export const SCENARIOS: Scenario[] = [
     repeat: 3, expect: 'payload', missing: need(RUNTIMES.node20),
   },
   { id: 'bun-fetch', group: 'proxy-aware', title: 'Bun fetch', argv: node(RUNTIMES.bun, 'fetch'), repeat: 3, expect: 'payload', missing: need(RUNTIMES.bun) },
-  { id: 'curl', group: 'proxy-aware', title: 'curl (macOS)', argv: ['sh', C('curl-client.sh')], repeat: 3, expect: 'payload' },
+  { id: 'curl', group: 'proxy-aware', title: isMac ? 'curl (macOS)' : 'curl (Debian)', argv: ['sh', C('curl-client.sh')], repeat: 3, expect: 'payload' },
   { id: 'curl-http2', group: 'proxy-aware', title: 'curl --http2', argv: ['sh', C('curl-client.sh'), '--http2'], repeat: 3, expect: 'payload' },
-  { id: 'py-urllib', group: 'proxy-aware', title: 'Python 3.14 urllib (Homebrew)', argv: [RUNTIMES.brewPython, C('py-client.py'), 'urllib'], repeat: 3, expect: 'payload', missing: need(RUNTIMES.brewPython) },
+  { id: 'py-urllib', group: 'proxy-aware', title: isMac ? 'Python 3.14 urllib (Homebrew)' : 'Python urllib (Debian, OpenSSL)', argv: [RUNTIMES.brewPython, C('py-client.py'), 'urllib'], repeat: 3, expect: 'payload', missing: need(RUNTIMES.brewPython) },
   { id: 'py-requests', group: 'proxy-aware', title: 'Python requests', argv: [RUNTIMES.venvPython, C('py-client.py'), 'requests'], repeat: 3, expect: 'payload', missing: need(RUNTIMES.venvPython) },
   { id: 'py-httpx', group: 'proxy-aware', title: 'Python httpx', argv: [RUNTIMES.venvPython, C('py-client.py'), 'httpx'], repeat: 3, expect: 'payload', missing: need(RUNTIMES.venvPython) },
   {
     id: 'py-apple', group: 'proxy-aware', title: 'Apple /usr/bin/python3 urllib (LibreSSL)', argv: [RUNTIMES.applePython, C('py-client.py'), 'urllib'], repeat: 3,
-    expect: 'host', why: 'ignores SSL_CERT_FILE; refuses the CA (D-04: no system trust changes)',
+    expect: 'host', why: 'ignores SSL_CERT_FILE; refuses the CA (D-04: no system trust changes)', missing: macOnly,
   },
   {
     id: 'ruby-system', group: 'proxy-aware', title: 'Ruby 2.6 Net::HTTP (macOS system)', argv: [RUNTIMES.ruby, C('ruby-client.rb')], repeat: 3,
-    expect: 'host', why: 'refuses the CA (system Ruby uses its own trust store)',
+    expect: 'host', why: 'refuses the CA (system Ruby uses its own trust store)', missing: macOnly,
   },
   {
     id: 'go', group: 'proxy-aware', title: 'Go 1.26 net/http', argv: [RUNTIMES.goClient], repeat: 3,
-    expect: 'host', why: 'on macOS Go verifies with the platform verifier and ignores SSL_CERT_FILE', missing: need(RUNTIMES.goClient),
+    // On Linux, Go reads SSL_CERT_FILE, so the payload is reachable there.
+    ...(isMac ? { expect: 'host' as const, why: 'on macOS Go verifies with the platform verifier and ignores SSL_CERT_FILE' } : { expect: 'payload' as const }),
+    missing: need(RUNTIMES.goClient),
   },
-  { id: 'java', group: 'proxy-aware', title: 'Java 25 HttpClient', argv: [RUNTIMES.java, C('Client.java')], repeat: 3, expect: 'payload', missing: need(RUNTIMES.java) },
+  { id: 'java', group: 'proxy-aware', title: isMac ? 'Java 25 HttpClient' : 'Java 17 HttpClient (OpenJDK)', argv: [RUNTIMES.java, C('Client.java')], repeat: 3, expect: 'payload', missing: need(RUNTIMES.java) },
   { id: 'websocket', group: 'proxy-aware', title: 'Node WebSocket, 2 messages', argv: node(RUNTIMES.node26, 'ws'), repeat: 3, expect: 'payload' },
   { id: 'websocket-20', group: 'proxy-aware', title: 'Node WebSocket, 20 messages', argv: node(RUNTIMES.node26, 'ws', '20'), repeat: 3, expect: 'payload' },
   {

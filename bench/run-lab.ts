@@ -19,6 +19,7 @@ import { parseHar } from '../src/har/read.js';
 import type { Capture } from '../src/har/types.js';
 import { localIdentities } from '../src/identity-local.js';
 import type { Report } from '../src/model.js';
+import { HTK_VERSION, htkMissing, spawnIntercepted, startHtkServer, startHtkSession } from './htk.js';
 import { type Lab, type LabEvent, lanAddress, startLab } from './lab/server.js';
 import { type Scenario, SCENARIOS } from './lab/scenarios.js';
 import { type LedgerEntry, type Named, type RunScore, type Tally, namedFromCapture, scoreRun, tally, wilson } from './lab/score.js';
@@ -44,7 +45,7 @@ const { values: flags } = parseArgs({
   },
 });
 const CLI = resolve(flags.cli ?? join(root, 'dist/cli.js'));
-type Tool = 'whatleaks' | 'mitmproxy';
+type Tool = 'whatleaks' | 'mitmproxy' | 'httptoolkit';
 const tools = flags.tools.split(',') as Tool[];
 const only = flags.only ? new Set(flags.only.split(',')) : undefined;
 
@@ -297,6 +298,42 @@ async function runMitmScenario(lab: Lab, sc: Scenario, runs: number, dir: string
   return out;
 }
 
+/**
+ * HTTP Toolkit, as a user runs it: a session started the way its app starts one, and each
+ * run in a shell that ran its "existing terminal" setup script. Like mitmproxy it has no
+ * notion of the app's lifetime, so it stops 10 s after the last client exits.
+ */
+async function runHtkScenario(lab: Lab, sc: Scenario, runs: number, dir: string, planted: Record<string, string>): Promise<RunResult[]> {
+  const session = await startHtkSession(readFileSync(lab.caPath, 'utf8'));
+  const pending: Array<{ run: number; ledger: string; wallMs: number; exit: number | null; eventsFrom: number }> = [];
+  for (let run = 1; run <= runs; run++) {
+    const ledger = join(dir, `${sc.id}-${run}.htk.ledger.jsonl`);
+    rmSync(ledger, { force: true });
+    const eventsFrom = lab.events.length;
+    const t0 = Date.now();
+    const child = spawnIntercepted(session.setupScript, sc.argv, { cwd: join(WLB, 'work'), env: { ...process.env, ...labEnv(lab, sc, run, ledger, planted) } });
+    const { code } = await waitExit(child, 120_000);
+    pending.push({ run, ledger, wallMs: Date.now() - t0, exit: code, eventsFrom });
+  }
+  await sleep(10_000);
+  const { requests, named } = await session.stop();
+  const out: RunResult[] = [];
+  for (const p of pending) {
+    const entries = readLedger(p.ledger);
+    const score = await scoreRun(entries, { requests, named }, lab, `/e/${sc.id}/${p.run}/`);
+    out.push({
+      run: p.run,
+      wallMs: p.wallMs,
+      exit: p.exit,
+      tally: tally(score.events),
+      unexpected: score.unexpected.filter((u) => !u.startsWith('request') || u.includes(`/e/${sc.id}/${p.run}/`)),
+      delivered: deliveredCount(entries, lab.events.slice(p.eventsFrom)),
+      outcomes: score.events.map((e) => `${e.entry.kind}${e.entry.msg !== undefined ? `#${e.entry.msg}` : ''}:${e.entry.seq}=${e.outcome}`),
+    });
+  }
+  return out;
+}
+
 function sum(ts: Tally[]): Tally {
   const t: Tally = { attempted: 0, payload: 0, request: 0, host: 0, missed: 0 };
   for (const x of ts) for (const k of Object.keys(t) as Array<keyof Tally>) t[k] += x[k];
@@ -359,6 +396,11 @@ async function main(): Promise<void> {
     }
   }
   const lab = await startLab(join(WLB, 'lab-certs'));
+  if (tools.includes('httptoolkit')) {
+    const missing = htkMissing();
+    if (missing) throw new Error(missing);
+  }
+  const htkServer = tools.includes('httptoolkit') ? await startHtkServer() : undefined;
   const ids = await localIdentities();
   const planted = {
     gitEmail: ids.find((i) => i.kind === 'git-email')?.value ?? '',
@@ -389,8 +431,10 @@ async function main(): Promise<void> {
           if (tool === 'whatleaks') {
             rs = [];
             for (let run = 1; run <= runs; run++) rs.push(await runWhatleaks(lab, sc, run, dir, planted));
-          } else {
+          } else if (tool === 'mitmproxy') {
             rs = await runMitmScenario(lab, sc, runs, dir, planted);
+          } else {
+            rs = await runHtkScenario(lab, sc, runs, dir, planted);
           }
         } catch (e) {
           failure = e instanceof Error ? e : new Error(String(e));
@@ -407,12 +451,14 @@ async function main(): Promise<void> {
     }
   }
   await lab.close();
+  htkServer?.stop();
   const meta = {
     tag: flags.tag,
     date: new Date().toISOString(),
     machine: `${os.type()} ${os.release()} ${os.arch()}, ${os.cpus().length} CPUs`,
     whatleaks: `${(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { version: string }).version} (${CLI})`,
     mitmproxy: existsSync(join(WLB, 'mitmproxy-version.txt')) ? readFileSync(join(WLB, 'mitmproxy-version.txt'), 'utf8').split('\n')[0] : 'unknown',
+    httptoolkit: tools.includes('httptoolkit') ? `httptoolkit-server ${HTK_VERSION}` : undefined,
     node: process.version,
     loadavg: os.loadavg().map((x) => Number(x.toFixed(1))),
   };

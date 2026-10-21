@@ -16,6 +16,7 @@ import { buildChildEnv } from '../src/capture/env.js';
 import { parseHar } from '../src/har/read.js';
 import type { Capture } from '../src/har/types.js';
 import type { Report } from '../src/model.js';
+import { HTK_VERSION, htkMissing, spawnIntercepted, startHtkServer, startHtkSession } from './htk.js';
 import { WLB, mitmBundle, sleep, startMitm, waitExit } from './lib.js';
 import { type RealTool, TOOLS } from './real/tools.js';
 
@@ -137,6 +138,22 @@ interface PhonehomeRow {
   kind: string;
 }
 
+/** HTTP Toolkit as a user runs it: the app's session and its "existing terminal" setup script. */
+async function htkRun(tool: RealTool, dir: string): Promise<Observed> {
+  tool.reset?.();
+  const session = await startHtkSession();
+  const t0 = Date.now();
+  const child = spawnIntercepted(session.setupScript, tool.argv, { cwd: tool.cwd, env: baseEnv(tool) });
+  const { code } = await waitExit(child, (tool.timeoutSec ?? 180) * 1000);
+  const wallMs = Date.now() - t0;
+  await sleep(10_000); // like mitmproxy: stopped by hand some time later
+  const { requests, named } = await session.stop();
+  writeFileSync(join(dir, `${tool.id}-htk.json`), JSON.stringify({ requests: requests.map((r) => ({ method: r.method, url: r.url, bytes: r.body.length })), named }, null, 2));
+  const capture: Capture = { source: 'har', creator: { name: 'httptoolkit', version: HTK_VERSION }, startedAt: t0, endedAt: Date.now(), requests, warnings: [] };
+  const o = observe(tool, capture);
+  return { ...o, hostsNamed: [...new Set([...o.hostsNamed, ...named.map((n) => `${n.host} (refused)`)])].sort(), exit: code, wallMs };
+}
+
 /** zyralab/phonehome (pinned) watching all processes while the tool runs without a proxy. */
 async function phonehomeRun(tool: RealTool, dir: string): Promise<{ telemetryDestinationSeen: boolean; labelledTelemetry: boolean; rows: number; rowsFromTool: number; rowsOther: number; wallMs: number }> {
   tool.reset?.();
@@ -183,6 +200,8 @@ async function phonehomeRun(tool: RealTool, dir: string): Promise<{ telemetryDes
 
 async function main(): Promise<void> {
   const only = flags.only ? new Set(flags.only.split(',')) : undefined;
+  const htkServer = skip.has('httptoolkit') || htkMissing() ? undefined : await startHtkServer();
+  const htk = !!htkServer;
   const dir = join(WLB, 'real-runs', flags.tag);
   mkdirSync(dir, { recursive: true });
   const results: Record<string, unknown>[] = [];
@@ -204,6 +223,8 @@ async function main(): Promise<void> {
     console.error(`   DO_NOT_TRACK=1: ${dnt.telemetryRequests}; ${Object.keys(tool.optOut).join(',')}: ${optout.telemetryRequests}`);
     const mitm = skip.has('mitmproxy') ? undefined : await mitmRun(tool, dir);
     if (mitm) console.error(`   mitmproxy: ${mitm.telemetryRequests} telemetry requests, ${mitm.events} events`);
+    const httptoolkit = htk ? await htkRun(tool, dir) : undefined;
+    if (httptoolkit) console.error(`   httptoolkit: ${httptoolkit.telemetryRequests} telemetry requests, ${httptoolkit.events} events`);
     const phonehome = skip.has('phonehome') ? undefined : await phonehomeRun(tool, dir);
     if (phonehome) console.error(`   phonehome: telemetry destination seen ${phonehome.telemetryDestinationSeen}, labelled ${phonehome.labelledTelemetry}, rows ${phonehome.rowsFromTool} (+${phonehome.rowsOther} other processes)`);
     const sentByDefault = defaults.some((d) => d.telemetryRequests > 0);
@@ -224,13 +245,15 @@ async function main(): Promise<void> {
       optOutSource: tool.optOutSource,
       dntSource: tool.dntSource,
       mitmproxy: mitm,
+      httptoolkit,
       phonehome,
     });
     writeFileSync(join(dir, 'progress.json'), JSON.stringify(results, null, 2));
   }
-  const meta = { tag: flags.tag, date: new Date().toISOString(), machine: `${os.type()} ${os.release()} ${os.arch()}`, cli: CLI, phonehome: 'zyralab/phonehome@946f42d', mitmproxy: 'mitmproxy 12 (uvx)' };
+  const meta = { tag: flags.tag, date: new Date().toISOString(), machine: `${os.type()} ${os.release()} ${os.arch()}`, cli: CLI, phonehome: 'zyralab/phonehome@946f42d', mitmproxy: 'mitmproxy 12 (uvx)', httptoolkit: htk ? `httptoolkit-server ${HTK_VERSION}` : undefined };
   mkdirSync(join(root, 'bench/results'), { recursive: true });
   writeFileSync(join(root, 'bench/results', `real-${flags.tag}.json`), JSON.stringify({ meta, results }, null, 2) + '\n');
+  htkServer?.stop();
   console.error('done');
   process.exit(0);
 }

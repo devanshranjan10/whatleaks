@@ -17,6 +17,15 @@ import tls from 'node:tls';
 import zlib from 'node:zlib';
 
 const E = process.env;
+
+// The lab stands in for the public internet, whose certificates every client trusts by
+// default. Add its CA to the defaults (which keep any CA a tool configured through
+// NODE_EXTRA_CA_CERTS), so a connection that bypasses the tool under test succeeds as it
+// would against a real server. Node < 22.19 has no such API; those clients go through
+// a proxy or fail, as before.
+if (E.LAB_CA && typeof tls.setDefaultCACertificates === 'function') {
+  tls.setDefaultCACertificates([...tls.getCACertificates('default'), readFileSync(E.LAB_CA, 'utf8')]);
+}
 const [mode = 'fetch', ...args] = process.argv.slice(2);
 const SEQ0 = Number(E.LAB_SEQ0 ?? 0);
 const sha = (b) => createHash('sha256').update(b).digest('hex');
@@ -124,7 +133,7 @@ const modes = {
     const body = bodyFor(SEQ0);
     ledger({ seq: SEQ0, kind: 'http', path: path(SEQ0), port: Number(E.LAB_H2_PORT), bodySha: sha(body), bodyLen: body.length, direct: true });
     await new Promise((resolve) => {
-      const c = http2.connect(`https://${E.LAB_HOST}:${E.LAB_H2_PORT}`, { ca: readFileSync(E.LAB_CA) });
+      const c = http2.connect(`https://${E.LAB_HOST}:${E.LAB_H2_PORT}`);
       c.on('error', (e) => {
         console.error(`http2: ${e.code ?? e.message}`);
         resolve();

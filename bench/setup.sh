@@ -13,4 +13,14 @@ uv pip install -q -p "$WLB/venv/bin/python" 'requests==2.*' 'httpx==0.*' 'aiohtt
 # mitmproxy baseline, isolated config dir (never ~/.mitmproxy).
 uvx --from 'mitmproxy==12.*' mitmdump --version > "$WLB/mitmproxy-version.txt" 2>&1 || true
 head -1 "$WLB/mitmproxy-version.txt"
+# HTTP Toolkit baseline: the official server release, pinned, with a private config folder.
+HTK=v1.27.3
+case "$(uname -s)-$(uname -m)" in
+  Darwin-arm64) htk_platform=darwin-arm64 ;; Darwin-x86_64) htk_platform=darwin-x64 ;;
+  Linux-aarch64) htk_platform=linux-arm64 ;; *) htk_platform=linux-x64 ;;
+esac
+if [ ! -x "$WLB/httptoolkit/dl/httptoolkit-server/bin/httptoolkit-server" ]; then
+  mkdir -p "$WLB/httptoolkit/dl"
+  (cd "$WLB/httptoolkit/dl" && gh release download "$HTK" -R httptoolkit/httptoolkit-server -p "httptoolkit-server-$HTK-$htk_platform.tar.gz" && tar -xzf "httptoolkit-server-$HTK-$htk_platform.tar.gz")
+fi
 echo "setup done in $WLB"

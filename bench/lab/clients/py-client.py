@@ -52,7 +52,11 @@ def run():
                 ledger(seq, b, direct=True)
 
                 async def go():
+                    # The lab's CA (standing in for public roots), plus any CA the
+                    # environment configures, as a default context would load it.
                     ctx = ssl.create_default_context(cafile=E["LAB_CA"])
+                    if E.get("SSL_CERT_FILE"):
+                        ctx.load_verify_locations(cafile=E["SSL_CERT_FILE"])
                     async with aiohttp.ClientSession() as s:
                         async with s.post(url(seq), data=b, ssl=ctx) as r:
                             await r.read()
