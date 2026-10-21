@@ -197,3 +197,16 @@ each with a test (commits ba283cc and f4060a2). Choices made along the way:
   from their owner, which rules out an environment marker.
 - **Memory.** mockttp's `recordTraffic` is turned off (it kept every body). Bodies over
   8 MiB are counted, not buffered, and decoding is capped at 16 MiB.
+
+## Benchmark round (2026-10-21, afternoon)
+
+**D-24 — Build a benchmark, then close the gaps it measures (option C).** The owner
+asked to "run the evals and benchmarks and achieve SOTA … fix all the gaps", and,
+offered four scopes, answered "do what's best … keep doing it until done … everything
+should be real". Chosen: an offline lab with exact ground truth, a real-tool corpus,
+and two real baselines (mitmproxy, zyralab/phonehome). Spec:
+`docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md`.
+- The real-tool runs send those tools' real telemetry from this Mac, as M8 did.
+- Baselines run from pinned sources: mitmproxy through `uvx` (no global install),
+  phonehome at commit `946f42d`, read before it was run.
+- Publishing stays out of scope.
