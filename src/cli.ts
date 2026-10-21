@@ -1,5 +1,7 @@
 import { Command, InvalidArgumentError } from 'commander';
+import { compareCommand } from './commands/compare.js';
 import { diffCommand } from './commands/diff.js';
+import { optOutsCommand } from './commands/optouts.js';
 import { processIo } from './commands/output.js';
 import { reportCommand } from './commands/report.js';
 import { runCommand } from './commands/run.js';
@@ -84,6 +86,32 @@ captureOptions(
 ).action(async (argv: string[], o: CaptureCliOptions & { label: string; out?: string; optOut: boolean }) => {
   process.exitCode = await runCommand(argv, { ...captureFlags(o), label: o.label, optOut: o.optOut, ...(o.out ? { out: o.out } : {}) }, processIo);
 });
+
+captureOptions(
+  program
+    .command('compare')
+    .description('Run a command twice, with defaults and then opted out of telemetry, and show what is still sent')
+    .argument('<command...>', 'the command to run, after --')
+    .passThroughOptions()
+    .option('--off-env <KEY=VALUE>', 'extra variable that opts out, for the second run (repeatable)', collect, [])
+    .option('--no-known-opt-outs', 'only use --off-env, not the documented opt-out list')
+    .option('--out-dir <dir>', 'where to write both HAR captures', '.')
+    .option('--strict', 'exit 1 if any telemetry endpoint is still contacted after opting out', false),
+).action(async (argv: string[], o: CaptureCliOptions & { offEnv: string[]; knownOptOuts: boolean; outDir: string; strict: boolean }) => {
+  process.exitCode = await compareCommand(
+    argv,
+    { ...captureFlags(o), offEnv: o.offEnv, knownOptOuts: o.knownOptOuts, outDir: o.outDir, strict: o.strict },
+    processIo,
+  );
+});
+
+program
+  .command('opt-outs')
+  .description('List the documented telemetry opt-out variables whatleaks knows')
+  .option('--json', 'machine-readable, with a source URL for each', false)
+  .action((o: { json: boolean }) => {
+    process.exitCode = optOutsCommand(o, processIo);
+  });
 
 program
   .command('report')
