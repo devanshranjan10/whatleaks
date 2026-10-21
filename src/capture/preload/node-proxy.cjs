@@ -5,7 +5,9 @@
 // requests would bypass whatleaks. On those versions this routes node:http, node:https
 // and the built-in fetch through the run's proxy with HTTP CONNECT tunnels. TLS still
 // happens inside the app, against NODE_EXTRA_CA_CERTS, exactly as it would through the
-// built-in proxy support. On newer Node it does nothing. Loopback hosts stay direct.
+// built-in proxy support. node:http2 ignores proxies on every Node, so its connections
+// are tunnelled on every version. Otherwise it does nothing on newer Node. Loopback hosts
+// stay direct.
 function install() {
   const env = process.env;
   if (!env.WHATLEAKS_PRELOAD) return;
@@ -18,7 +20,6 @@ function install() {
   const http = require('node:http');
   const https = require('node:https');
   if (httpNative && env.NODE_USE_ENV_PROXY) useEnvProxyInAppAgents(http, https);
-  if (fetchNative && httpNative) return;
 
   const net = require('node:net');
   const tls = require('node:tls');
@@ -89,6 +90,76 @@ function install() {
   }
 
   const sni = (host, servername) => servername || (net.isIP(bare(host)) ? undefined : bare(host));
+
+  /**
+   * A stream to host:port through the proxy, usable at once: writes wait for the tunnel.
+   * For APIs whose createConnection must return a socket synchronously (node:http2).
+   */
+  function tunnelStream(host, port) {
+    const { Duplex } = require('node:stream');
+    let sock;
+    const queued = [];
+    const d = new Duplex({
+      write(chunk, enc, cb) {
+        if (sock) sock.write(chunk, enc, cb);
+        else queued.push([chunk, enc, cb]);
+      },
+      final(cb) {
+        if (sock) sock.end(cb);
+        else queued.push([null, null, cb]);
+      },
+      read() {
+        if (sock) sock.resume();
+      },
+      destroy(err, cb) {
+        if (sock) sock.destroy();
+        cb(err);
+      },
+    });
+    tunnel(host, port, (err, s) => {
+      if (err) return d.destroy(err);
+      if (d.destroyed) return s.destroy();
+      sock = s;
+      s.on('data', (c) => {
+        if (!d.push(c)) s.pause();
+      });
+      s.on('end', () => d.push(null));
+      s.on('error', (e) => d.destroy(e));
+      s.on('close', () => d.destroy());
+      for (const [chunk, enc, cb] of queued.splice(0)) {
+        if (chunk === null) s.end(cb);
+        else s.write(chunk, enc, cb);
+      }
+    });
+    return d;
+  }
+
+  // node:http2 never reads proxy variables. Give each session a TLS connection over a
+  // tunnel; an app that brings its own createConnection keeps it.
+  const http2 = require('node:http2');
+  const h2connect = http2.connect;
+  http2.connect = function (authority, options, listener) {
+    if (typeof options === 'function') {
+      listener = options;
+      options = undefined;
+    }
+    try {
+      const u = typeof authority === 'string' ? new URL(authority) : authority;
+      const host = u && (u.hostname || u.host);
+      const port = Number(u && u.port) || 443;
+      if (host && u.protocol === 'https:' && !(options && options.createConnection) && !isLocal(host, port)) {
+        const o = options || {};
+        options = {
+          ...o,
+          createConnection: () =>
+            tls.connect({ ...o, host: bare(host), port, socket: tunnelStream(bare(host), port), servername: sni(host, o.servername), ALPNProtocols: ['h2'] }),
+        };
+      }
+    } catch {
+      // leave the session as the app asked for it
+    }
+    return h2connect.call(this, authority, options, listener);
+  };
 
   if (!httpNative) {
     // Patch the prototypes, not just the global agents, so agents the app creates itself

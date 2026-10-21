@@ -128,7 +128,7 @@ const modes = {
       };
     });
   },
-  // node:http2 ignores proxy variables entirely: a direct connection.
+  // node:http2 ignores proxy variables entirely: direct unless something tunnels it.
   async http2() {
     const body = bodyFor(SEQ0);
     ledger({ seq: SEQ0, kind: 'http', path: path(SEQ0), port: Number(E.LAB_H2_PORT), bodySha: sha(body), bodyLen: body.length, direct: true });

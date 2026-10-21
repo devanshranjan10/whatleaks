@@ -103,7 +103,7 @@ export const SCENARIOS: Scenario[] = [
   { id: 'pinned', group: 'proxy-aware', title: 'client pinning its own trust store', argv: node(RUNTIMES.node26, 'pinned'), repeat: 3, expect: 'host', why: 'pinning is never bypassed (D-04)' },
 
   // --- Clients that ignore proxy variables: at best named as a direct connection ----
-  { id: 'node-http2', group: 'proxy-ignoring', title: 'Node http2 module', argv: node(RUNTIMES.node26, 'http2'), repeat: 10, expect: 'host', why: 'ignores proxy variables' },
+  { id: 'node-http2', group: 'proxy-ignoring', title: 'Node http2 module (ignores proxy variables)', argv: node(RUNTIMES.node26, 'http2'), repeat: 10, expect: 'payload', why: 'the Node preload tunnels it; other tools see it only as a direct connection' },
   {
     // Ignores proxy variables by default; whatleaks' Python hook makes trust_env default to True (D-31).
     id: 'py-aiohttp', group: 'proxy-ignoring', title: 'Python aiohttp (ignores proxy variables by default)', argv: [RUNTIMES.venvPython, C('py-client.py'), 'aiohttp'], repeat: 10,

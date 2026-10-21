@@ -131,6 +131,20 @@ describe('captureSession (offline, real child processes)', () => {
     ]);
   });
 
+  it('the Node preload tunnels node:http2, which ignores proxy settings on every Node', async () => {
+    const child = `
+      const c = require('node:http2').connect('https://upstream.test');
+      c.on('error', (e) => { console.error(e); process.exit(9); });
+      const r = c.request({ ':method': 'POST', ':path': '/h2', 'content-type': 'application/json' });
+      r.on('response', (h) => { if (h[':status'] !== 200) process.exit(7); });
+      r.resume();
+      r.on('end', () => { c.close(); process.exit(0); });
+      r.end('{"h2":1}');`;
+    const { har, launch } = await session(process.execPath, ['-e', child]);
+    expect(launch.exitCode).toBe(0);
+    expect(har.log.entries.map((e) => [e.request.url, e.request.postData?.text])).toEqual([['https://upstream.test/h2', '{"h2":1}']]);
+  });
+
   it('records agents the app makes itself on Node with built-in proxy support (class, old-style and plain)', async () => {
     const child = `
       const https = require('node:https');
