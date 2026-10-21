@@ -6,6 +6,7 @@ import { parseHar } from '../har/read.js';
 import { serializeHar } from '../har/write.js';
 import { emitDiff } from './diff.js';
 import type { Io } from './output.js';
+import { plural } from '../render/format.js';
 import { reportFor } from './report.js';
 import { type CaptureFlags, type RunDeps, captureToFile, parseEnvPairs, timestamp } from './run.js';
 
@@ -37,7 +38,7 @@ export async function compareCommand(argv: string[], opts: CompareOptions, io: I
 
   io.stderr(`whatleaks: run 1 of 2 — defaults (opt-out variables removed)\n`);
   const first = await captureToFile({ argv, label: 'default', flags: opts, removeEnv }, resolve(dir, `whatleaks-default-${stamp}.har`), io, deps);
-  io.stderr(`whatleaks: run 2 of 2 — opted out (${Object.keys(off).length} variables set)\n`);
+  io.stderr(`whatleaks: run 2 of 2 — opted out (${plural(Object.keys(off).length, 'variable')} set)\n`);
   const second = await captureToFile({ argv, label: 'opted-out', flags: opts, optOut: off }, resolve(dir, `whatleaks-opted-out-${stamp}.har`), io, deps);
 
   for (const [n, r] of [[1, first], [2, second]] as const) {

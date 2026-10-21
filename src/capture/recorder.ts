@@ -35,6 +35,8 @@ export interface RecordedResponse {
 
 interface Pending {
   req: RecordedRequest;
+  /** Only the headers were seen so far. */
+  bodyPending?: boolean;
   res?: RecordedResponse;
   aborted?: string;
   ws?: { sent: number; samples: string[] };
@@ -80,8 +82,21 @@ export class Recorder {
 
   constructor(private readonly now: () => number = Date.now) {}
 
-  request(req: RecordedRequest): void {
+  /** Headers arrived; the body may never complete if the client gives up. */
+  initiated(req: Omit<RecordedRequest, 'body' | 'wireBodySize'>): void {
     if (this.pending.has(req.id)) return;
+    this.pending.set(req.id, { req: { ...req, body: new Uint8Array(), wireBodySize: 0 }, bodyPending: true });
+    this.order.push(req.id);
+  }
+
+  request(req: RecordedRequest): void {
+    const existing = this.pending.get(req.id);
+    if (existing) {
+      existing.req = req;
+      existing.bodyPending = false;
+      if (req.websocket && !existing.ws) existing.ws = { sent: 0, samples: [] };
+      return;
+    }
     this.pending.set(req.id, { req, ...(req.websocket ? { ws: { sent: 0, samples: [] } } : {}) });
     this.order.push(req.id);
   }
@@ -154,6 +169,7 @@ export class Recorder {
     if (truncated) meta.truncated = true;
     if (p.aborted) meta.aborted = p.aborted;
     if (!res && !p.aborted && !p.ws) meta.incomplete = true;
+    if (p.bodyPending) meta.bodyIncomplete = true;
     if (p.ws) meta.websocket = p.ws;
     const wait = res ? Math.max(0, res.endedAt - req.startedAt) : 0;
     return {

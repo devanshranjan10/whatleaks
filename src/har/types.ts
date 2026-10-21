@@ -75,6 +75,8 @@ export interface EntryMeta {
   aborted?: string;
   /** Still in flight when the capture stopped. */
   incomplete?: boolean;
+  /** Only the request headers arrived; the body was never completed. */
+  bodyIncomplete?: boolean;
   websocket?: { sent: number; samples: string[] };
 }
 
@@ -178,6 +180,8 @@ export interface CapturedRequest {
   truncated: boolean;
   aborted?: string;
   incomplete: boolean;
+  /** Only the headers arrived; the body upload never finished. */
+  bodyIncomplete: boolean;
   websocket?: { sent: number; samples: string[] };
 }
 

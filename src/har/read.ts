@@ -141,6 +141,7 @@ export function parseHar(text: string): Capture {
       truncated: em.truncated === true,
       ...(typeof em.aborted === 'string' ? { aborted: em.aborted } : {}),
       incomplete: em.incomplete === true,
+      bodyIncomplete: em.bodyIncomplete === true,
       ...(ws ? { websocket: ws } : {}),
     });
   });

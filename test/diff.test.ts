@@ -85,6 +85,8 @@ describe('buildDiff', () => {
     const clean = buildDiff(rep(chattyHar()), rep(makeHar([{ at: 0, url: 'https://registry.npmjs.org/left-pad' }])));
     expect(stillSendsTelemetry(clean)).toBe(false);
     expect(renderDiffTerminal(clean)).toContain('All 5 telemetry endpoints stopped after opting out.');
+    const same = buildDiff(rep(chattyHar()), rep(chattyHar()));
+    expect(renderDiffTerminal(same)).toContain('All 5 telemetry endpoints were still contacted after opting out.');
     expect(renderDiffTerminal(clean)).toContain("nothing identifying in the second run's visible traffic");
   });
 });

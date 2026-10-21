@@ -161,6 +161,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
   const timeline = new Array<number>(TIMELINE_BUCKETS).fill(0);
   let truncatedBodies = 0;
   let unfinished = 0;
+  let cutOff = 0;
 
   const note = (kind: FindingKind, req: number, key: string, location: string, form: string): void => {
     let f = findings.get(kind);
@@ -226,6 +227,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
     acc.fields.add(req.index, leaves);
     if (req.truncated) truncatedBodies++;
     if (req.incomplete || req.aborted) unfinished++;
+    if (req.bodyIncomplete) cutOff++;
 
     const bucket = durationMs > 0 ? Math.min(TIMELINE_BUCKETS - 1, Math.floor((req.offsetMs / durationMs) * TIMELINE_BUCKETS)) : 0;
     timeline[Math.max(0, bucket)]!++;
@@ -357,6 +359,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
   }
   if (truncatedBodies > 0) caveats.push(`${truncatedBodies} request bod${truncatedBodies === 1 ? 'y was' : 'ies were'} cut at the 1 MiB storage cap.`);
   if (unfinished > 0) caveats.push(`${unfinished} request${unfinished === 1 ? '' : 's'} did not complete (aborted, or still in flight when capture stopped).`);
+  if (cutOff > 0) caveats.push(`${cutOff} request${cutOff === 1 ? ' was' : 's were'} cut off before ${cutOff === 1 ? 'its' : 'their'} body finished uploading, so ${cutOff === 1 ? 'its' : 'their'} content is missing.`);
   for (const w of capture.warnings) caveats.push(`HAR: ${w}`);
   for (const n of meta?.notes ?? []) caveats.push(n);
 

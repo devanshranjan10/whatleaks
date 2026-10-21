@@ -18,12 +18,15 @@ function runLine(label: string, r: Diff['before']): string {
 
 function headlineText(d: Diff): string {
   const h = d.headline;
-  if (h.telemetryEndpointsBefore === 0 && h.telemetryEndpointsNew === 0) return 'No telemetry endpoints were seen in either run.';
+  const n = h.telemetryEndpointsBefore;
+  if (n === 0 && h.telemetryEndpointsNew === 0) return 'No telemetry endpoints were seen in either run.';
   const still = h.telemetryEndpointsStill + h.telemetryEndpointsNew;
-  if (still === 0) return `All ${plural(h.telemetryEndpointsBefore, 'telemetry endpoint')} stopped after opting out.`;
-  const from = `${h.telemetryEndpointsStill} of the ${h.telemetryEndpointsBefore} from the first run`;
+  if (still === 0) return n === 1 ? 'The telemetry endpoint stopped after opting out.' : `All ${n} telemetry endpoints stopped after opting out.`;
+  if (h.telemetryEndpointsNew === 0 && h.telemetryEndpointsStill === n) {
+    return n === 1 ? 'The telemetry endpoint was still contacted after opting out.' : `All ${n} telemetry endpoints were still contacted after opting out.`;
+  }
   const extra = h.telemetryEndpointsNew ? `, plus ${h.telemetryEndpointsNew} new` : '';
-  return `${plural(still, 'telemetry endpoint')} still contacted after opting out: ${from}${extra}.`;
+  return `${plural(still, 'telemetry endpoint')} still contacted after opting out: ${h.telemetryEndpointsStill} of the ${n} from the first run${extra}.`;
 }
 
 function endpointLines(e: EndpointDiff, c: Colors): string[] {

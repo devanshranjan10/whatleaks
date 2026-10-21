@@ -145,6 +145,10 @@ export async function startProxy(opts: ProxyOptions): Promise<RunningProxy> {
   };
 
   await Promise.all([
+    server.on('request-initiated', (r) => {
+      touch();
+      rec.initiated({ id: r.id, method: r.method, url: r.url, httpVersion: r.httpVersion, headers: r.rawHeaders, startedAt: r.timingEvents.startTime });
+    }),
     server.on('request', (r) => onRequest(r, false)),
     server.on('websocket-request', (r) => onRequest(r, true)),
     server.on('response', onResponse),

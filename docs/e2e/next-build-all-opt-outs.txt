@@ -1,0 +1,21 @@
+whatleaks diff · before "default" (4.7 s, 9 requests) → after "opted-out" (2.1 s, 1 request)
+command: ./node_modules/.bin/next build
+opted out with: DO_NOT_TRACK NEXT_TELEMETRY_DISABLED ASTRO_TELEMETRY_DISABLED NUXT_TELEMETRY_DISABLED GATSBY_TELEMETRY_DISABLED NG_CLI_ANALYTICS TURBO_TELEMETRY_DISABLED VERCEL_TELEMETRY_DISABLED CHECKPOINT_DISABLE …
+
+The telemetry endpoint stopped after opting out.
+Telemetry requests: 8 → 0 · all requests: 9 → 1
+
+STOPPED
+  ✓ POST telemetry.nextjs.org/api/v1/record  analytics · Next.js telemetry  8 → 0 requests
+
+OTHER TRAFFIC
+  (not identified as telemetry; check it yourself)
+  = POST registry.npmjs.org/-/npm/v1/security/advisories/bulk  other  1 → 1
+
+STILL SENT ABOUT YOU
+  ✓ nothing identifying in the second run's visible traffic
+  no longer sent: stable-id
+
+NOTES
+  • "Stopped" means not seen in the second run. Some tools send certain events only on first use, or upload on a later run, so repeat the comparison before relying on a stop.
+  • The runs lasted 4.7 s and 2.1 s, so request counts are not like for like.

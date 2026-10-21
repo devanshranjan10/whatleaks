@@ -18,11 +18,10 @@ function categoryLabel(ep: Endpoint): string {
   return c.category;
 }
 
+/** Only ids are tagged in the terminal; the Markdown report has the full notes. */
 function fieldTag(f: FieldStat): string {
-  const tags: string[] = [];
-  if (f.idLike) tags.push('id');
-  if (f.constant) tags.push('same every time');
-  return tags.length ? ` (${tags.join(', ')})` : '';
+  if (!f.idLike) return '';
+  return f.constant ? ' (id, same in every request)' : ' (id)';
 }
 
 function findingLine(f: Finding, c: Colors, report: Report): string[] {
@@ -58,7 +57,8 @@ function endpointBlock(ep: Endpoint, c: Colors, opts: Required<TerminalOptions>)
     .join(' ');
   lines.push(`      ${stats.join(' · ')} · ${c.dim(`status ${statuses}`)}`);
   if (ep.fields.length > 0) {
-    const shown = ep.fields.slice(0, opts.fieldsPerEndpoint).map((f) => `${f.path}${fieldTag(f)}`);
+    const ordered = [...ep.fields.filter((f) => f.idLike), ...ep.fields.filter((f) => !f.idLike)];
+    const shown = ordered.slice(0, opts.fieldsPerEndpoint).map((f) => `${f.path}${fieldTag(f)}`);
     const more = ep.fields.length > shown.length ? ` …+${ep.fields.length - shown.length}` : '';
     lines.push(`      fields: ${clip(shown.join(', '), 400)}${more}`);
   }

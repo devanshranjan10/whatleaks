@@ -39,6 +39,20 @@ describe('Recorder', () => {
     expect(r.inFlight()).toBe(2);
   });
 
+  it('keeps requests whose body never finished uploading', () => {
+    const r = new Recorder();
+    r.initiated({ id: 'i', method: 'POST', url: 'https://t.example/batch', httpVersion: '1.1', headers: [['content-type', 'application/json']], startedAt: T });
+    r.abort('i', 'aborted');
+    r.initiated({ id: 'c', method: 'POST', url: 'https://t.example/ok', httpVersion: '1.1', headers: [], startedAt: T });
+    r.request(req('c'));
+    const [i, c] = r.entries();
+    expect(i?._whatleaks).toMatchObject({ aborted: 'aborted', bodyIncomplete: true });
+    expect(i?.request.postData).toBeUndefined();
+    expect(c?._whatleaks?.bodyIncomplete).toBeUndefined();
+    expect(c?.request.postData?.text).toBe('{"a":1}');
+    expect(r.entries()).toHaveLength(2);
+  });
+
   it('records aborts, websocket messages, refused and passthrough hosts', () => {
     const r = new Recorder(() => T);
     r.request(req('a'));

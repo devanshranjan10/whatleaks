@@ -35,7 +35,7 @@ WHERE IT WENT
 ENDPOINTS
   POST api.segment.io/v1/batch  analytics · Segment
       3 requests · first +1.0s · every ~10.0 s · 3/min · ≈1.4 KB · status 200×3
-      fields: batch[].anonymousId (id, same every time), batch[].context.device.id (id, same every time), batch[].context.os.name (same every time), batch[].event (same every time), batch[].properties.cwd (same every time), batch[].properties.durationMs, batch[].type (same every time), header:authorization (same every time)
+      fields: batch[].anonymousId (id, same in every request), batch[].context.device.id (id, same in every request), batch[].context.os.name, batch[].event, batch[].properties.cwd, batch[].properties.durationMs, batch[].type, header:authorization
       sample (+1.0s):
         {
           "batch": [

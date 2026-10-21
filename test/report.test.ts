@@ -84,7 +84,7 @@ describe('buildReport', () => {
 
   it('adds caveats for refused hosts, imported HAR, and unfinished requests', () => {
     const har = makeHar(
-      [{ at: 0, url: 'https://x.example/a', meta: { aborted: 'ECONNRESET' } }],
+      [{ at: 0, url: 'https://x.example/a', meta: { aborted: 'ECONNRESET', bodyIncomplete: true } }],
       { refused: [{ host: 'pinned.example', count: 4, cause: 'cert-rejected', firstAt: '', lastAt: '' }], watcher: 'unavailable', notes: ['custom note'] },
     );
     const rr = buildReport(parseHar(harText(har)), { matchers, rules: TEST_RULES });
@@ -92,6 +92,7 @@ describe('buildReport', () => {
       '4 connections to 1 host did not accept the whatleaks certificate, so their contents are not in this report.',
       'Direct-connection watching was unavailable, so traffic that bypassed the proxy is not listed.',
       '1 request did not complete (aborted, or still in flight when capture stopped).',
+      '1 request was cut off before its body finished uploading, so its content is missing.',
       'custom note',
     ]);
     expect(rr.totals.refusedConnections).toBe(4);

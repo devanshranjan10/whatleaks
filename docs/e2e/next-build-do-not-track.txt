@@ -1,0 +1,22 @@
+whatleaks diff · before "default" (3.7 s, 9 requests) → after "opted-out" (3.1 s, 9 requests)
+command: ./node_modules/.bin/next build
+opted out with: DO_NOT_TRACK
+
+The telemetry endpoint was still contacted after opting out.
+Telemetry requests: 8 → 8 · all requests: 9 → 9
+
+STILL SENDING AFTER OPT-OUT
+  ● POST telemetry.nextjs.org/api/v1/record  analytics · Next.js telemetry  8 → 8 requests
+      still sent: context.anonymousId, context.projectId, context.sessionId, events[].eventName, meta.agentName, meta.ciName, meta.cpuCount, meta.cpuModel, meta.cpuSpeed, meta.isCI …+81
+
+OTHER TRAFFIC
+  (not identified as telemetry; check it yourself)
+  = POST registry.npmjs.org/-/npm/v1/security/advisories/bulk  other  1 → 1
+
+STILL SENT ABOUT YOU
+  ○ Repeated identifiers — 8 requests, in context.anonymousId, context.projectId, context.sessionId
+
+PERSISTENT IDENTIFIERS
+  same value in both runs, so it is stored on disk and survives a restart
+  ○ e4a7…4360 at context.anonymousId → POST telemetry.nextjs.org/api/v1/record
+  ○ 1597…f2ed at context.projectId → POST telemetry.nextjs.org/api/v1/record
