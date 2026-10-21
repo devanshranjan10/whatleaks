@@ -17,6 +17,6 @@ STILL SENT ABOUT YOU
   ○ Repeated identifiers — 8 requests, in context.anonymousId, context.projectId, context.sessionId
 
 PERSISTENT IDENTIFIERS
-  same value in both runs, so it is stored on disk and survives a restart
-  ○ e4a7…4360 at context.anonymousId → POST telemetry.nextjs.org/api/v1/record
-  ○ 1597…f2ed at context.projectId → POST telemetry.nextjs.org/api/v1/record
+  same value in both runs: stored by the app or built into it, so it can link runs together
+  ○ ‹id-1› at context.anonymousId → POST telemetry.nextjs.org/api/v1/record
+  ○ ‹id-2› at context.projectId → POST telemetry.nextjs.org/api/v1/record

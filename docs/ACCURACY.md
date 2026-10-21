@@ -65,18 +65,34 @@ path and git email agreed, so there were no false positives on real data.
   - the npm advisory check: other, not telemetry
 - That is a small sample.
 - The keyword heuristics (e.g. `/telemetry`, `/events`, `/batch`, `/track`) are tested
-  only on synthetic URLs, and **will** mislabel some ordinary APIs. Reports therefore
-  mark every heuristic label with `?` and never present a heuristic as a fact.
+  only on synthetic URLs, and **will** mislabel some ordinary APIs. The independent
+  review found GitHub `/repos/o/r/events` and Stripe `/v1/events` guessed as
+  analytics. So:
+  - every heuristic label is marked `?`
+  - headline counts and `--strict` use **catalog hosts only**
+  - guesses are listed separately as "possibly telemetry"
 
 ## 5. Redaction
 
 - The report redacts these by default:
-  - local identifiers
-  - secret-named headers, fields and query params
+  - local identifiers (labels)
+  - secret-named headers, fields and query params, including everything nested under
+    a secret-named key
+  - secrets written as `key=value`, `"key":"value"`, multipart fields or header lines
+    inside free text
+  - secret flags in the command line
   - emails
-  - id-shaped values
-- Unit tests check that none of the planted values appear in terminal, Markdown or JSON
-  output.
+  - id-shaped values, which become per-report aliases (`‹id-1›`)
+  - control characters, which are neutralised
+- `test/leaks.test.ts` plants every leak the independent review found:
+  - WebSocket tokens, multipart passwords and JSON cut at the size cap
+  - secrets in the command line
+  - identifiers in hosts and paths, and encoded emails in URLs
+  - nested secrets and numeric secrets
+  - id-shaped JSON keys and terminal escapes
+  None of them appears in terminal, Markdown, JSON or diff output.
+- Fingerprints used to compare ids across two runs are a keyed hash (HMAC) with a
+  random key per process, so they cannot be reversed or matched against other reports.
 - Redaction is pattern-based, so it is **not a guarantee**. A secret in free text under
   an innocent name will not be caught. Read a report before posting it.
 - The HAR file is never redacted; share the report, not the HAR.

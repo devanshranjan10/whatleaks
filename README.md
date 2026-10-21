@@ -30,9 +30,9 @@ STILL SENT ABOUT YOU
   ○ Repeated identifiers — 8 requests, in context.anonymousId, context.projectId, context.sessionId
 
 PERSISTENT IDENTIFIERS
-  same value in both runs, so it is stored on disk and survives a restart
-  ○ e4a7…4360 at context.anonymousId → POST telemetry.nextjs.org/api/v1/record
-  ○ 1597…f2ed at context.projectId → POST telemetry.nextjs.org/api/v1/record
+  same value in both runs: stored by the app or built into it, so it can link runs together
+  ○ ‹id-1› at context.anonymousId → POST telemetry.nextjs.org/api/v1/record
+  ○ ‹id-2› at context.projectId → POST telemetry.nextjs.org/api/v1/record
 ```
 
 That is real output from Next.js 16.4.2 on 2026-10-21. `DO_NOT_TRACK=1` does not stop
@@ -109,10 +109,11 @@ Useful options:
 | `--md <file>`, `--json <file>` | Write the report (or, for `compare` and `diff`, the diff) as Markdown or JSON. The Markdown has every field and full payload samples. |
 | `--samples <n>` | Payload samples per endpoint (default 2). |
 | `--duration <s>` | Stop the app after this many seconds. whatleaks stops every process the app started. |
-| `--linger <s>` | After the app exits, wait for processes it left running (default 10 s). Some tools send telemetry from a detached helper after they exit. |
+| `--linger <s>` | After the app exits, wait up to this long for processes it left running (default 10 s). Some tools send telemetry from a detached helper after they exit. |
+| `--grace <s>` | After the app exits, keep recording at least this long (default 1 s), for helpers that start sending a moment later. |
 | `--passthrough <host>` | Tunnel a host without decrypting it, e.g. `*.mybank.com`. It is still counted. |
 | `-e KEY=VALUE` | Extra environment variable for the app. |
-| `--strict` | `compare` and `diff`: exit 1 if any telemetry endpoint is still contacted in the second run. |
+| `--strict` | `compare` and `diff`: exit 1 if a *known* telemetry endpoint (from the catalog) is still contacted in the second run, or if the second run did not exit cleanly. |
 | `--raw` | Turn off redaction (see below). |
 | `--no-watch` | Do not sample for connections that bypass the proxy. |
 
@@ -127,11 +128,11 @@ cut at the end:
 
 ```
 whatleaks · ./node_modules/.bin/next build · 3.7 s · exit 0
-9 requests to 2 destinations · ≈10.6 KB sent · 8 to telemetry endpoints
+9 requests to 2 destinations · ≈10.6 KB sent · 8 to known telemetry endpoints
 activity |  █ ▃   █ ▃▃        | over 3.7 s
 
 WHAT IT SENT ABOUT YOU
-  ○ Repeated identifiers: 3 ids reused across requests (e4a7…4360 ×8, 1597…f2ed ×8, a752…40db ×8)
+  ○ Repeated identifiers: 3 ids reused across requests (‹id-1› ×8, ‹id-2› ×8, ‹id-3› ×8)
       in context.anonymousId, context.projectId, context.sessionId
 
 WHERE IT WENT
@@ -146,9 +147,9 @@ ENDPOINTS
       sample (+0.5s):
         {
           "context": {
-            "anonymousId": "e4a7…4360",
-            "projectId": "1597…f2ed",
-            "sessionId": "a752…40db"
+            "anonymousId": "‹id-1›",
+            "projectId": "‹id-2›",
+            "sessionId": "‹id-3›"
           },
 …
 ```
@@ -181,9 +182,12 @@ and where it appeared. This line is from the test suite's synthetic capture:
 
    Trust reaches only the app's own process tree. **Nothing is installed in your
    system's trust store, and no system proxy settings change.**
-4. **Process tree.** whatleaks follows every process the app starts, including
-   detached helpers, so it can wait for late telemetry and stop everything on
-   `--duration`.
+4. **Process tree.**
+   - whatleaks follows the processes the app starts, identified by pid and start time.
+   - It also adopts any process connected to the proxy, which catches detached
+     helpers whose parent already exited.
+   - So it can wait for late telemetry, and stop everything on `--duration`, on
+     Ctrl-C, or when the wait ends.
 5. **Not-visible traffic.** An app that refuses the CA, such as one that pins
    certificates, fails that request. whatleaks lists the host by name, with a count,
    under "not visible". It does not try to get around pinning. Connections that ignore
@@ -198,6 +202,8 @@ and where it appeared. This line is from the test suite's synthetic capture:
      written.
    - Endpoints are classified from a catalog of 69 known telemetry hosts, each with a
      source link. Otherwise a URL keyword guess is used, always marked `?`.
+   - Headlines and `--strict` count only catalog hosts. Guesses are listed separately,
+     as "possibly telemetry".
 
 ## Reports are redacted
 
@@ -205,7 +211,10 @@ Reports are meant to be shared, so by default:
 - this machine's identifiers become labels (`‹home›`, `‹sha256(mac)›`, …)
 - secret-looking headers, fields and query parameters become `‹redacted›`
 - emails become `‹email›`
-- id-shaped values are masked (`e4a7…4360`)
+- id-shaped values (install ids, session ids, tokens) become per-report aliases
+  (`‹id-1›`). The same value always gets the same alias, so you can still follow it
+  through the report.
+- control characters are neutralised, so a payload cannot inject terminal escapes
 
 `--raw` turns this off.
 
@@ -247,6 +256,10 @@ The full write-up is in [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
   tested with real exports from Proxyman, Charles or HTTP Toolkit.
 - **Only processes you launch through whatleaks.** GUI apps, Electron apps, browsers
   and system daemons were not tested.
+- **Late helpers.** A detached helper is caught when it is still connected to the
+  proxy, or was seen as a child of the app. One whose parent exits at once, and which
+  first connects more than `--grace` seconds later, is missed: raise `--grace` for
+  tools like that.
 - **Apps that ignore proxy variables or the CA cannot be read:**
   - Go programs on macOS and Apple's `/usr/bin/python3` refuse the CA (both checked).
     They are named, not read.

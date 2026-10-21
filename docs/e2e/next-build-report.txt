@@ -1,9 +1,9 @@
 whatleaks · ./node_modules/.bin/next build · 3.7 s · exit 0
-9 requests to 2 destinations · ≈10.6 KB sent · 8 to telemetry endpoints
+9 requests to 2 destinations · ≈10.6 KB sent · 8 to known telemetry endpoints
 activity |  █ ▃   █ ▃▃        | over 3.7 s
 
 WHAT IT SENT ABOUT YOU
-  ○ Repeated identifiers: 3 ids reused across requests (e4a7…4360 ×8, 1597…f2ed ×8, a752…40db ×8)
+  ○ Repeated identifiers: 3 ids reused across requests (‹id-1› ×8, ‹id-2› ×8, ‹id-3› ×8)
       in context.anonymousId, context.projectId, context.sessionId
 
 WHERE IT WENT
@@ -18,9 +18,9 @@ ENDPOINTS
       sample (+0.5s):
         {
           "context": {
-            "anonymousId": "e4a7…4360",
-            "projectId": "1597…f2ed",
-            "sessionId": "a752…40db"
+            "anonymousId": "‹id-1›",
+            "projectId": "‹id-2›",
+            "sessionId": "‹id-3›"
           },
           "meta": {
             "systemPlatform": "darwin",
@@ -35,4 +35,4 @@ ENDPOINTS
       1 request · first +0.4s · ≈321 B · status 200
       fields: next[]
 
-Redacted: ‹labels› replace local identifiers and secrets; ids are masked. Use --raw to see everything.
+Redacted: ‹labels› replace local identifiers and secrets; ids are replaced by aliases. Use --raw to see everything.

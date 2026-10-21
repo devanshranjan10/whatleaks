@@ -174,3 +174,26 @@ telemetry throws inside the process on Node 24.22 and 26.0 (e2e §3), so nothing
 be sent. Node 22.21+ has both working Next telemetry and `NODE_USE_ENV_PROXY`. The
 official binary was downloaded to `/tmp` and checksum-verified; nothing was installed
 system-wide. whatleaks itself ran on the machine's Node 26.0.0.
+
+**D-23 — An independent code review was acted on in full.** The review was read-only
+and run by a separate agent after M8. It reported 20 findings and all 20 were fixed,
+each with a test (commits ba283cc and f4060a2). Choices made along the way:
+- **Ids become per-report aliases (`‹id-1›`), not partial masks.** This supersedes the
+  masking part of D-14. A mask that keeps 8 characters of an install id still lets the
+  vendor link a public report to its author. Aliases are shared between the two
+  reports of a diff, so a persistent id keeps one alias.
+- **Fingerprints are an HMAC with a random key per process.** A plain `sha256(value)`
+  can be brute-forced when the value is itself a hash of a MAC or username.
+- **Known versus guessed telemetry.** Headlines and `--strict` count only catalog
+  hosts. URL keyword guesses go in a "possibly telemetry" section. This enforces D-11:
+  a heuristic never counts as a fact.
+- **`--strict` also fails when the second run did not exit cleanly.** A crash looks
+  exactly like an opt-out that worked.
+- **Signals.** A Ctrl-C while the app runs is the normal way to stop it, so the wait
+  for late senders still happens. A signal before the app starts or after it exits
+  ends the wait, stops leftover processes and still writes the HAR.
+- **Process identity is pid plus start time.** Helpers are also adopted by their
+  connection to the proxy, because macOS 26 hides other processes' environments even
+  from their owner, which rules out an environment marker.
+- **Memory.** mockttp's `recordTraffic` is turned off (it kept every body). Bodies over
+  8 MiB are counted, not buffered, and decoding is capped at 16 MiB.
