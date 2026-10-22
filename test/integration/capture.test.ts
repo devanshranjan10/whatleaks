@@ -5,6 +5,7 @@ import net from 'node:net';
 import os from 'node:os';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Recorder } from '../../src/capture/recorder.js';
+import { nodeProxySupport } from '../../src/capture/nodecheck.js';
 import { startProxy } from '../../src/capture/proxy.js';
 import { captureSession, type SessionOptions } from '../../src/capture/session.js';
 import { generateCACertificate } from 'mockttp';
@@ -182,7 +183,9 @@ describe('captureSession (offline, real child processes)', () => {
 
   it('does not load the preload with preload: false', async () => {
     const { har } = await session(process.execPath, ['-e', "process.stdout.write(process.env.NODE_OPTIONS ?? ''); fetch('https://upstream.test/x').finally(() => process.exit(0))"], { preload: false });
-    expect(har.log.entries).toHaveLength(1);
+    // Without the preload only Node's own NODE_USE_ENV_PROXY support routes fetch; a Node
+    // without it (before 22.21) must bypass, which also shows the preload stayed out.
+    expect(har.log.entries).toHaveLength(nodeProxySupport(process.version) === 'none' ? 0 : 1);
   });
 
   it('names a host whose client refuses the certificate, without its contents', async () => {

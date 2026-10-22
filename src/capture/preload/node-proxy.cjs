@@ -187,8 +187,9 @@ function install() {
   if (!fetchNative && typeof globalThis.fetch === 'function') {
     // Node's built-in fetch is undici, which creates its global dispatcher on first use.
     // Make it do so now, then replace it with an Agent of the same class whose connector
-    // tunnels through the proxy. Newer undici keeps the Agent under globalDispatcher.2 and
-    // a compatibility wrapper under .1; older versions only have .1.
+    // tunnels through the proxy. undici 8 (Node 26) keeps the Agent under globalDispatcher.2
+    // and a compatibility wrapper under .1; undici 7 (Node 24) keeps the same Agent under
+    // both, and its fetch reads .1; older versions only have .1.
     try {
       const s1 = Symbol.for('undici.globalDispatcher.1');
       const s2 = Symbol.for('undici.globalDispatcher.2');
@@ -230,7 +231,7 @@ function install() {
         if (globalThis[s2]) {
           const Wrapper = globalThis[s1] && globalThis[s1].constructor;
           globalThis[s2] = agent;
-          if (typeof Wrapper === 'function' && Wrapper !== Agent) globalThis[s1] = new Wrapper(agent);
+          globalThis[s1] = typeof Wrapper === 'function' && Wrapper !== Agent ? new Wrapper(agent) : agent;
         } else {
           globalThis[s1] = agent;
         }

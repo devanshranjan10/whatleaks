@@ -1,9 +1,10 @@
 import { spawnSync } from 'node:child_process';
 import dgram from 'node:dgram';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import { join } from 'node:path';
+import tls from 'node:tls';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildChildEnv } from '../src/capture/env.js';
 import { runtimeHooks } from '../src/capture/preload.js';
@@ -45,12 +46,16 @@ const has = (bin: string): boolean => spawnSync(bin, ['--version'], { stdio: 'ig
 
 describe.skipIf(!lan)('runtime hooks report direct sockets', () => {
   let dir: string;
+  let ca: string;
   let tcp: net.Server;
   let udp: dgram.Socket;
   let tcpPort = 0;
   let udpPort = 0;
   beforeAll(async () => {
     dir = mkdtempSync(join(os.tmpdir(), 'wl-sock-'));
+    // A real certificate: Node 22 and 24 warn on stderr about an extra-certs file they cannot load.
+    ca = join(dir, 'ca.pem');
+    writeFileSync(ca, tls.rootCertificates[0]!);
     tcp = net.createServer((s) => s.destroy());
     await new Promise<void>((res) => tcp.listen(0, lan, res));
     tcpPort = (tcp.address() as net.AddressInfo).port;
@@ -66,9 +71,10 @@ describe.skipIf(!lan)('runtime hooks report direct sockets', () => {
 
   const run = (bin: string, args: string[], name: string): SocketReport[] => {
     const log = join(dir, `${name}.ndjson`);
-    const env = buildChildEnv({ base: { PATH: process.env.PATH }, proxyUrl: 'http://127.0.0.1:9', caPath: '/nonexistent', bundlePath: '/nonexistent', hooks: runtimeHooks(), socketLog: log }).env;
+    const env = buildChildEnv({ base: { PATH: process.env.PATH }, proxyUrl: 'http://127.0.0.1:9', caPath: ca, bundlePath: ca, hooks: runtimeHooks(), socketLog: log }).env;
     const res = spawnSync(bin, args, { env: { ...env, LAN: lan, TCP_PORT: String(tcpPort), UDP_PORT: String(udpPort) }, encoding: 'utf8', timeout: 20000 });
-    expect(res.stderr).toBe('');
+    // Node 22 calls its own env proxy support experimental (README, Limitations); the hooks print nothing.
+    expect(res.stderr.replace(/^\(node:\d+\) \[UNDICI-EHPA\].*\n(?:\(Use `node --trace-warnings .*\n)?/m, '')).toBe('');
     expect(res.status).toBe(0);
     try {
       return parseSocketReports(readFileSync(log, 'utf8'));
