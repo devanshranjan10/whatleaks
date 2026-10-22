@@ -191,6 +191,8 @@ and where it appeared. This line is from the test suite's synthetic capture:
      `SSL_CERT_FILE`, such as Apple's `/usr/bin/python3` and the macOS system Ruby. The
      Python hook also makes aiohttp honour the proxy variables, as `trust_env=True`
      would. A client given its own CA file keeps it.
+   - All three hooks also report each direct TCP connection and UDP destination as it
+     opens, to a file in the run's private temp folder (see "Not-visible traffic").
    - `--no-preload` turns all three off.
 
    Trust reaches only the app's own process tree. **Nothing is installed in your
@@ -213,6 +215,8 @@ and where it appeared. This line is from the test suite's synthetic capture:
      macOS keeps the owner of a TIME_WAIT socket.
    - **Linux:** `/proc` at the same rates, so no `ps`, `lsof` or `netstat` is needed.
    - **Elsewhere:** `lsof` every 0.5 s.
+   - **Node, Python and Ruby** also report each direct socket themselves as it opens,
+     so even ones that last a millisecond are listed, with the hostname asked for.
 6. **Analysis.**
    - Requests are grouped into endpoints, with path ids templated
      (`/users/123` → `/users/:id`).
@@ -247,22 +251,23 @@ the raw traffic: share the report, not the HAR.
 Measured in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); method notes in
 [`docs/ACCURACY.md`](docs/ACCURACY.md). In short:
 
-- **Lab with exact ground truth.** 43 scenarios and 564 attempts on macOS, 40 and 537 on
+- **Lab with exact ground truth.** 46 scenarios and 594 attempts on macOS, 43 and 567 on
   Linux, covering Node 20/22/26, Bun, curl, four Python HTTP clients and Apple's
   Python, Ruby, Go, Java, WebSockets, `node:http2`, raw TCP and UDP, and late helpers.
   Two other tools ran on the same scenarios:
 
   | Silently missed | macOS | Linux |
   |---|---|---|
-  | **whatleaks** | **5 %** | **5 %** |
-  | mitmproxy 12.2.3, given the same environment | 35 % | 36 % |
-  | HTTP Toolkit server 1.27.3, with its own interception | 65 % | 69 % |
-  | the build before this benchmark | 48 % | – |
+  | **whatleaks** | **2.9 %** | **3.2 %** |
+  | mitmproxy 12.2.3, given the same environment | 38 % | 40 % |
+  | HTTP Toolkit server 1.27.3, with its own interception | 67 % | 70 % |
+  | the build before this benchmark (43 scenarios) | 48 % | – |
 
-  - whatleaks read the full payload of 78 % of attempts on both platforms, and reached
-    the best outcome its rules allow in 95 %.
-  - Every remaining miss is a connection that ignores the proxy and is gone within
-    about 10 ms, or UDP sent without a destination address on the socket.
+  - whatleaks reached the best outcome its rules allow in 97 % of attempts on both
+    platforms.
+  - Every remaining miss is from a Go program, which whatleaks loads no hook into: a
+    connection reset within 10 ms, or UDP sent with `sendto()`. The same from Node,
+    Python or Ruby was caught every time.
   - Nothing the app did not send was ever credited to it.
 - **Real tools, against each tool's own debug output:** whatleaks matched 5 of 5,
   HTTP Toolkit 4 of 5, mitmproxy 3 of 5.
@@ -300,15 +305,14 @@ Measured limits are in [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
 - **Connections that bypass the proxy are named, not read.**
   - Examples: raw sockets, UDP, and HTTP clients that ignore proxy variables other
     than `node:http2` and aiohttp, which whatleaks routes through the proxy.
-  - They are found by polling, which misses very short ones:
+  - From Node, Python and Ruby, each one is reported by whatleaks's hook as it opens,
+    with the hostname the app asked for. That includes UDP sent with `sendto()`.
+  - From other programs (Go, Rust, C), they are found by polling, which misses very
+    short ones:
     - a socket closed by the app is found afterwards on macOS (TIME_WAIT keeps its
-      owner);
-    - one reset by the app, or closed first by the server, must be seen while open.
-      In the lab, resets after 10 ms were caught in 3 to 30 % of runs and resets
-      after 50 ms in 80 to 100 %.
-  - UDP sent with `sendto()` on an unconnected socket leaves no address for any watcher
-    and is never seen.
-  - On Linux a closed socket has no owner, so only open ones count.
+      owner); on Linux a closed socket has no owner, so only open ones count;
+    - one reset within about 10 ms is often missed (Go in the lab: 20 to 30 %);
+    - UDP sent with `sendto()` leaves no address for any watcher and is never seen.
 - **Not covered by the Node preload:** the `undici` npm package with its own dispatcher,
   and `node:http2` over plain-text `http:` (h2c). Their connections are named as direct
   connections.

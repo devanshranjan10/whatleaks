@@ -4,7 +4,7 @@ This is the resume point for any session.
 
 Spec: `docs/superpowers/specs/2026-10-21-whatleaks-design.md`.
 Plan: `docs/superpowers/plans/2026-10-21-whatleaks.md`.
-Decisions: `docs/DECISIONS.md` (D-01 to D-33). Research: `docs/RESEARCH.md`.
+Decisions: `docs/DECISIONS.md` (D-01 to D-35). Research: `docs/RESEARCH.md`.
 Accuracy: `docs/ACCURACY.md`. Real runs: `docs/e2e/README.md`.
 Benchmark: `docs/BENCHMARK.md` (spec `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md`).
 
@@ -32,13 +32,33 @@ independent code review.
 
 | Benchmark (lab, real tools, perf, Linux) and the gaps it found | c2dbf16 … 6856b3b; see `docs/BENCHMARK.md` §7 |
 | HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | fbc545d … 110f4f9 |
+| Socket reports from the hooks, mockttp upload fix, loopback probe fix | 74439e8, 2bd7f5e |
 
-**Gate on the last commit:** `npm ci`, typecheck, lint, **229 offline tests**, build. It
+**Gate on the last commit:** `npm ci`, typecheck, lint, **239 offline tests**, build. It
 passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It returns
 npm's real exit code; an earlier `| grep` pipe hid two lint failures, which were
 amended.
 
 ---
+
+## Benchmark session, third round (2026-10-22)
+
+The owner asked for every remaining gap to be fixed.
+- **Short direct sockets and `sendto()`:** the Node, Python and Ruby hooks now report
+  each TCP connection and UDP destination as it opens (D-34). Lab: every Node raw
+  socket row is 100 % on both platforms. Previously a reset after 10 ms was 10–50 %,
+  server-closes 0–40 % and `sendto()` 0 %.
+- **New lab rows** for the same sockets from Go, which has no hook. They keep the limit
+  measured: reset after 10 ms 20–30 %, `sendto()` 0 %.
+- **Silently missed, macOS / Linux:** whatleaks **2.9 % / 3.2 %**, all in those Go
+  rows. On the old build's 43 scenarios: 0 of 564. mitmproxy 38 % / 40 %, HTTP Toolkit
+  67 % / 70 %.
+- **Uploads:** 79 → 187 MiB/s, by fixing mockttp's body-data batching when whatleaks
+  loads it (D-35). The fix should also go upstream to mockttp.
+- **Found by the Linux lab:** the loopback probe refused to run when another listener
+  held the proxy's port number on a LAN address (`2bd7f5e`).
+- **Kept by design:** bodies over 8 MiB are cut off (bounded memory), and whatleaks
+  uses the most CPU of the three proxies (the polling watcher).
 
 ## Benchmark session, second round (2026-10-21 evening to 2026-10-22)
 
@@ -165,9 +185,10 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
   outside the app's folder, and that first connects more than `--grace` seconds
   (default 1 s) later, is not captured. In the app's folder it is waited for (lab:
   100 % up to 8 s).
-- **Very short connections that bypass the proxy can be missed.** That means ones
-  reset within ~10 ms, or closed at once by the server. So is UDP sent with `sendto()`
-  (`docs/BENCHMARK.md` §3).
+- **Very short connections that bypass the proxy can be missed in programs with no
+  hook** (Go, Rust, C). That means ones reset within ~10 ms, or UDP sent with
+  `sendto()` (`docs/BENCHMARK.md` §3). From Node, Python and Ruby they are all
+  reported.
 - **Keyword guesses mislabel some APIs** (GitHub `/events`). They are marked `?` and
   never counted in headlines or `--strict`.
 - **Imported HAR** was tested only with hand-made devtools-style and mitmproxy-style
@@ -197,7 +218,7 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
 
 ```
 cd ~/Downloads/sideproj/whatleaks
-npm ci && ./scripts/gate.sh        # 229 tests, all offline
+npm ci && ./scripts/gate.sh        # 239 tests, all offline
 node dist/cli.js --help
 ```
 

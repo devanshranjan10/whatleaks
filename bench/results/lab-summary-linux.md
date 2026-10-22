@@ -2,11 +2,11 @@
 
 | | attempts | payload | request | host only | **silently missed** | at best possible |
 |---|---|---|---|---|---|---|
-| whatleaks | 537 | 78 % | 1 % | 16 % | **5 %** (27) | 95 % |
-| mitmproxy | 537 | 63 % | 0 % | 1 % | **36 %** (195) | 64 % |
-| HTTP Toolkit | 537 | 31 % | 0 % | 1 % | **69 %** (369) | 31 % |
+| whatleaks | 567 | 74 % | 1 % | 22 % | **3 %** (18) | 97 % |
+| mitmproxy | 567 | 60 % | 0 % | 1 % | **40 %** (225) | 60 % |
+| HTTP Toolkit | 567 | 29 % | 0 % | 1 % | **70 %** (399) | 30 % |
 
-"At best possible": share of attempts that reached the best outcome whatleaks can reach without breaking its rules (payload for proxy-aware clients; the destination named for pinned clients and clients that ignore proxies). A baseline can go beyond it (HTTP Toolkit reads some clients whatleaks can only name); those are listed below the table.
+"At best possible": share of attempts that reached the best outcome whatleaks can reach without breaking its rules (payload for proxy-aware clients; the destination named for pinned clients and clients that ignore proxies). A baseline can go beyond it (keep a body whatleaks cuts off, or read a client whatleaks can only name); those cases are listed below the table.
 
 | Scenario | Best possible | whatleaks | mitmproxy | HTTP Toolkit |
 |---|---|---|---|---|
@@ -32,16 +32,19 @@
 | client pinning its own trust store | host | **100 %** | 100 % | 100 % |
 | Node http2 module (ignores proxy variables) | payload | **100 %** | 0 % | 0 % |
 | Python aiohttp (ignores proxy variables by default) | payload | **100 %** | 0 % | 100 % |
-| raw TCP held 10 ms | host | **60 %** | 0 % | 0 % |
+| raw TCP held 10 ms | host | **100 %** | 0 % | 0 % |
 | raw TCP held 100 ms | host | **100 %** | 0 % | 0 % |
 | raw TCP held 500 ms | host | **100 %** | 0 % | 0 % |
 | raw TCP held 2 s | host | **100 %** | 0 % | 0 % |
-| raw TCP reset by the client after 10 ms | host | **50 %** | 0 % | 0 % |
+| raw TCP reset by the client after 10 ms | host | **100 %** | 0 % | 0 % |
 | raw TCP reset by the client after 50 ms | host | **100 %** | 0 % | 0 % |
 | raw TCP reset by the client after 200 ms | host | **100 %** | 0 % | 0 % |
-| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | **20 %** | 0 % | 0 % |
+| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | **100 %** | 0 % | 0 % |
 | one UDP datagram, connected socket (like QUIC) | host | **100 %** | 0 % | 0 % |
-| one UDP datagram, unconnected socket (sendto) | host | **0 %** | 0 % | 0 % |
+| one UDP datagram, unconnected socket (sendto) | host | **100 %** | 0 % | 0 % |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | **20 %** | 0 % | 0 % |
+| Go raw TCP, server closes at once (no runtime hook) | host | **100 %** | 0 % | 0 % |
+| Go UDP datagram, unconnected socket (no runtime hook) | host | **0 %** | 0 % | 0 % |
 | detached helper sends 0.2 s after the app exits | payload | **100 %** | 100 % | 0 % |
 | detached helper sends 1.5 s after the app exits | payload | **100 %** | 100 % | 0 % |
 | detached helper sends 3 s after the app exits | payload | **100 %** | 100 % | 0 % |

@@ -62,8 +62,9 @@ const sum = (rows: Array<Row | undefined>): Tally => {
 
 const baselines = [...new Set(after.map((r) => r.tool))].filter((t) => t !== 'whatleaks');
 const NAMES: Record<string, string> = { mitmproxy: 'mitmproxy', httptoolkit: 'HTTP Toolkit' };
-// Only scenarios measured in every column are compared in the totals.
-const ids = [...new Set(after.map((r) => r.id))].filter((id) => (!before || find(before, id, 'whatleaks')) && find(after, id, 'whatleaks') && baselines.every((b) => find(after, id, b)));
+// Scenarios measured for every tool in the after file; the before build is totalled over
+// the ones it ran (newer scenarios show "–" there).
+const ids = [...new Set(after.map((r) => r.id))].filter((id) => find(after, id, 'whatleaks') && baselines.every((b) => find(after, id, b)));
 type Col = [string, Array<Row | undefined>];
 const cols: Col[] = [
   ...(before ? [['whatleaks before', ids.map((id) => find(before, id, 'whatleaks'))] as Col] : []),
@@ -73,14 +74,16 @@ const cols: Col[] = [
 
 const lines = [`# Lab benchmark (${flags.after}): ${cols.map((c) => c[0]).join(', ')}`, ''];
 lines.push('| | attempts | payload | request | host only | **silently missed** | at best possible |', '|---|---|---|---|---|---|---|');
-for (const [name, rows] of cols) {
+for (const [col, rows] of cols) {
   const t = sum(rows);
+  const measured = rows.filter(Boolean).length;
+  const name = measured < ids.length ? `${col} (${measured} of ${ids.length} scenarios)` : col;
   const best = rows.reduce((n, r) => n + (r ? r.atBest * r.total.attempted : 0), 0) / t.attempted;
   lines.push(`| ${name} | ${t.attempted} | ${pct(t.payload / t.attempted)} | ${pct(t.request / t.attempted)} | ${pct(t.host / t.attempted)} | **${pct(t.missed / t.attempted)}** (${t.missed}) | ${pct(best)} |`);
 }
 lines.push(
   '',
-  '"At best possible": share of attempts that reached the best outcome whatleaks can reach without breaking its rules (payload for proxy-aware clients; the destination named for pinned clients and clients that ignore proxies). A baseline can go beyond it (HTTP Toolkit reads some clients whatleaks can only name); those are listed below the table.',
+  '"At best possible": share of attempts that reached the best outcome whatleaks can reach without breaking its rules (payload for proxy-aware clients; the destination named for pinned clients and clients that ignore proxies). A baseline can go beyond it (keep a body whatleaks cuts off, or read a client whatleaks can only name); those cases are listed below the table.',
   '',
 );
 lines.push(`| Scenario | Best possible | ${cols.map((c) => c[0]).join(' | ')} |`, `|---|---|${cols.map(() => '---').join('|')}|`);

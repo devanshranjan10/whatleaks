@@ -44,11 +44,11 @@ ground truth, 3 or 10 runs each, on macOS and on Linux unless one is named.
 | Detached helper that sends after the app exits | captured up to `--linger` (default 10 s) when it runs in the app's folder or connects to the proxy | lab 100 % for 0.2, 1.5, 3 and 8 s after exit |
 | Short-lived child that connects directly | named, attributed to the app | lab 100 % |
 | Upload over 8 MiB, or abandoned mid-way | listed, marked cut off; the first MiB kept and decoded | lab 100 % at that outcome; integration tests |
-| Program that ignores proxy settings (raw TCP, UDP, other HTTP clients) | named as a direct connection by address and process | lab, across runs: TCP held 100 ms to 2 s 100 %, TCP held 10 ms 100 % on macOS and 60 % on Linux, TCP reset after 50 ms or more 80–100 %, connected UDP 70–100 % |
-| Connection reset by the app within ~10 ms, or closed at once by the server | **often missed**: there is nothing left to find once it closes | lab: reset after 10 ms 10–50 %, server closes at once 0–40 % |
-| UDP sent with `sendto()` on an unconnected socket | **never seen**: the socket has no destination address | lab 0 % |
-| HTTP/3 (QUIC) | not proxied; named as a direct UDP connection (QUIC uses connected sockets) | lab: connected UDP 70–100 % |
-| Linux | `/proc` backend, no tools needed | full lab in Docker (5 % silently missed, as on macOS); `node:22-slim` container, 6 of 6 checks |
+| Node, Python or Ruby program that ignores proxy settings (raw TCP, UDP, other HTTP clients) | named as a direct connection by address, process and the hostname asked for: the runtime hook reports each socket as it opens (D-34) | lab 100 % on both platforms for TCP held 10 ms to 2 s, reset after 10 to 200 ms, closed at once by the server, and UDP connected or sent with `sendto()`; unit tests for Node, Python (Homebrew and Apple's) and Ruby 2.6 |
+| Other programs (Go, Rust, C) that ignore proxy settings | named by the polling watcher, by address and process | lab, Go: server closes at once 100 %; reset after 10 ms 30 % on macOS, 20 % on Linux |
+| UDP sent with `sendto()` from a program with no hook | **never seen**: the socket has no destination address | lab, Go: 0 % |
+| HTTP/3 (QUIC) | not proxied; named as a direct UDP connection (QUIC uses connected sockets) | lab: connected UDP 100 % from Node; 70–100 % by polling alone in earlier runs |
+| Linux | `/proc` backend, no tools needed | full lab in Docker (3.2 % silently missed, all in the Go rows); `node:22-slim` container, 6 of 6 checks |
 | GUI and Electron apps, browsers, system daemons | **not tested.** whatleaks only sees processes it launches | n/a |
 
 ## 3. Identity detection

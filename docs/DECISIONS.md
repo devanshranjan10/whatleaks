@@ -323,7 +323,44 @@ now keeps one context per distinct set of plain options (at most 64), built on f
 Contexts with key material or their own CA list are built as before. Trust is unchanged:
 the shared context is the one that would have been built.
 
-Not fixed: mockttp's request-body-data events concatenate each chunk onto the pending
-buffer (`emitBodyDataEvents`), which costs about 15 ms per 4 MiB upload. whatleaks needs
-those events to count bodies past the cap. mockttp is a runtime dependency, so the fix
-belongs upstream, not in a postinstall patch.
+mockttp's request-body-data events had a second cost; D-35 fixes it.
+
+**D-34 — Runtime hooks report direct sockets as they open.** The remaining lab misses were
+connections that bypass the proxy and close within about 10 ms (a reset, or the server
+closing first), and UDP sent with `sendto()`, which never has a peer to poll. A poll
+cannot see either. The runtime hooks whatleaks already loads can: each one appends a
+line to `WHATLEAKS_SOCKETS` (in the run's 0700 temp folder) for every TCP connection and
+UDP destination outside loopback:
+- Node: `net.Socket#connect` (which TLS uses too), `dgram` send and connect;
+- Python: `socket.connect`, `connect_ex` and `sendto`, with hostnames remembered from
+  `getaddrinfo`;
+- Ruby: `TCPSocket`, `Socket#connect` and `connect_nonblock`, `UDPSocket#connect` and
+  `send`.
+
+The session merges these lines into the watcher's list:
+- a destination seen by both keeps one entry;
+- an IPv6 address netstat cut short is completed;
+- each entry gains the hostname the app asked for, which polling never knows.
+
+UDP is reported once per destination per process; at most 10,000 lines per process. DNS
+(port 53) is left out, as the watcher leaves it out.
+
+Not covered: runtimes with no hook (Go, Rust, C). The lab now has Go rows for a reset
+after 10 ms, a server that closes at once, and `sendto()`, so that limit stays measured.
+`--no-watch` turns the reports off along with the watcher.
+
+**D-35 — mockttp's body-data batching fixed when it loads.** `emitBodyDataEvents` appends
+each chunk with `Buffer.concat([pending, chunk])`, so a 4 MiB upload arriving within one
+20 ms batch was copied about half a GiB, halving upload throughput (77 → 180 MiB/s with
+the fix). whatleaks needs those events to count and keep bodies past the cap. mockttp is
+now loaded lazily through `src/capture/mockttp.ts`. Before loading, it wraps
+`Module.prototype._compile` for that one file: chunks are collected and joined once per
+batch.
+- The rewrite applies only if the exact original lines are found, so another mockttp
+  version loads unchanged (a test checks it against the installed copy).
+- It only changes how chunks are joined, not what is emitted.
+- The fix should also go upstream to mockttp.
+
+Kept: bodies over 8 MiB are still cut off, to keep memory bounded (D-23, "Memory").
+Whole bodies would mean holding, scanning and writing arbitrarily large uploads. The size
+is counted, and the first MiB is kept and scanned.

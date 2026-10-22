@@ -1,10 +1,10 @@
 # Lab benchmark: after
 
-Run 2026-10-21T17:56:28.953Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/tmp/wlb/after/dist/cli.js); mitmproxy Mitmproxy: 12.2.3.
+Run 2026-10-22T02:31:02.469Z on Darwin 25.6.0 arm64, 8 CPUs. whatleaks 0.1.0 (/tmp/wlb/after/dist/cli.js); mitmproxy Mitmproxy: 12.2.3.
 
 ## whatleaks
 
-Attempts 564: payload 78 %, request 1 %, host only 17 %, **silently missed 5 %** (27).
+Attempts 594: payload 74 %, request 1 %, host only 23 %, **silently missed 3 %** (17).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -37,12 +37,15 @@ Attempts 564: payload 78 %, request 1 %, host only 17 %, **silently missed 5 %**
 | raw TCP held 100 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP held 500 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP held 2 s | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
-| raw TCP reset by the client after 10 ms | host | 10 | 0 | 0 | 2 | 8 | 20 % (6–51) | – |
+| raw TCP reset by the client after 10 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP reset by the client after 50 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | raw TCP reset by the client after 200 ms | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
-| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 1 | 9 | 10 % (2–40) | – |
+| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
-| one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | 10 | 0 | 0 | 3 | 7 | 30 % (11–60) | – |
+| Go raw TCP, server closes at once (no runtime hook) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
+| Go UDP datagram, unconnected socket (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 1.5 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 3 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
@@ -54,7 +57,7 @@ Attempts 564: payload 78 %, request 1 %, host only 17 %, **silently missed 5 %**
 
 ## mitmproxy
 
-Attempts 564: payload 60 %, request 0 %, host only 5 %, **silently missed 35 %** (195).
+Attempts 594: payload 57 %, request 0 %, host only 5 %, **silently missed 38 %** (225).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -93,6 +96,9 @@ Attempts 564: payload 60 %, request 0 %, host only 5 %, **silently missed 35 %**
 | raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Go raw TCP, server closes at once (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Go UDP datagram, unconnected socket (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 1.5 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
 | detached helper sends 3 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |
@@ -104,7 +110,7 @@ Attempts 564: payload 60 %, request 0 %, host only 5 %, **silently missed 35 %**
 
 ## httptoolkit
 
-Attempts 564: payload 32 %, request 0 %, host only 2 %, **silently missed 65 %** (369).
+Attempts 594: payload 31 %, request 0 %, host only 2 %, **silently missed 67 %** (399).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -143,6 +149,9 @@ Attempts 564: payload 32 %, request 0 %, host only 2 %, **silently missed 65 %**
 | raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Go raw TCP, server closes at once (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
+| Go UDP datagram, unconnected socket (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |
 | detached helper sends 1.5 s after the app exits | payload | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |
 | detached helper sends 3 s after the app exits | payload | 30 | 0 | 0 | 0 | 30 | 0 % (0–11) | – |

@@ -2,12 +2,12 @@
 
 | | attempts | payload | request | host only | **silently missed** | at best possible |
 |---|---|---|---|---|---|---|
-| whatleaks before | 564 | 33 % | 11 % | 7 % | **48 %** (273) | 38 % |
-| whatleaks | 564 | 78 % | 1 % | 17 % | **5 %** (27) | 95 % |
-| mitmproxy | 564 | 60 % | 0 % | 5 % | **35 %** (195) | 62 % |
-| HTTP Toolkit | 564 | 32 % | 0 % | 2 % | **65 %** (369) | 35 % |
+| whatleaks before (43 of 46 scenarios) | 564 | 33 % | 11 % | 7 % | **48 %** (273) | 38 % |
+| whatleaks | 594 | 74 % | 1 % | 23 % | **3 %** (17) | 97 % |
+| mitmproxy | 594 | 57 % | 0 % | 5 % | **38 %** (225) | 59 % |
+| HTTP Toolkit | 594 | 31 % | 0 % | 2 % | **67 %** (399) | 33 % |
 
-"At best possible": share of attempts that reached the best outcome whatleaks can reach without breaking its rules (payload for proxy-aware clients; the destination named for pinned clients and clients that ignore proxies). A baseline can go beyond it (HTTP Toolkit reads some clients whatleaks can only name); those are listed below the table.
+"At best possible": share of attempts that reached the best outcome whatleaks can reach without breaking its rules (payload for proxy-aware clients; the destination named for pinned clients and clients that ignore proxies). A baseline can go beyond it (keep a body whatleaks cuts off, or read a client whatleaks can only name); those cases are listed below the table.
 
 | Scenario | Best possible | whatleaks before | whatleaks | mitmproxy | HTTP Toolkit |
 |---|---|---|---|---|---|
@@ -40,12 +40,15 @@
 | raw TCP held 100 ms | host | 0 % | **100 %** | 0 % | 0 % |
 | raw TCP held 500 ms | host | 20 % | **100 %** | 0 % | 0 % |
 | raw TCP held 2 s | host | 100 % | **100 %** | 0 % | 0 % |
-| raw TCP reset by the client after 10 ms | host | 0 % | **20 %** | 0 % | 0 % |
+| raw TCP reset by the client after 10 ms | host | 0 % | **100 %** | 0 % | 0 % |
 | raw TCP reset by the client after 50 ms | host | 0 % | **100 %** | 0 % | 0 % |
 | raw TCP reset by the client after 200 ms | host | 0 % | **100 %** | 0 % | 0 % |
-| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 0 % | **10 %** | 0 % | 0 % |
+| raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 0 % | **100 %** | 0 % | 0 % |
 | one UDP datagram, connected socket (like QUIC) | host | 0 % | **100 %** | 0 % | 0 % |
-| one UDP datagram, unconnected socket (sendto) | host | 0 % | **0 %** | 0 % | 0 % |
+| one UDP datagram, unconnected socket (sendto) | host | 0 % | **100 %** | 0 % | 0 % |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | – | **30 %** | 0 % | 0 % |
+| Go raw TCP, server closes at once (no runtime hook) | host | – | **100 %** | 0 % | 0 % |
+| Go UDP datagram, unconnected socket (no runtime hook) | host | – | **0 %** | 0 % | 0 % |
 | detached helper sends 0.2 s after the app exits | payload | 100 % | **100 %** | 100 % | 0 % |
 | detached helper sends 1.5 s after the app exits | payload | 0 % | **100 %** | 100 % | 0 % |
 | detached helper sends 3 s after the app exits | payload | 0 % | **100 %** | 100 % | 0 % |
