@@ -258,8 +258,8 @@ Measured in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); method notes in
 
   | Silently missed | macOS | Linux |
   |---|---|---|
-  | **whatleaks** | **3.4 %** | **3.2 %** |
-  | mitmproxy 12.2.3, given the same environment | 38 % | 40 % |
+  | **whatleaks** | **3.4 %** | **3.0 %** |
+  | mitmproxy 12.2.3 (12.3.0 on Linux), given the same environment | 38 % | 40 % |
   | HTTP Toolkit server 1.27.3, with its own interception | 67 % | 70 % |
   | the build before this benchmark (43 scenarios) | 48 % | – |
 

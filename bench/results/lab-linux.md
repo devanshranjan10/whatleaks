@@ -1,10 +1,10 @@
 # Lab benchmark: linux
 
-Run 2026-10-22T03:09:07.010Z on Linux 6.12.76-linuxkit arm64, 4 CPUs. whatleaks 0.1.0 (/app/dist/cli.js); mitmproxy Mitmproxy: 12.2.3.
+Run 2026-10-22T07:30:08.309Z on Linux 6.12.76-linuxkit arm64, 4 CPUs. whatleaks 0.1.0 (/app/dist/cli.js); mitmproxy Mitmproxy: 12.3.0.
 
 ## whatleaks
 
-Attempts 567: payload 74 %, request 1 %, host only 22 %, **silently missed 3 %** (18).
+Attempts 567: payload 74 %, request 1 %, host only 22 %, **silently missed 3 %** (17).
 
 | Scenario | Best possible | Attempts | payload | request | host | missed | at best (95 % CI) | unexpected |
 |---|---|---|---|---|---|---|---|---|
@@ -40,7 +40,7 @@ Attempts 567: payload 74 %, request 1 %, host only 22 %, **silently missed 3 %**
 | raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | one UDP datagram, connected socket (like QUIC) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | one UDP datagram, unconnected socket (sendto) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
-| Go raw TCP reset after 10 ms (no runtime hook) | host | 10 | 0 | 0 | 2 | 8 | 20 % (6–51) | – |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | 10 | 0 | 0 | 3 | 7 | 30 % (11–60) | – |
 | Go raw TCP, server closes at once (no runtime hook) | host | 10 | 0 | 0 | 10 | 0 | 100 % (72–100) | – |
 | Go UDP datagram, unconnected socket (no runtime hook) | host | 10 | 0 | 0 | 0 | 10 | 0 % (0–28) | – |
 | detached helper sends 0.2 s after the app exits | payload | 30 | 30 | 0 | 0 | 0 | 100 % (89–100) | – |

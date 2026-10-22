@@ -45,10 +45,10 @@ ground truth, 3 or 10 runs each, on macOS and on Linux unless one is named.
 | Short-lived child that connects directly | named, attributed to the app | lab 100 % |
 | Upload over 8 MiB, or abandoned mid-way | listed, marked cut off; the first MiB kept and decoded | lab 100 % at that outcome; integration tests |
 | Node, Python or Ruby program that ignores proxy settings (raw TCP, UDP, other HTTP clients) | named as a direct connection by address, process and the hostname asked for: the runtime hook reports each socket as it opens (D-34) | lab 100 % on both platforms for TCP held 10 ms to 2 s, reset after 10 to 200 ms, closed at once by the server, and UDP connected or sent with `sendto()`; unit tests for Node, Python (Homebrew and Apple's) and Ruby 2.6 |
-| Other programs (Go, Rust, C) that ignore proxy settings | named by the polling watcher, by address and process | lab, Go: server closes at once 90–100 %; reset after 10 ms 10–30 % on macOS, 20 % on Linux |
+| Other programs (Go, Rust, C) that ignore proxy settings | named by the polling watcher, by address and process | lab, Go: server closes at once 90–100 %; reset after 10 ms 10–30 % on macOS, 20–30 % on Linux |
 | UDP sent with `sendto()` from a program with no hook | **never seen**: the socket has no destination address | lab, Go: 0 % |
 | HTTP/3 (QUIC) | not proxied; named as a direct UDP connection (QUIC uses connected sockets) | lab: connected UDP 100 % from Node; 70–100 % by polling alone in earlier runs |
-| Linux | `/proc` backend, no tools needed | full lab in Docker (3.2 % silently missed, all in the Go rows); `node:22-slim` container, 6 of 6 checks |
+| Linux | `/proc` backend, no tools needed | full lab in Docker (3.0 % silently missed, all in the Go rows); `node:22-slim` container, 6 of 6 checks |
 | GUI and Electron apps, browsers, system daemons | **not tested.** whatleaks only sees processes it launches | n/a |
 
 ## 3. Identity detection

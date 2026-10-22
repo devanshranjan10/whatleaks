@@ -50,7 +50,7 @@ The owner asked for every remaining gap to be fixed.
   server-closes 0–40 % and `sendto()` 0 %.
 - **New lab rows** for the same sockets from Go, which has no hook. They keep the limit
   measured: reset after 10 ms 20–30 %, `sendto()` 0 %.
-- **Silently missed, macOS / Linux:** whatleaks **3.4 % / 3.2 %**, all in those Go
+- **Silently missed, macOS / Linux:** whatleaks **3.4 % / 3.0 %**, all in those Go
   rows. On the old build's 43 scenarios: 0 of 564. mitmproxy 38 % / 40 %, HTTP Toolkit
   67 % / 70 %.
 - **Uploads:** 79 → 211 MiB/s, by fixing mockttp's body-data batching when whatleaks
@@ -58,8 +58,8 @@ The owner asked for every remaining gap to be fixed.
 - **CPU:** fast polling only while a process without a hook is alive (D-36). An empty
   run went from 1.5 s to about 1.05 s of CPU, and each perf workload is about 20 %
   lower.
-- **Open:** the Linux lab on `da94ba7` stopped when the Mac's disk filled up (Docker
-  Desktop crashed). The Linux numbers are from `74439e8`.
+- **Both platforms on `da94ba7`.** The first Linux rerun stopped when the Mac's disk
+  filled up; it was rerun after clearing Docker's build cache.
 - **Found by the Linux lab:** the loopback probe refused to run when another listener
   held the proxy's port number on a LAN address (`2bd7f5e`).
 - **Kept by design:** bodies over 8 MiB are cut off (bounded memory), and whatleaks

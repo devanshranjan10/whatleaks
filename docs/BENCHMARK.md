@@ -2,7 +2,7 @@
 
 What whatleaks catches, what it misses, and what it costs, measured against ground
 truth and against three tools people use today:
-- [mitmproxy](https://mitmproxy.org) 12.2.3, run with the same proxy and CA variables
+- [mitmproxy](https://mitmproxy.org) 12.2.3 (12.3.0 in the Linux image), run with the same proxy and CA variables
   whatleaks sets;
 - [HTTP Toolkit](https://httptoolkit.com) server v1.27.3, driven the way its desktop
   app drives it: a session with the app's start options, and its "existing terminal"
@@ -21,10 +21,7 @@ Every number comes from a script in `bench/` and a result file in `bench/results
 design is in `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md` (D-24).
 
 "Before" is the build at the start of this work (`8c6baa0`). "After" is:
-- `da94ba7` for every macOS lab row and the cost runs;
-- `74439e8` for the Linux lab. It differs from `da94ba7` only in the loopback probe
-  fix (`2bd7f5e`) and in when the watcher polls fast (D-36). The Linux rerun on
-  `da94ba7` stopped when the Mac's disk filled up.
+`da94ba7` for every lab row on both platforms and for the cost runs.
 
 ## 1. Headline
 
@@ -39,13 +36,13 @@ design is in `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md` (D-24
 
 | Linux | payload read | request seen, body cut | host named | **silently missed** | at the best possible outcome |
 |---|---|---|---|---|---|
-| **whatleaks** | 74 % | 1 % | 22 % | **3.2 %** (18) | **97 %** |
+| **whatleaks** | 74 % | 1 % | 22 % | **3.0 %** (17) | **97 %** |
 | mitmproxy | 60 % | 0 % | 1 % | **40 %** (225) | 60 % |
 | HTTP Toolkit | 29 % | 0 % | 1 % | **70 %** (399) | 30 % |
 
 - **Every miss left is a program whatleaks loads no hook into.** On the 43 scenarios
   the old build also ran, whatleaks missed **0 of 564** attempts on macOS. All 20 misses
-  on macOS and all 18 on Linux are in rows added to measure that limit, Go programs
+  on macOS and all 17 on Linux are in rows added to measure that limit, Go programs
   that bypass the proxy:
   - a TCP connection reset after 10 ms;
   - UDP sent with `sendto()`;
@@ -166,12 +163,12 @@ Share of attempts at the best possible outcome. The Linux table is in section 6.
 | body with this machine's identifiers and decoys | payload | 100 % | **100 %** | 100 % | 0 % |
 | identifiers in the 5th of 6 WebSocket messages | payload | 50 % | **100 %** | 100 % | 0 % |
 
-### Where whatleaks still misses (20 attempts on macOS, 18 on Linux)
+### Where whatleaks still misses (20 attempts on macOS, 17 on Linux)
 
 Only in programs whatleaks loads no hook into (Go here; also Rust, C and other native
 code), and only when their connection bypasses the proxy:
 - **a TCP connection reset within about 10 ms:** Go 10 % and 30 % in two macOS runs,
-  20 % on Linux. The polling watcher must see it while it's open, and a reset leaves
+  20 % and 30 % in two Linux runs. The polling watcher must see it while it's open, and a reset leaves
   no closed-socket record behind;
 - **UDP sent with `sendto()` on an unconnected socket:** 0 %. The socket never has a
   remote address for any watcher to read.
@@ -299,7 +296,7 @@ macOS:
 |---|---|---|---|---|
 | Go 1.26 net/http (reads `SSL_CERT_FILE` on Linux) | payload | **100 %** | 100 % | 100 % |
 | Java 17 HttpClient (OpenJDK) | payload | **100 %** | 0 % | 100 % |
-| Go raw TCP reset after 10 ms (no runtime hook) | host | **20 %** | 0 % | 0 % |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | **30 %** | 0 % | 0 % |
 
 On Linux a closed socket has no owner in `/proc`, so the polling watcher names a
 direct connection only if it sees it open. Before D-34 that left raw TCP held 10 ms
@@ -373,10 +370,10 @@ and the commits above. It covered:
 - **Same-machine lab.** The lab is on the same machine, so round trips take
   microseconds. That makes direct connections shorter than they would be over the
   internet: a hard case for whatleaks's polling watcher, not an easy one.
-- **Provenance.** The macOS lab and cost runs used `da94ba7`, the Linux lab `74439e8`;
-  see the top of this file. On Linux, one run of "raw TCP held 2 s" hit the false
-  "proxy reachable" refusal fixed in `2bd7f5e`, and was rerun. The fix changes no
-  capture code. The real-tool runs (section
+- **Provenance.** Both lab platforms and the cost runs used `da94ba7`. The Linux
+  image was rebuilt for the final run and installed mitmproxy 12.3.0 (macOS ran
+  12.2.3); its Linux totals were the same as with 12.2.3 on the previous build. The
+  real-tool runs (section
   4) used `e38c907`; the later changes don't affect traffic that goes through the proxy.
 - **Small samples.** There are 3 or 10 runs per scenario. Rows between 0 and 100 %
   have wide intervals, given in `lab-after.md` and `lab-linux.md`.
