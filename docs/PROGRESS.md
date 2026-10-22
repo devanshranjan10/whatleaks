@@ -39,6 +39,22 @@ passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It ret
 npm's real exit code; an earlier `| grep` pipe hid two lint failures, which were
 amended.
 
+The gate passes on macOS with Node 22.12.0, 22.23.4, 24.22.1 and 26.12.0, the versions CI
+covers. CI (`.github/workflows/ci.yml`) runs it on Ubuntu and macOS, then installs the
+packed package in an empty directory and captures a real request. The suite has not run
+on Linux yet (Docker was paused), so the first CI run is its first Linux run.
+
+## Launch prep (2026-10-23)
+
+Done: npm metadata (repository, homepage, bugs, author); `prepack` builds and
+`prepublishOnly` runs the gate; README installs from npm; CI and release workflows,
+modelled on landmine's; commit emails rewritten to the GitHub noreply address (backup in
+`../.git-backups/whatleaks-before-email-rewrite.bundle`; every tree unchanged, and the
+doc citations follow the new hashes). `npm publish --dry-run` passes.
+
+Left for the owner: create github.com/devanshranjan10/whatleaks and push `main`; add the
+`NPM_TOKEN` secret and push the tag `v0.1.0` (or run `npm publish` once by hand).
+
 ---
 
 ## Benchmark session, third round (2026-10-22)

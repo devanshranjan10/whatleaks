@@ -1,5 +1,9 @@
 # whatleaks
 
+[![npm](https://img.shields.io/npm/v/whatleaks)](https://www.npmjs.com/package/whatleaks)
+[![ci](https://github.com/devanshranjan10/whatleaks/actions/workflows/ci.yml/badge.svg)](https://github.com/devanshranjan10/whatleaks/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **See what an app you run sends home, and what it still sends after you opt out.**
 
 whatleaks runs a command through a local, single-run proxy and tells you:
@@ -48,24 +52,34 @@ command twice, in fresh processes, and keeps both captures.
 
 ## Install
 
-whatleaks is **not on npm yet**. To use it from source (Node ≥ 22.12):
+Needs Node ≥ 22.12. Run it with npx:
 
 ```
-git clone <this repo> whatleaks && cd whatleaks
+npx whatleaks run -- <command>
+```
+
+or install the `whatleaks` command:
+
+```
+npm install -g whatleaks
+```
+
+The install pulls about 195 packages (41 MB), mostly the proxy library,
+[mockttp](https://github.com/httptoolkit/mockttp). Recent npm versions may say they
+skipped an install script for `tls-impersonate`. Nothing needs approving: mockttp loads
+that native module only to mirror TLS fingerprints, which whatleaks never turns on, and
+it ships prebuilt binaries anyway.
+
+From source:
+
+```
+git clone https://github.com/devanshranjan10/whatleaks && cd whatleaks
 npm ci && npm run build
 node dist/cli.js --help
 ```
 
-Or pack it and install the tarball into a project:
-
-```
-npm pack                                   # creates whatleaks-0.1.0.tgz
-cd /some/project && npm install /path/to/whatleaks-0.1.0.tgz
-npx whatleaks --help
-```
-
-Both routes were tested on macOS 26.6.2. The tarball install pulls 195 packages (about
-41 MB), mostly the proxy library, [mockttp](https://github.com/httptoolkit/mockttp).
+The source build, and the packed package installed into an empty project, were tested
+on macOS 26.6.2.
 
 ## Usage
 

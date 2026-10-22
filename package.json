@@ -4,6 +4,15 @@
   "description": "See what an app you run sends home: where, how often, which fields, with payload samples, and what it still sends after you opt out of telemetry.",
   "type": "module",
   "license": "MIT",
+  "author": "Devansh Ranjan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devanshranjan10/whatleaks.git"
+  },
+  "homepage": "https://github.com/devanshranjan10/whatleaks#readme",
+  "bugs": {
+    "url": "https://github.com/devanshranjan10/whatleaks/issues"
+  },
   "bin": {
     "whatleaks": "dist/cli.js"
   },
@@ -28,6 +37,7 @@
   "scripts": {
     "build": "tsup",
     "prepack": "npm run build",
+    "prepublishOnly": "npm run check",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
