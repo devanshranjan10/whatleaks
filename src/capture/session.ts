@@ -10,7 +10,7 @@ import { runtimeHooks } from './preload.js';
 import { startProxy, upstreamFromEnv } from './proxy.js';
 import { CliError } from '../errors.js';
 import { Recorder } from './recorder.js';
-import { mergeSocketReports, readSocketReports } from './socket-reports.js';
+import { SocketLog, mergeSocketReports } from './socket-reports.js';
 
 export interface SessionOptions {
   command: string;
@@ -48,7 +48,15 @@ export interface SessionObserver {
   /** Stop sampling and return what was seen. */
   finish(): Promise<{ direct: DirectConn[]; watcher: SessionMeta['watcher']; notes: string[] }>;
 }
-export type SessionObserverFactory = (rootPid: number, proxyPort: number, watch: boolean, cwd?: string) => SessionObserver;
+/** What the runtime hooks tell the observer while the app runs (see SocketLog). */
+export interface HookSignals {
+  /** Picks up lines the hooks appended since the last call. */
+  read(): void;
+  /** Pids whose hook loaded: they report their own sockets. */
+  readonly hooked: ReadonlySet<number>;
+}
+
+export type SessionObserverFactory = (rootPid: number, proxyPort: number, watch: boolean, cwd?: string, hooks?: HookSignals) => SessionObserver;
 
 export interface SessionResult {
   har: Har;
@@ -136,7 +144,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
     let watcher: SessionMeta['watcher'] = 'off';
     let direct: DirectConn[] = [];
     const hooks = opts.preload === false ? {} : runtimeHooks();
-    const socketLogPath = join(ca.dir, 'sockets.ndjson');
+    const socketLog = new SocketLog(join(ca.dir, 'sockets.ndjson'));
     try {
       const childEnv = buildChildEnv({
         base: opts.baseEnv,
@@ -145,7 +153,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         bundlePath: ca.bundlePath,
         javaTrustPath: ca.javaTrustPath,
         hooks,
-        ...(opts.watch ? { socketLog: socketLogPath } : {}),
+        socketLog: socketLog.path,
         ...(opts.optOut ? { optOut: opts.optOut } : {}),
         ...(opts.removeEnv ? { remove: opts.removeEnv } : {}),
         ...(opts.extraEnv ? { extra: opts.extraEnv } : {}),
@@ -168,7 +176,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         onStop: (signal) => observer?.signalAll(signal),
       });
       appRunning = true;
-      if (opts.observers) observer = opts.observers(launched.pid, proxy.port, opts.watch, opts.cwd);
+      if (opts.observers) observer = opts.observers(launched.pid, proxy.port, opts.watch, opts.cwd, socketLog);
       result = await launched.done;
       appRunning = false;
 
@@ -196,7 +204,8 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         direct = seen.direct;
         notes.push(...seen.notes);
       }
-      if (opts.watch) direct = mergeSocketReports(direct, await readSocketReports(socketLogPath));
+      socketLog.close();
+      if (opts.watch) direct = mergeSocketReports(direct, socketLog.reports);
     } finally {
       await proxy.stop();
     }

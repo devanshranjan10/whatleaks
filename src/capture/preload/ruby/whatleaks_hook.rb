@@ -63,13 +63,19 @@ begin
           line = { proto: proto, addr: addr, port: port.to_i, pid: Process.pid, cmd: CMD, t: (Time.now.to_f * 1000).to_i }
           line[:host] = host.to_s if host && host.to_s != addr
           begin
-            @io ||= File.open(ENV['WHATLEAKS_SOCKETS'], File::WRONLY | File::APPEND | File::CREAT, 0o600)
+            return if @io.nil?
             @io.syswrite(JSON.generate(line) + "\n")
             @lines += 1
           rescue StandardError
             @lines = 10_000
           end
         end
+      end
+
+      # Announce this process: whatleaks adopts it, and needs no fast polling for its sockets.
+      def self.hello
+        @io = File.open(ENV['WHATLEAKS_SOCKETS'], File::WRONLY | File::APPEND | File::CREAT, 0o600)
+        @io.syswrite(JSON.generate(hello: 1, pid: Process.pid, cmd: CMD, t: (Time.now.to_f * 1000).to_i) + "\n")
       end
 
       def self.peer(sock, proto, host = nil)
@@ -129,6 +135,7 @@ begin
         end
       end
     end
+    WhatleaksSockets.hello
     TCPSocket.prepend(WhatleaksSockets::TCP)
     Socket.prepend(WhatleaksSockets::Sock)
     UDPSocket.prepend(WhatleaksSockets::UDP)

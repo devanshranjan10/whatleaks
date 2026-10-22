@@ -108,3 +108,20 @@ describe.skipIf(!lan)('runtime hooks report direct sockets', () => {
     expectBoth(run('ruby', ['-e', script], 'ruby'));
   });
 });
+
+describe('SocketLog', () => {
+  it('reads the file as it grows, keeping hooked pids and holding back a cut line', async () => {
+    const { appendFileSync, mkdtempSync: mk } = await import('node:fs');
+    const { SocketLog } = await import('../src/capture/socket-reports.js');
+    const path = join(mk(join(os.tmpdir(), 'wl-log-')), 'sockets.ndjson');
+    const log = new SocketLog(path);
+    log.read(); // no file yet
+    appendFileSync(path, '{"hello":1,"pid":7,"cmd":"node","t":1}\n{"proto":"TCP","addr":"203.0.113.5","port":4');
+    log.read();
+    expect([...log.hooked]).toEqual([7]);
+    expect(log.reports).toEqual([]);
+    appendFileSync(path, '43,"pid":7,"cmd":"node","t":2}\n');
+    log.close();
+    expect(log.reports).toEqual([{ proto: 'TCP', addr: '203.0.113.5', port: 443, pid: 7, cmd: 'node', t: 2 }]);
+  });
+});

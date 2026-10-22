@@ -71,6 +71,13 @@ def _report_sockets():
     state = {"fd": None, "lines": 0}
     lock = threading.Lock()
 
+    # Announce this process: whatleaks adopts it, and needs no fast polling for its sockets.
+    try:
+        state["fd"] = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        os.write(state["fd"], (json.dumps({"hello": 1, "pid": os.getpid(), "cmd": cmd, "t": int(time.time() * 1000)}) + "\n").encode())
+    except Exception:
+        return
+
     def report(proto, addr, port, host=None):
         if not addr or not port or addr == "localhost" or addr == "::1" or addr.startswith("127.") or addr.startswith("::ffff:127."):
             return
@@ -86,8 +93,6 @@ def _report_sockets():
             if host and host != addr:
                 line["host"] = host
             try:
-                if state["fd"] is None:
-                    state["fd"] = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
                 os.write(state["fd"], (json.dumps(line) + "\n").encode())
                 state["lines"] += 1
             except Exception:

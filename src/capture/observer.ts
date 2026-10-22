@@ -127,7 +127,7 @@ export function createObserver(deps: ObserverDeps = {}): SessionObserverFactory 
  */
 function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): SessionObserverFactory {
   const fillsTruncated = backend === 'netstat';
-  return (rootPid, proxyPort, watch, cwd): SessionObserver => {
+  return (rootPid, proxyPort, watch, cwd, hooks): SessionObserver => {
     const tracker = new ProcessTracker(rootPid, deps.list ?? listProcesses);
     const judge = orphanJudge(tracker, cwd, deps.cwdOf ?? cwdOf);
     const sockets = deps.sockets ?? (backend === 'proc' ? procSocketSource() : netstatSource(deps.netstat));
@@ -148,11 +148,33 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
     };
     const isBusy = (): boolean => Date.now() < busyUntil;
     let tracked = 0;
+    let refreshedAt = 0;
+    let sampledAt = 0;
+    /** Hooked pids already handed to the tracker. */
+    const announced = new Set<number>();
+    /**
+     * Processes running a whatleaks hook report their own sockets as they open (D-34), so
+     * polling fast is only worth its CPU while some live process of the app has no hook.
+     */
+    let listed = false;
+    const unhookedAlive = (): boolean => !hooks || (listed ? tracker.alive() : [rootPid]).some((pid) => !hooks.hooked.has(pid));
+    const readHooks = (): void => {
+      if (!hooks) return;
+      hooks.read();
+      const fresh = [...hooks.hooked].filter((pid) => !announced.has(pid));
+      if (!fresh.length) return;
+      for (const pid of fresh) announced.add(pid);
+      // They inherited the run's environment, so they are the app's; a new one makes the app busy.
+      tracker.adopt(fresh);
+      busy();
+    };
 
     const refresh = async (): Promise<void> => {
       if (!treeOk) return;
+      refreshedAt = Date.now();
       try {
         await tracker.refresh();
+        listed = true;
       } catch {
         treeOk = false;
         notes.push('Could not list processes (ps), so processes the app left running were not waited for.');
@@ -165,6 +187,8 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
     const interest = (pid: number): boolean => pid !== process.pid && (pid > rootPid || tracker.everTracked(pid));
     const keep = (pid: number): boolean => watch && interest(pid);
     const sample = async (): Promise<void> => {
+      readHooks();
+      sampledAt = Date.now();
       if (!sockOk) return;
       let rows;
       try {
@@ -207,8 +231,9 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
     // Fast while the app is busy (the first 3 s, and 3 s after any new socket or process),
     // slower when it idles: each socket poll costs about 3 ms of CPU and a full process
     // listing about 20 ms, which at the fast rates is a third of a core.
-    const treeLoop = loop(deps.treeEveryMs ?? (() => (isBusy() ? 100 : 500)), refresh);
-    const watchLoop = loop(deps.watchEveryMs ?? (() => (isBusy() ? 20 : 100)), sample);
+    const fast = (): boolean => isBusy() && unhookedAlive();
+    const treeLoop = loop(deps.treeEveryMs ?? (() => (fast() ? 100 : isBusy() ? 250 : 500)), refresh);
+    const watchLoop = loop(deps.watchEveryMs ?? (() => (fast() ? 20 : 100)), sample);
 
     /** netstat cuts long IPv6 addresses; ask lsof for the full one while the process lives. */
     const fillTruncated = async (): Promise<void> => {
@@ -226,9 +251,11 @@ function netstatObserver(deps: ObserverDeps, backend: 'netstat' | 'proc'): Sessi
     };
 
     return {
+      // Called every 200 ms while the run waits after the app exits: reuse what the
+      // loops found moments ago instead of listing everything again.
       anyAlive: async () => {
-        await sample();
-        await refresh();
+        if (Date.now() - sampledAt > 150) await sample();
+        if (Date.now() - refreshedAt > 250) await refresh();
         return treeOk && tracker.aliveOrLikely().length > 0;
       },
       signalAll: (signal) => signalProven(tracker, signal),

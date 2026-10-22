@@ -95,3 +95,36 @@ describe('netstat observer', () => {
     expect(seen.notes).toContain('The app talked to a DNS server directly; DNS lookups are not listed.');
   });
 });
+
+describe('observer with runtime hooks', () => {
+  const row = (pid: number, ppid: number, comm: string): ProcRow => ({ pid, ppid, started: 'Tue Oct 21 10:00:00 2026', comm });
+  const run = async (hooked: number[]): Promise<{ polls: number; alive: boolean }> => {
+    let polls = 0;
+    const obs = createObserver({
+      platform: 'darwin',
+      netstat: () => {
+        polls++;
+        return Promise.resolve('');
+      },
+      // 600 (the app) and 650, a detached helper whose parent is launchd.
+      list: () => Promise.resolve([row(600, 1, 'node'), row(650, 1, 'node')]),
+      listSome: () => Promise.resolve([]),
+      lsof: () => Promise.resolve(''),
+      reverse: () => Promise.resolve([]),
+    })(600, 8123, true, undefined, { read: () => {}, hooked: new Set(hooked) });
+    await new Promise((r) => setTimeout(r, 400));
+    const alive = await obs.anyAlive();
+    await obs.finish();
+    return { polls, alive };
+  };
+
+  it('polls fast only while a process without a hook is alive, and adopts hooked processes', async () => {
+    const unhooked = await run([]);
+    const hooked = await run([600, 650]);
+    // 20 ms polling for 400 ms, against 100 ms.
+    expect(unhooked.polls).toBeGreaterThan(12);
+    expect(hooked.polls).toBeLessThan(8);
+    // 650 is not a child of the app, but its hook said hello: it is the app's.
+    expect(hooked.alive).toBe(true);
+  });
+});

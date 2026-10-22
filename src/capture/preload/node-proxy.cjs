@@ -278,6 +278,13 @@ function reportSockets() {
   const local = (a) => a === 'localhost' || a === '::1' || /^(::ffff:)?127\./.test(a);
   let fd;
   let lines = 0;
+  // Announce this process: whatleaks adopts it, and needs no fast polling for its sockets.
+  try {
+    fd = fs.openSync(file, 'a', 0o600);
+    fs.writeSync(fd, JSON.stringify({ hello: 1, pid: process.pid, cmd, t: Date.now() }) + '\n');
+  } catch {
+    return;
+  }
   const udpSeen = new Set(); // UDP has no connections: one line per destination
   const report = (proto, addr, port, host) => {
     if (!addr || !port || local(addr) || lines >= 10000) return;
@@ -287,7 +294,6 @@ function reportSockets() {
       udpSeen.add(k);
     }
     try {
-      if (fd === undefined) fd = fs.openSync(file, 'a', 0o600);
       const line = { proto, addr, port: Number(port), pid: process.pid, cmd, t: Date.now() };
       if (host && host !== addr) line.host = String(host);
       fs.writeSync(fd, JSON.stringify(line) + '\n');

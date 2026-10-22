@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { closeSync, openSync, readSync } from 'node:fs';
 import type { DirectConn } from '../har/types.js';
 
 /**
@@ -17,34 +17,73 @@ export interface SocketReport {
   t: number;
 }
 
-export function parseSocketReports(text: string): SocketReport[] {
-  const out: SocketReport[] = [];
-  for (const line of text.split('\n')) {
-    if (!line.trim()) continue;
-    try {
-      const v = JSON.parse(line) as Partial<SocketReport>;
-      if ((v.proto !== 'TCP' && v.proto !== 'UDP') || typeof v.addr !== 'string' || typeof v.port !== 'number' || typeof v.t !== 'number') continue;
-      out.push({
-        proto: v.proto,
-        addr: v.addr.replace(/^::ffff:(?=\d+\.)/, ''),
-        port: v.port,
-        ...(typeof v.host === 'string' && v.host ? { host: v.host } : {}),
-        pid: typeof v.pid === 'number' ? v.pid : 0,
-        cmd: typeof v.cmd === 'string' && v.cmd ? v.cmd : 'unknown',
-        t: v.t,
-      });
-    } catch {
-      // a line cut short when the app was killed mid-write
-    }
+type Line = { hello: number } | SocketReport;
+
+function parseLine(line: string): Line | undefined {
+  if (!line.trim()) return undefined;
+  try {
+    const v = JSON.parse(line) as Partial<SocketReport> & { hello?: unknown };
+    if (v.hello === 1 && typeof v.pid === 'number') return { hello: v.pid };
+    if ((v.proto !== 'TCP' && v.proto !== 'UDP') || typeof v.addr !== 'string' || typeof v.port !== 'number' || typeof v.t !== 'number') return undefined;
+    return {
+      proto: v.proto,
+      addr: v.addr.replace(/^::ffff:(?=\d+\.)/, ''),
+      port: v.port,
+      ...(typeof v.host === 'string' && v.host ? { host: v.host } : {}),
+      pid: typeof v.pid === 'number' ? v.pid : 0,
+      cmd: typeof v.cmd === 'string' && v.cmd ? v.cmd : 'unknown',
+      t: v.t,
+    };
+  } catch {
+    return undefined; // a line cut short when the app was killed mid-write
   }
-  return out;
 }
 
-export async function readSocketReports(path: string): Promise<SocketReport[]> {
-  try {
-    return parseSocketReports(await readFile(path, 'utf8'));
-  } catch {
-    return [];
+export function parseSocketReports(text: string): SocketReport[] {
+  return text
+    .split('\n')
+    .map(parseLine)
+    .filter((l): l is SocketReport => !!l && !('hello' in l));
+}
+
+/**
+ * The file the hooks append to (WHATLEAKS_SOCKETS), read as it grows: socket reports,
+ * and the pids of processes whose hook loaded (their "hello" line).
+ */
+export class SocketLog {
+  readonly reports: SocketReport[] = [];
+  /** Processes running a whatleaks hook, which report their own sockets. */
+  readonly hooked = new Set<number>();
+  private fd: number | undefined;
+  private rest = '';
+
+  constructor(readonly path: string) {}
+
+  /** Reads whatever was appended since the last call. Cheap: the file only grows by lines. */
+  read(): void {
+    try {
+      this.fd ??= openSync(this.path, 'r');
+    } catch {
+      return; // no hook has written yet
+    }
+    const buf = Buffer.alloc(64 * 1024);
+    for (let n; (n = readSync(this.fd, buf, 0, buf.length, null)) > 0; ) {
+      const text = this.rest + buf.toString('utf8', 0, n);
+      const cut = text.lastIndexOf('\n');
+      this.rest = text.slice(cut + 1);
+      for (const line of text.slice(0, cut + 1).split('\n')) {
+        const l = parseLine(line);
+        if (!l) continue;
+        if ('hello' in l) this.hooked.add(l.hello);
+        else this.reports.push(l);
+      }
+    }
+  }
+
+  close(): void {
+    this.read();
+    if (this.fd !== undefined) closeSync(this.fd);
+    this.fd = undefined;
   }
 }
 
