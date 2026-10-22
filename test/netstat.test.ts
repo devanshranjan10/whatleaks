@@ -98,12 +98,12 @@ describe('netstat observer', () => {
 
 describe('observer with runtime hooks', () => {
   const row = (pid: number, ppid: number, comm: string): ProcRow => ({ pid, ppid, started: 'Tue Oct 21 10:00:00 2026', comm });
-  const run = async (hooked: number[]): Promise<{ polls: number; alive: boolean }> => {
-    let polls = 0;
+  const run = async (hooked: number[]): Promise<{ gaps: number[]; alive: boolean }> => {
+    const polls: number[] = [];
     const obs = createObserver({
       platform: 'darwin',
       netstat: () => {
-        polls++;
+        polls.push(performance.now());
         return Promise.resolve('');
       },
       // 600 (the app) and 650, a detached helper whose parent is launchd.
@@ -113,17 +113,21 @@ describe('observer with runtime hooks', () => {
       reverse: () => Promise.resolve([]),
     })(600, 8123, true, undefined, { read: () => {}, hooked: new Set(hooked) });
     await new Promise((r) => setTimeout(r, 400));
+    // The watch loop's own polls only, before anyAlive() and finish() add theirs.
+    const gaps = polls.slice(1).map((t, i) => t - polls[i]!);
     const alive = await obs.anyAlive();
     await obs.finish();
-    return { polls, alive };
+    return { gaps, alive };
   };
 
   it('polls fast only while a process without a hook is alive, and adopts hooked processes', async () => {
     const unhooked = await run([]);
     const hooked = await run([600, 650]);
-    // 20 ms polling for 400 ms, against 100 ms.
-    expect(unhooked.polls).toBeGreaterThan(12);
-    expect(hooked.polls).toBeLessThan(8);
+    // 20 ms polling against 100 ms. Gaps, not counts: a busy machine delays timers,
+    // which fewer polls would show, but never fires them early.
+    expect(Math.min(...unhooked.gaps)).toBeLessThan(60);
+    expect(hooked.gaps.length).toBeGreaterThan(0);
+    expect(Math.min(...hooked.gaps)).toBeGreaterThanOrEqual(80);
     // 650 is not a child of the app, but its hook said hello: it is the app's.
     expect(hooked.alive).toBe(true);
   });

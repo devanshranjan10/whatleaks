@@ -95,22 +95,66 @@ const PROBE_TIMEOUT_MS = 150;
  * bound to that specific address, or Linux connecting the probe to itself when it picks
  * the destination port as its own source port.
  */
-function canConnect(host: string, port: number, accepted?: Set<number>): Promise<boolean> {
+function canConnect(host: string, port: number, accepted?: AcceptedPorts): Promise<boolean> {
   return new Promise((resolve) => {
     const s = net.connect({ host, port, timeout: PROBE_TIMEOUT_MS });
+    let settled = false;
     const done = (ok: boolean): void => {
+      if (settled) return;
+      settled = true;
       s.destroy();
       resolve(ok);
     };
     s.once('connect', () => {
+      s.setTimeout(0);
       if (!accepted) return done(true);
-      // The proxy's 'connection' event can follow the client's 'connect' by a tick.
       const local = s.localPort;
-      setTimeout(() => done(local !== undefined && accepted.has(local)), 20);
+      if (local === undefined) return done(false);
+      void accepted.wait(local, ACCEPT_GRACE_MS).then(done);
     });
-    s.once('timeout', () => done(false));
+    // On a busy event loop the timer can run before a connect that has already completed:
+    // decide only after pending I/O events have had their turn.
+    s.once('timeout', () =>
+      setImmediate(() => {
+        if (s.connecting) done(false);
+      }),
+    );
     s.once('error', () => done(false));
   });
+}
+
+/**
+ * How long a probe that connected waits for the proxy's own 'connection' event. That
+ * event usually follows the client's 'connect' by a tick, but a busy machine can delay
+ * it, and giving up early would wrongly call the proxy unreachable. Only a probe that
+ * something other than the proxy answered waits this long.
+ */
+const ACCEPT_GRACE_MS = 1000;
+
+/** Source ports of the probe connections the proxy accepted. */
+class AcceptedPorts {
+  private readonly ports = new Set<number>();
+  private readonly waiters = new Map<number, () => void>();
+
+  add(port: number): void {
+    this.ports.add(port);
+    this.waiters.get(port)?.();
+  }
+
+  wait(port: number, ms: number): Promise<boolean> {
+    if (this.ports.has(port)) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const t = setTimeout(() => {
+        this.waiters.delete(port);
+        resolve(false);
+      }, ms);
+      this.waiters.set(port, () => {
+        clearTimeout(t);
+        this.waiters.delete(port);
+        resolve(true);
+      });
+    });
+  }
 }
 
 /**
@@ -129,7 +173,7 @@ export async function assertLoopbackOnly(server: Mockttp, port: number): Promise
     (addrs ?? []).filter((a) => !a.internal).map((a) => (a.family === 'IPv6' && a.address.toLowerCase().startsWith('fe80') ? `${a.address}%${name}` : a.address)),
   );
   // Source ports of connections the proxy accepted while probing.
-  const accepted = inner ? new Set<number>() : undefined;
+  const accepted = inner ? new AcceptedPorts() : undefined;
   const onConnection = (c: net.Socket): void => {
     if (c.remotePort !== undefined) accepted?.add(c.remotePort);
   };

@@ -34,7 +34,7 @@ independent code review.
 | HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | fbc545d … 110f4f9 |
 | Socket reports from the hooks, mockttp upload fix, loopback probe fix | 74439e8, 2bd7f5e |
 
-**Gate on the last commit:** `npm ci`, typecheck, lint, **241 offline tests**, build. It
+**Gate on the last commit:** `npm ci`, typecheck, lint, **242 offline tests**, build. It
 passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It returns
 npm's real exit code; an earlier `| grep` pipe hid two lint failures, which were
 amended.
@@ -223,7 +223,7 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
 
 ```
 cd ~/Downloads/sideproj/whatleaks
-npm ci && ./scripts/gate.sh        # 241 tests, all offline
+npm ci && ./scripts/gate.sh        # 242 tests, all offline
 node dist/cli.js --help
 ```
 

@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import net from 'node:net';
 import os from 'node:os';
 import type { Mockttp } from 'mockttp';
@@ -38,6 +39,22 @@ describe.skipIf(!lan)('the loopback-only check', () => {
     try {
       await expect(assertLoopbackOnly(asMockttp(proxy), port)).rejects.toThrow(/proxy reachable on/);
     } finally {
+      proxy.close();
+    }
+  });
+
+  it('still refuses it when the proxy accepts late, as on a busy machine', async () => {
+    const open = new Set<net.Socket>();
+    const proxy = net.createServer((s) => open.add(s));
+    const port = await listen(proxy, '0.0.0.0');
+    // What the check listens to: the proxy's 'connection' events, each 200 ms late.
+    const late = new EventEmitter() as EventEmitter & { address: () => net.AddressInfo };
+    late.address = () => ({ ...(proxy.address() as net.AddressInfo), address: '127.0.0.1' });
+    proxy.on('connection', (s) => setTimeout(() => late.emit('connection', s), 200));
+    try {
+      await expect(assertLoopbackOnly({ server: late } as unknown as Mockttp, port)).rejects.toThrow(/proxy reachable on/);
+    } finally {
+      for (const s of open) s.destroy();
       proxy.close();
     }
   });
