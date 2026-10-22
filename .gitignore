@@ -3,6 +3,7 @@ dist/
 coverage/
 *.log
 .DS_Store
+__pycache__/
 *.har
 !test/fixtures/**/*.har
 whatleaks-*.md
