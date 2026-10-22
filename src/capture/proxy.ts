@@ -89,14 +89,25 @@ async function withLoopbackListen<T>(fn: () => Promise<T>): Promise<T> {
  */
 const PROBE_TIMEOUT_MS = 150;
 
-function canConnect(host: string, port: number): Promise<boolean> {
+/**
+ * Whether a connection to host:port succeeds and, when `accepted` can tell, whether the
+ * proxy itself accepted it. Something else can answer on the same port number: a socket
+ * bound to that specific address, or Linux connecting the probe to itself when it picks
+ * the destination port as its own source port.
+ */
+function canConnect(host: string, port: number, accepted?: Set<number>): Promise<boolean> {
   return new Promise((resolve) => {
     const s = net.connect({ host, port, timeout: PROBE_TIMEOUT_MS });
     const done = (ok: boolean): void => {
       s.destroy();
       resolve(ok);
     };
-    s.once('connect', () => done(true));
+    s.once('connect', () => {
+      if (!accepted) return done(true);
+      // The proxy's 'connection' event can follow the client's 'connect' by a tick.
+      const local = s.localPort;
+      setTimeout(() => done(local !== undefined && accepted.has(local)), 20);
+    });
     s.once('timeout', () => done(false));
     s.once('error', () => done(false));
   });
@@ -107,7 +118,7 @@ function canConnect(host: string, port: number): Promise<boolean> {
  * when it can, and always probes every non-loopback address of this machine, so a
  * change inside mockttp cannot silently open the proxy to the network.
  */
-async function assertLoopbackOnly(server: Mockttp, port: number): Promise<void> {
+export async function assertLoopbackOnly(server: Mockttp, port: number): Promise<void> {
   const inner = (server as unknown as { server?: net.Server }).server;
   const addr = inner?.address();
   if (addr && typeof addr === 'object' && addr.address !== '127.0.0.1') {
@@ -117,7 +128,18 @@ async function assertLoopbackOnly(server: Mockttp, port: number): Promise<void> 
   const external = Object.entries(os.networkInterfaces()).flatMap(([name, addrs]) =>
     (addrs ?? []).filter((a) => !a.internal).map((a) => (a.family === 'IPv6' && a.address.toLowerCase().startsWith('fe80') ? `${a.address}%${name}` : a.address)),
   );
-  const reachable = await Promise.all(external.map((ip) => canConnect(ip, port)));
+  // Source ports of connections the proxy accepted while probing.
+  const accepted = inner ? new Set<number>() : undefined;
+  const onConnection = (c: net.Socket): void => {
+    if (c.remotePort !== undefined) accepted?.add(c.remotePort);
+  };
+  inner?.prependListener('connection', onConnection);
+  let reachable: boolean[];
+  try {
+    reachable = await Promise.all(external.map((ip) => canConnect(ip, port, accepted)));
+  } finally {
+    inner?.off('connection', onConnection);
+  }
   const open = external.filter((_, i) => reachable[i]);
   if (open.length > 0) throw new Error(`proxy reachable on ${open.join(', ')}; refusing to run`);
 }
