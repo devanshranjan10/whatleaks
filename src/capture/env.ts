@@ -11,6 +11,8 @@ export interface ChildEnvInput {
   javaTrustPath?: string;
   /** Runtime hooks to load into the app (Node preload, Python and Ruby hooks). */
   hooks?: RuntimeHooks;
+  /** File the hooks append direct connections to (WHATLEAKS_SOCKETS). */
+  socketLog?: string;
   /** Opt-out variables to set (compare's second run, or run --opt-out). */
   optOut?: Record<string, string>;
   /** Variables to remove so a "default" run really is default (compare's first run). */
@@ -59,6 +61,7 @@ export function buildChildEnv(input: ChildEnvInput): ChildEnv {
     env.NODE_OPTIONS = withPreload(input.base.NODE_OPTIONS, hooks.node);
     env.WHATLEAKS_PRELOAD = '1';
   }
+  if (input.socketLog && (hooks.node || hooks.python || hooks.ruby)) env.WHATLEAKS_SOCKETS = input.socketLog;
   // Python and Ruby builds that ignore SSL_CERT_FILE get the CA from their hook.
   if (hooks.python || hooks.ruby) env.WHATLEAKS_CA = input.caPath;
   const prepend = (dir: string, existing: string | undefined): string => (existing ? `${dir}${delimiter}${existing}` : dir);

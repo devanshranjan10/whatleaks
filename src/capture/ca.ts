@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import tls from 'node:tls';
-import { generateCACertificate } from 'mockttp';
+import { loadMockttp } from './mockttp.js';
 import { jksTrustStore } from './jks.js';
 
 export interface SessionCA {
@@ -38,6 +38,7 @@ function rootCertificates(): string[] {
  * written, to a private temp dir that is deleted when the run ends.
  */
 export async function createSessionCA(): Promise<SessionCA> {
+  const { generateCACertificate } = await loadMockttp();
   const { key, cert } = await generateCACertificate({
     subject: { commonName: `whatleaks single-run CA ${new Date().toISOString()}`, organizationName: 'whatleaks (local, one run only)' },
     bits: 2048,

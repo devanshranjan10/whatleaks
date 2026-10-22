@@ -123,6 +123,10 @@ export interface DirectConn {
   /** netstat cut this IPv6 address to fit its column, and lsof could not fill it in. */
   truncated?: boolean;
   rdns?: string;
+  /** The hostname the app asked for, reported by a runtime hook. */
+  host?: string;
+  /** Who saw it: the polling watcher (absent), a runtime hook, or both. */
+  seenBy?: 'hook' | 'both';
 }
 
 export interface SessionMeta {

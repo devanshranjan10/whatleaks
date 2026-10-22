@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { join } from 'node:path';
 import type { DirectConn, Har, SessionMeta } from '../har/types.js';
 import { PACKAGE_NAME, VERSION } from '../version.js';
 import { createSessionCA } from './ca.js';
@@ -9,6 +10,7 @@ import { runtimeHooks } from './preload.js';
 import { startProxy, upstreamFromEnv } from './proxy.js';
 import { CliError } from '../errors.js';
 import { Recorder } from './recorder.js';
+import { mergeSocketReports, readSocketReports } from './socket-reports.js';
 
 export interface SessionOptions {
   command: string;
@@ -134,6 +136,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
     let watcher: SessionMeta['watcher'] = 'off';
     let direct: DirectConn[] = [];
     const hooks = opts.preload === false ? {} : runtimeHooks();
+    const socketLogPath = join(ca.dir, 'sockets.ndjson');
     try {
       const childEnv = buildChildEnv({
         base: opts.baseEnv,
@@ -142,6 +145,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         bundlePath: ca.bundlePath,
         javaTrustPath: ca.javaTrustPath,
         hooks,
+        ...(opts.watch ? { socketLog: socketLogPath } : {}),
         ...(opts.optOut ? { optOut: opts.optOut } : {}),
         ...(opts.removeEnv ? { remove: opts.removeEnv } : {}),
         ...(opts.extraEnv ? { extra: opts.extraEnv } : {}),
@@ -192,6 +196,7 @@ export async function captureSession(opts: SessionOptions): Promise<SessionResul
         direct = seen.direct;
         notes.push(...seen.notes);
       }
+      if (opts.watch) direct = mergeSocketReports(direct, await readSocketReports(socketLogPath));
     } finally {
       await proxy.stop();
     }

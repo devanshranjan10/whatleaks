@@ -127,7 +127,7 @@ export function renderTerminal(report: Report, options: TerminalOptions = {}): s
       out.push(`  ${c.yellow('↷')} ${p.host}:${p.port} — ${plural(p.count, 'connection')} tunnelled without decrypting (--passthrough)`);
     }
     for (const d of report.direct) {
-      const name = d.rdns ? ` (${d.rdns})` : '';
+      const name = d.host ?? d.rdns ? ` (${d.host ?? d.rdns})` : '';
       const cut = d.truncated ? '…' : '';
       const what = d.connections && d.connections > 1 ? `${d.connections} direct connections` : 'direct connection';
       out.push(`  ${c.yellow('↷')} ${d.remote}${cut}:${d.port}${name} ${d.protocol} — ${what} by ${d.process}, bypassed the proxy`);

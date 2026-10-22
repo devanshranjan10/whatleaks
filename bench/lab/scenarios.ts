@@ -127,6 +127,11 @@ export const SCENARIOS: Scenario[] = [
     id: 'udp-unconnected', group: 'proxy-ignoring', title: 'one UDP datagram, unconnected socket (sendto)', argv: node(RUNTIMES.node26, 'udp', '50', 'unconnected'), repeat: 10,
     expect: 'host', why: 'UDP is never proxied',
   },
+  // The same short sockets from Go, which loads no whatleaks hook: only the polling
+  // watcher can name these (the Node rows above are also reported by the Node preload).
+  { id: 'go-tcp-rst-10ms', group: 'proxy-ignoring', title: 'Go raw TCP reset after 10 ms (no runtime hook)', argv: [RUNTIMES.goClient, 'tcp', '10', 'reset'], repeat: 10, expect: 'host', why: 'not HTTP', missing: need(RUNTIMES.goClient) },
+  { id: 'go-tcp-server-closes', group: 'proxy-ignoring', title: 'Go raw TCP, server closes at once (no runtime hook)', argv: [RUNTIMES.goClient, 'tcp', '100', 'server-closes'], repeat: 10, expect: 'host', why: 'not HTTP', missing: need(RUNTIMES.goClient) },
+  { id: 'go-udp-unconnected', group: 'proxy-ignoring', title: 'Go UDP datagram, unconnected socket (no runtime hook)', argv: [RUNTIMES.goClient, 'udp', 'unconnected'], repeat: 10, expect: 'host', why: 'UDP is never proxied', missing: need(RUNTIMES.goClient) },
 
   // --- Process lifecycle ------------------------------------------------------------
   { id: 'helper-0.2s', group: 'lifecycle', title: 'detached helper sends 0.2 s after the app exits', argv: node(RUNTIMES.node26, 'helper', '200'), repeat: 10, expect: 'payload', settleMs: 2200 },

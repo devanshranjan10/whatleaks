@@ -457,6 +457,7 @@ export function buildReport(capture: Capture, opts: ReportOptions): Report {
       ...d,
       process: redactor.text(d.process),
       ...(d.rdns ? { rdns: redactor.text(d.rdns) } : {}),
+      ...(d.host ? { host: redactor.text(d.host) } : {}),
     })),
     timeline,
     caveats,

@@ -161,7 +161,7 @@ export function buildDiff(before: Report, after: Report): Diff {
   if (shorter > 0 && longer / shorter > 2) {
     caveats.push(`The runs lasted ${duration(before.capture.durationMs)} and ${duration(after.capture.durationMs)}, so request counts are not like for like.`);
   }
-  const hiddenAfter = [...new Set([...after.refused.map((r) => r.host), ...after.passthrough.map((p) => p.host), ...after.direct.map((d) => d.rdns ?? d.remote)])];
+  const hiddenAfter = [...new Set([...after.refused.map((r) => r.host), ...after.passthrough.map((p) => p.host), ...after.direct.map((d) => d.host ?? d.rdns ?? d.remote)])];
   if (hiddenAfter.length > 0) {
     caveats.push(`In the second run, ${hiddenAfter.length} destination${hiddenAfter.length === 1 ? '' : 's'} could not be read (see "not visible"), so the diff cannot say what they carried.`);
   }

@@ -262,6 +262,94 @@ function useEnvProxyInAppAgents(http, https) {
   }
 }
 
+/**
+ * Every TCP connection and UDP destination outside the proxy, written as one line each to
+ * WHATLEAKS_SOCKETS as it happens. A poll misses sockets that live a few milliseconds, and
+ * UDP sent with sendto() never has a peer to poll; this sees both, with the hostname the
+ * app asked for. Loopback (which includes the proxy) is skipped.
+ */
+function reportSockets() {
+  const file = process.env.WHATLEAKS_SOCKETS;
+  if (!file) return;
+  const fs = require('node:fs');
+  const net = require('node:net');
+  const dgram = require('node:dgram');
+  const cmd = require('node:path').basename(process.argv0 || process.execPath);
+  const local = (a) => a === 'localhost' || a === '::1' || /^(::ffff:)?127\./.test(a);
+  let fd;
+  let lines = 0;
+  const udpSeen = new Set(); // UDP has no connections: one line per destination
+  const report = (proto, addr, port, host) => {
+    if (!addr || !port || local(addr) || lines >= 10000) return;
+    if (proto === 'UDP') {
+      const k = `${addr} ${port}`;
+      if (udpSeen.has(k)) return;
+      udpSeen.add(k);
+    }
+    try {
+      if (fd === undefined) fd = fs.openSync(file, 'a', 0o600);
+      const line = { proto, addr, port: Number(port), pid: process.pid, cmd, t: Date.now() };
+      if (host && host !== addr) line.host = String(host);
+      fs.writeSync(fd, JSON.stringify(line) + '\n');
+      lines++;
+    } catch {
+      fd = -1; // the run is over or the folder is gone: stop trying
+      lines = Infinity;
+    }
+  };
+
+  const connect = net.Socket.prototype.connect;
+  net.Socket.prototype.connect = function (...args) {
+    let o = args[0];
+    if (Array.isArray(o)) o = o[0]; // net.connect passes its normalized arguments
+    const host = o && typeof o === 'object' ? o.host || o.hostname : typeof args[1] === 'string' ? args[1] : undefined;
+    if (!(o && typeof o === 'object' && o.path) && typeof o !== 'string') {
+      this.once('connect', () => report('TCP', this.remoteAddress, this.remotePort, host));
+    }
+    return connect.apply(this, args);
+  };
+
+  const remote = (sock) => {
+    try {
+      return sock.remoteAddress();
+    } catch {
+      return undefined; // not connected
+    }
+  };
+  const send = dgram.Socket.prototype.send;
+  dgram.Socket.prototype.send = function (...args) {
+    const r = remote(this);
+    if (r) report('UDP', r.address, r.port);
+    else {
+      // send(msg, [offset, length,] port[, address][, callback])
+      const i = typeof args[3] === 'number' ? 3 : 1;
+      const port = args[i];
+      const address = typeof args[i + 1] === 'string' ? args[i + 1] : undefined;
+      if (typeof port === 'number' && address) {
+        if (net.isIP(address)) report('UDP', address, port);
+        else
+          require('node:dns').lookup(address, (err, ip) => {
+            if (!err) report('UDP', ip, port, address);
+          });
+      }
+    }
+    return send.apply(this, args);
+  };
+  const dconnect = dgram.Socket.prototype.connect;
+  dgram.Socket.prototype.connect = function (port, address, ...rest) {
+    this.once('connect', () => {
+      const r = remote(this);
+      if (r) report('UDP', r.address, r.port, typeof address === 'string' ? address : undefined);
+    });
+    return dconnect.call(this, port, address, ...rest);
+  };
+}
+
+try {
+  reportSockets();
+} catch {
+  // A preload must never stop the app from starting.
+}
 try {
   install();
 } catch {

@@ -118,7 +118,7 @@ export function renderMarkdown(report: Report): string {
     for (const p of report.passthrough) out.push(`- ${code(`${p.host}:${p.port}`)}: ${plural(p.count, 'connection')} tunnelled without decrypting (\`--passthrough\`).`);
     for (const d of report.direct) {
       const what = d.connections && d.connections > 1 ? `${d.connections} direct connections` : 'direct connection';
-      out.push(`- ${code(`${d.remote}${d.truncated ? '…' : ''}:${d.port}`)}${d.rdns ? ` (${code(d.rdns)})` : ''} ${d.protocol}: ${what} by \`${d.process}\` that bypassed the proxy.`);
+      out.push(`- ${code(`${d.remote}${d.truncated ? '…' : ''}:${d.port}`)}${d.host ?? d.rdns ? ` (${code((d.host ?? d.rdns)!)})` : ''} ${d.protocol}: ${what} by \`${d.process}\` that bypassed the proxy.`);
     }
     out.push('');
   }

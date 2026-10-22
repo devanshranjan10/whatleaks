@@ -10,6 +10,10 @@
 #
 # Both patches apply when those modules are first imported, so a Python program that
 # never uses them pays nothing. Any other sitecustomize on the path still runs.
+#
+# Every TCP connection and UDP destination outside the proxy is also written, one line
+# each, to WHATLEAKS_SOCKETS as it happens: a poll misses sockets that live a few
+# milliseconds, and UDP sent with sendto() has no peer to poll. Loopback is skipped.
 import os
 import sys
 
@@ -50,6 +54,102 @@ def _patch_aiohttp(aiohttp):
 
 
 _PATCHES = {"ssl": _patch_ssl, "aiohttp": _patch_aiohttp}
+
+
+def _report_sockets():
+    path = os.environ.get("WHATLEAKS_SOCKETS")
+    if not path:
+        return
+    import json
+    import socket
+    import threading
+    import time
+
+    cmd = os.path.basename(sys.executable or "python")
+    names = {}  # address -> the hostname getaddrinfo resolved it from
+    udp_seen = set()
+    state = {"fd": None, "lines": 0}
+    lock = threading.Lock()
+
+    def report(proto, addr, port, host=None):
+        if not addr or not port or addr == "localhost" or addr == "::1" or addr.startswith("127.") or addr.startswith("::ffff:127."):
+            return
+        with lock:
+            if state["lines"] >= 10000:
+                return
+            if proto == "UDP":
+                if (addr, port) in udp_seen:
+                    return
+                udp_seen.add((addr, port))
+            line = {"proto": proto, "addr": addr, "port": int(port), "pid": os.getpid(), "cmd": cmd, "t": int(time.time() * 1000)}
+            host = host or names.get(addr)
+            if host and host != addr:
+                line["host"] = host
+            try:
+                if state["fd"] is None:
+                    state["fd"] = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+                os.write(state["fd"], (json.dumps(line) + "\n").encode())
+                state["lines"] += 1
+            except Exception:
+                state["lines"] = 10000
+
+    inet = (socket.AF_INET, getattr(socket, "AF_INET6", socket.AF_INET))
+
+    def target(sock, address):
+        if sock.family not in inet or not isinstance(address, tuple) or len(address) < 2:
+            return None
+        return str(address[0]), address[1]
+
+    def proto(sock):
+        return "UDP" if sock.type & socket.SOCK_DGRAM else "TCP"
+
+    getaddrinfo = socket.getaddrinfo
+
+    def remembering_getaddrinfo(host, *args, **kwargs):
+        result = getaddrinfo(host, *args, **kwargs)
+        if isinstance(host, str):
+            for entry in result:
+                try:
+                    names.setdefault(str(entry[4][0]), host)
+                except Exception:
+                    pass
+        return result
+
+    connect = socket.socket.connect
+    connect_ex = socket.socket.connect_ex
+    sendto = socket.socket.sendto
+
+    def wl_connect(self, address):
+        t = target(self, address)
+        try:
+            result = connect(self, address)
+        except (BlockingIOError, InterruptedError):
+            # a non-blocking connect under way (asyncio)
+            if t:
+                report(proto(self), *t)
+            raise
+        if t:
+            report(proto(self), *t)
+        return result
+
+    def wl_connect_ex(self, address):
+        result = connect_ex(self, address)
+        t = target(self, address)
+        # 0, or a non-blocking connect under way (EINPROGRESS, EWOULDBLOCK)
+        if t and result in (0, 36, 115, 10035, 11, 35):
+            report(proto(self), *t)
+        return result
+
+    def wl_sendto(self, data, *args):
+        t = target(self, args[-1]) if args else None
+        if t:
+            report(proto(self), *t)
+        return sendto(self, data, *args)
+
+    socket.getaddrinfo = remembering_getaddrinfo
+    socket.socket.connect = wl_connect
+    socket.socket.connect_ex = wl_connect_ex
+    socket.socket.sendto = wl_sendto
 
 
 class _Finder(object):
@@ -108,6 +208,10 @@ def _chain():
             return
 
 
+try:
+    _report_sockets()
+except Exception:
+    pass
 try:
     _install()
 except Exception:
