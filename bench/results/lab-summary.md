@@ -3,7 +3,7 @@
 | | attempts | payload | request | host only | **silently missed** | at best possible |
 |---|---|---|---|---|---|---|
 | whatleaks before (43 of 46 scenarios) | 564 | 33 % | 11 % | 7 % | **48 %** (273) | 38 % |
-| whatleaks | 594 | 74 % | 1 % | 23 % | **3 %** (17) | 97 % |
+| whatleaks | 594 | 74 % | 1 % | 22 % | **3 %** (20) | 97 % |
 | mitmproxy | 594 | 57 % | 0 % | 5 % | **38 %** (225) | 59 % |
 | HTTP Toolkit | 594 | 31 % | 0 % | 2 % | **67 %** (399) | 33 % |
 
@@ -46,8 +46,8 @@
 | raw TCP, server closes at once (client socket lives ~1 ms, no TIME_WAIT) | host | 0 % | **100 %** | 0 % | 0 % |
 | one UDP datagram, connected socket (like QUIC) | host | 0 % | **100 %** | 0 % | 0 % |
 | one UDP datagram, unconnected socket (sendto) | host | 0 % | **100 %** | 0 % | 0 % |
-| Go raw TCP reset after 10 ms (no runtime hook) | host | – | **30 %** | 0 % | 0 % |
-| Go raw TCP, server closes at once (no runtime hook) | host | – | **100 %** | 0 % | 0 % |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | – | **10 %** | 0 % | 0 % |
+| Go raw TCP, server closes at once (no runtime hook) | host | – | **90 %** | 0 % | 0 % |
 | Go UDP datagram, unconnected socket (no runtime hook) | host | – | **0 %** | 0 % | 0 % |
 | detached helper sends 0.2 s after the app exits | payload | 100 % | **100 %** | 100 % | 0 % |
 | detached helper sends 1.5 s after the app exits | payload | 0 % | **100 %** | 100 % | 0 % |

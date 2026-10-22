@@ -4,7 +4,7 @@ This is the resume point for any session.
 
 Spec: `docs/superpowers/specs/2026-10-21-whatleaks-design.md`.
 Plan: `docs/superpowers/plans/2026-10-21-whatleaks.md`.
-Decisions: `docs/DECISIONS.md` (D-01 to D-35). Research: `docs/RESEARCH.md`.
+Decisions: `docs/DECISIONS.md` (D-01 to D-36). Research: `docs/RESEARCH.md`.
 Accuracy: `docs/ACCURACY.md`. Real runs: `docs/e2e/README.md`.
 Benchmark: `docs/BENCHMARK.md` (spec `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md`).
 
@@ -34,7 +34,7 @@ independent code review.
 | HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | fbc545d … 110f4f9 |
 | Socket reports from the hooks, mockttp upload fix, loopback probe fix | 74439e8, 2bd7f5e |
 
-**Gate on the last commit:** `npm ci`, typecheck, lint, **239 offline tests**, build. It
+**Gate on the last commit:** `npm ci`, typecheck, lint, **241 offline tests**, build. It
 passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It returns
 npm's real exit code; an earlier `| grep` pipe hid two lint failures, which were
 amended.
@@ -50,11 +50,16 @@ The owner asked for every remaining gap to be fixed.
   server-closes 0–40 % and `sendto()` 0 %.
 - **New lab rows** for the same sockets from Go, which has no hook. They keep the limit
   measured: reset after 10 ms 20–30 %, `sendto()` 0 %.
-- **Silently missed, macOS / Linux:** whatleaks **2.9 % / 3.2 %**, all in those Go
+- **Silently missed, macOS / Linux:** whatleaks **3.4 % / 3.2 %**, all in those Go
   rows. On the old build's 43 scenarios: 0 of 564. mitmproxy 38 % / 40 %, HTTP Toolkit
   67 % / 70 %.
-- **Uploads:** 79 → 187 MiB/s, by fixing mockttp's body-data batching when whatleaks
+- **Uploads:** 79 → 211 MiB/s, by fixing mockttp's body-data batching when whatleaks
   loads it (D-35). The fix should also go upstream to mockttp.
+- **CPU:** fast polling only while a process without a hook is alive (D-36). An empty
+  run went from 1.5 s to about 1.05 s of CPU, and each perf workload is about 20 %
+  lower.
+- **Open:** the Linux lab on `da94ba7` stopped when the Mac's disk filled up (Docker
+  Desktop crashed). The Linux numbers are from `74439e8`.
 - **Found by the Linux lab:** the loopback probe refused to run when another listener
   held the proxy's port number on a LAN address (`2bd7f5e`).
 - **Kept by design:** bodies over 8 MiB are cut off (bounded memory), and whatleaks
@@ -218,7 +223,7 @@ in `sideproj/whatleaks`, with local git only: nothing published, no remote. Comm
 
 ```
 cd ~/Downloads/sideproj/whatleaks
-npm ci && ./scripts/gate.sh        # 239 tests, all offline
+npm ci && ./scripts/gate.sh        # 241 tests, all offline
 node dist/cli.js --help
 ```
 

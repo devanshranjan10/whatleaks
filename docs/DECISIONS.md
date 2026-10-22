@@ -364,3 +364,21 @@ batch.
 Kept: bodies over 8 MiB are still cut off, to keep memory bounded (D-23, "Memory").
 Whole bodies would mean holding, scanning and writing arbitrarily large uploads. The size
 is counted, and the first MiB is kept and scanned.
+
+**D-36 — Fast polling only for processes without a hook.** Profiling an app that does
+nothing showed whatleaks spending about 1.5 s of CPU: 0.5 s in its own code (mostly
+loading mockttp), and the rest in `netstat` and `ps` processes. Those ran every 20 and
+100 ms for the first 3 s, and the wait after exit listed everything again every 200 ms.
+Since D-34, hooked processes report their own sockets, so:
+- each hook writes a `hello` line with its pid when it loads;
+- the watcher reads the file while the app runs and adopts those pids. A detached
+  helper with a hook is the app's by construction, since it inherited the run's
+  environment;
+- the 20 ms socket polling and 100 ms process listing run only while some live process
+  of the app has no hook. Until the first listing, the app's own pid counts as
+  unhooked. Otherwise the rates are 100 ms and 250 ms;
+- the wait after exit reuses a socket sample under 150 ms old and a process listing
+  under 250 ms old.
+
+An empty run now costs about 1.05 s of CPU. Programs with no hook (a shell wrapper, Go,
+anything native) still get the fast rates, so their limits are unchanged.

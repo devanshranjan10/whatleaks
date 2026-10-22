@@ -258,7 +258,7 @@ Measured in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); method notes in
 
   | Silently missed | macOS | Linux |
   |---|---|---|
-  | **whatleaks** | **2.9 %** | **3.2 %** |
+  | **whatleaks** | **3.4 %** | **3.2 %** |
   | mitmproxy 12.2.3, given the same environment | 38 % | 40 % |
   | HTTP Toolkit server 1.27.3, with its own interception | 67 % | 70 % |
   | the build before this benchmark (43 scenarios) | 48 % | – |
@@ -266,8 +266,8 @@ Measured in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); method notes in
   - whatleaks reached the best outcome its rules allow in 97 % of attempts on both
     platforms.
   - Every remaining miss is from a Go program, which whatleaks loads no hook into: a
-    connection reset within 10 ms, or UDP sent with `sendto()`. The same from Node,
-    Python or Ruby was caught every time.
+    connection reset within 10 ms, UDP sent with `sendto()`, and once a connection the
+    server closed at once. The same from Node, Python or Ruby was caught every time.
   - Nothing the app did not send was ever credited to it.
 - **Real tools, against each tool's own debug output:** whatleaks matched 5 of 5,
   HTTP Toolkit 4 of 5, mitmproxy 3 of 5.
@@ -311,7 +311,7 @@ Measured limits are in [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
     short ones:
     - a socket closed by the app is found afterwards on macOS (TIME_WAIT keeps its
       owner); on Linux a closed socket has no owner, so only open ones count;
-    - one reset within about 10 ms is often missed (Go in the lab: 20 to 30 %);
+    - one reset within about 10 ms is often missed (Go in the lab: caught 10 to 30 %);
     - UDP sent with `sendto()` leaves no address for any watcher and is never seen.
 - **Not covered by the Node preload:** the `undici` npm package with its own dispatcher,
   and `node:http2` over plain-text `http:` (h2c). Their connections are named as direct

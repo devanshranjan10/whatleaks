@@ -20,8 +20,11 @@ Everything was run on 2026-10-21 and 2026-10-22:
 Every number comes from a script in `bench/` and a result file in `bench/results/`. The
 design is in `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md` (D-24).
 
-"Before" is the build at the start of this work (`8c6baa0`). "After" is `74439e8`:
-every lab row on both platforms, and the cost runs, were measured on that one build.
+"Before" is the build at the start of this work (`8c6baa0`). "After" is:
+- `da94ba7` for every macOS lab row and the cost runs;
+- `74439e8` for the Linux lab. It differs from `da94ba7` only in the loopback probe
+  fix (`2bd7f5e`) and in when the watcher polls fast (D-36). The Linux rerun on
+  `da94ba7` stopped when the Mac's disk filled up.
 
 ## 1. Headline
 
@@ -30,7 +33,7 @@ every lab row on both platforms, and the cost runs, were measured on that one bu
 | macOS | payload read | request seen, body cut | host named | **silently missed** | at the best possible outcome |
 |---|---|---|---|---|---|
 | whatleaks before (the 43 scenarios it ran) | 33 % | 11 % | 7 % | **48 %** (273 of 564) | 38 % |
-| **whatleaks** | 74 % | 1 % | 23 % | **2.9 %** (17) | **97 %** |
+| **whatleaks** | 74 % | 0.5 % | 22 % | **3.4 %** (20) | **97 %** |
 | mitmproxy | 57 % | 0 % | 5 % | **38 %** (225) | 59 % |
 | HTTP Toolkit | 31 % | 0 % | 2 % | **67 %** (399) | 33 % |
 
@@ -41,10 +44,14 @@ every lab row on both platforms, and the cost runs, were measured on that one bu
 | HTTP Toolkit | 29 % | 0 % | 1 % | **70 %** (399) | 30 % |
 
 - **Every miss left is a program whatleaks loads no hook into.** On the 43 scenarios
-  the old build also ran, whatleaks missed **0 of 564** attempts on macOS. All 17 misses
-  on macOS and all 18 on Linux are in two rows added to measure that limit: a Go
-  program that resets a TCP connection after 10 ms, and a Go program that sends UDP
-  with `sendto()`. No other tool here names those either.
+  the old build also ran, whatleaks missed **0 of 564** attempts on macOS. All 20 misses
+  on macOS and all 18 on Linux are in rows added to measure that limit, Go programs
+  that bypass the proxy:
+  - a TCP connection reset after 10 ms;
+  - UDP sent with `sendto()`;
+  - on macOS in this run, 1 of 10 connections closed at once by the server.
+
+  No other tool here names those either.
 - **whatleaks reached the best possible outcome in every scenario where another tool
   did.** In no scenario did a baseline read a payload whatleaks only named. The one row
   where a baseline went past whatleaks is the 9 MiB upload: mitmproxy kept the whole
@@ -58,8 +65,7 @@ every lab row on both platforms, and the cost runs, were measured on that one bu
   for 4 and mitmproxy for 3 (section 4).
 - **Cost:** whatleaks had the lowest median latency of the three proxies on keep-alive
   requests and on new TLS connections. Large uploads were roughly even with mitmproxy.
-  It uses the most CPU, because it also watches for connections that bypass the proxy
-  (section 5).
+  It uses more CPU than mitmproxy, mostly a fixed second per run (section 5).
 
 ## 2. How the lab works
 
@@ -148,8 +154,8 @@ Share of attempts at the best possible outcome. The Linux table is in section 6.
 | raw TCP, server closes at once (client socket lives ~1 ms) | host | 0 % | **100 %** | 0 % | 0 % |
 | one UDP datagram, connected socket (like QUIC) | host | 0 % | **100 %** | 0 % | 0 % |
 | one UDP datagram, unconnected socket (sendto) | host | 0 % | **100 %** | 0 % | 0 % |
-| Go raw TCP reset after 10 ms (no runtime hook) | host | – | **30 %** | 0 % | 0 % |
-| Go raw TCP, server closes at once (no runtime hook) | host | – | **100 %** | 0 % | 0 % |
+| Go raw TCP reset after 10 ms (no runtime hook) | host | – | **10 %** | 0 % | 0 % |
+| Go raw TCP, server closes at once (no runtime hook) | host | – | **90 %** | 0 % | 0 % |
 | Go UDP datagram, unconnected socket (no runtime hook) | host | – | **0 %** | 0 % | 0 % |
 | detached helper sends 0.2 s after the app exits | payload | 100 % | **100 %** | 100 % | 0 % |
 | detached helper sends 1.5 s after the app exits | payload | 0 % | **100 %** | 100 % | 0 % |
@@ -160,19 +166,20 @@ Share of attempts at the best possible outcome. The Linux table is in section 6.
 | body with this machine's identifiers and decoys | payload | 100 % | **100 %** | 100 % | 0 % |
 | identifiers in the 5th of 6 WebSocket messages | payload | 50 % | **100 %** | 100 % | 0 % |
 
-### Where whatleaks still misses (17 attempts on macOS, 18 on Linux)
+### Where whatleaks still misses (20 attempts on macOS, 18 on Linux)
 
 Only in programs whatleaks loads no hook into (Go here; also Rust, C and other native
 code), and only when their connection bypasses the proxy:
-- **a TCP connection reset within about 10 ms:** Go 30 % on macOS, 20 % on Linux. The
-  polling watcher must see it while it's open, and a reset leaves no closed-socket
-  record behind;
+- **a TCP connection reset within about 10 ms:** Go 10 % and 30 % in two macOS runs,
+  20 % on Linux. The polling watcher must see it while it's open, and a reset leaves
+  no closed-socket record behind;
 - **UDP sent with `sendto()` on an unconnected socket:** 0 %. The socket never has a
   remote address for any watcher to read.
 
 The same connections from Node, Python or Ruby are reported by whatleaks's runtime hook
 as they open: 100 % in the lab (D-34). A Go connection the server closes at once is
-still named (100 %), because the client keeps its socket a moment longer.
+usually still named (90 % and 100 % in two macOS runs, 100 % on Linux), because the
+client keeps its socket a moment longer.
 
 Seeing every connection from every program would take a kernel-level hook (eBPF, a
 network extension). whatleaks avoids that, because it needs neither root nor
@@ -238,38 +245,42 @@ Result file: `bench/results/real-after.json`. The mitmproxy lazy run is in
 ## 5. Cost
 
 `bench/run-perf.ts` uses one Node https client against the lab and runs it four ways:
-directly, under whatleaks, under mitmproxy and under HTTP Toolkit. Load average 3.3
+directly, under whatleaks, under mitmproxy and under HTTP Toolkit. Load average 2.0
 (`bench/results/perf-after.md`).
 
 | Workload | direct p50 / p95 | **whatleaks** | mitmproxy | HTTP Toolkit |
 |---|---|---|---|---|
-| 300 × 1 KiB POST, keep-alive | 0.2 / 0.9 ms | **0.6 / 1.7 ms** | 1.2 / 1.5 ms | 13.6 / 24.8 ms |
-| 100 × 1 KiB POST, new TLS connection each | 5.0 / 7.9 ms | **8.4 / 10.4 ms** | 13.8 / 14.9 ms | 13.3 / 29.1 ms |
-| 10 × 4 MiB POST, throughput | 430 MiB/s | **187 MiB/s** | 160 MiB/s | 103 MiB/s |
+| 300 × 1 KiB POST, keep-alive | 0.2 / 0.5 ms | **0.5 / 1.1 ms** | 1.2 / 1.4 ms | 13.3 / 25.1 ms |
+| 100 × 1 KiB POST, new TLS connection each | 6.1 / 8.0 ms | **8.5 / 11.1 ms** | 10.7 / 15.7 ms | 13.1 / 28.5 ms |
+| 10 × 4 MiB POST, throughput | 406 MiB/s | **211 MiB/s** | 239 MiB/s | 93 MiB/s |
 
 | Workload: CPU s / peak RSS | **whatleaks** | mitmproxy | HTTP Toolkit |
 |---|---|---|---|
-| keep-alive | 1.9 s / 159 MiB | 0.9 s / 92 MiB | 3.0 s / 358 MiB |
-| new connection each | 2.2 s / 137 MiB | 1.4 s / 89 MiB | 1.0 s / 312 MiB |
-| 4 MiB uploads | 2.3 s / 300 MiB | 0.8 s / 283 MiB | 0.6 s / 336 MiB |
+| keep-alive | 1.5 s / 136 MiB | 0.8 s / 91 MiB | 2.9 s / 338 MiB |
+| new connection each | 1.7 s / 127 MiB | 1.2 s / 88 MiB | 1.0 s / 239 MiB |
+| 4 MiB uploads | 1.8 s / 305 MiB | 0.7 s / 301 MiB | 0.6 s / 272 MiB |
 
 How to read these:
-- **Upload throughput varies from run to run.** mitmproxy measured 205 MiB/s in an
-  earlier run on the same machine, so treat uploads as roughly even with mitmproxy.
-- **CPU:** whatleaks's figure is its total minus the bare client's. It includes its
-  startup (mockttp, a fresh CA) and the direct-connection watcher, which polls every
-  20 ms while the app is busy (D-30). The other tools have no such watcher.
+- **Upload throughput varies from run to run.** Over three runs mitmproxy measured
+  160 to 239 MiB/s, and whatleaks 187 and 211 since D-35. Treat uploads as roughly
+  even.
+- **CPU:** whatleaks's figure is its total minus the bare client's. About 1 s of it is
+  a fixed cost per run: loading mockttp, creating a CA, and the watcher's process
+  listings during the 1 s wait after the app exits.
 - **Memory:** its RSS is the largest process it waited for, so it can include the app.
   It keeps every body it buffers (up to 8 MiB) for analysis.
 
-What changed the numbers this round:
-- New TLS connections went from p50 18.9 ms and 4.3 s of CPU per 100 to 8.4 ms and
-  2.2 s: upstream TLS contexts are now shared (D-33).
-- Uploads went from 79 to 187 MiB/s and peak memory from 492 to 300 MiB, because
+What changed the numbers:
+- **New TLS connections:** p50 from 18.9 to 8.5 ms, because upstream TLS contexts are
+  now shared (D-33).
+- **Uploads:** 79 to 211 MiB/s, and peak memory from 492 to 305 MiB, because
   mockttp's body-data batching is fixed when whatleaks loads it (D-35).
+- **CPU:** 2.1–2.3 s to 1.5–1.8 s per workload, from fast polling only while a process
+  without a hook is alive (D-36). An app that does nothing went from 1.5 s to about
+  1.05 s.
 
-**Startup and exit**, one-request app, median of 10: bare 88 ms, under whatleaks
-2037 ms. The build before this work took 3196 ms.
+**Startup and exit**, one-request app, median of 10: bare 92 ms, under whatleaks
+1964 ms. The build before this work took 3196 ms.
 
 1 s of that is the grace period that catches late senders (`--grace`). The rest is
 startup and analysis:
@@ -324,6 +335,7 @@ decision entries give the reasoning.
 | A new TLS connection cost about 6 ms of CPU in the proxy | shared upstream TLS contexts (D-33) | `110f4f9` |
 | Direct sockets closed within ~10 ms: 10 to 20 % on macOS, 20 to 60 % on Linux; UDP via `sendto()`: 0 % | runtime hooks report each socket as it opens (D-34) | `74439e8` |
 | 4 MiB uploads at 79 MiB/s | mockttp's body-data batching fixed when it loads (D-35) | `74439e8` |
+| Fast polling in every run: an app that does nothing cost 1.5 s of CPU | hooked processes announce themselves; fast polling only while one without a hook is alive (D-36) | `da94ba7` |
 | A run could refuse to start ("proxy reachable") when another program held the proxy's port number on a LAN address, or Linux connected the probe to itself (found in the Linux lab) | the probe counts only connections the proxy accepted | `2bd7f5e` |
 | One-datagram UDP at 30 % after polling UDP every 4th time | UDP read every 2nd poll | `f80a1be` |
 | `whatleaks run -- x \| tail` waited the full linger for `tail` (found while measuring startup) | only real subreapers and higher pids | `3d21e93` |
@@ -361,9 +373,10 @@ and the commits above. It covered:
 - **Same-machine lab.** The lab is on the same machine, so round trips take
   microseconds. That makes direct connections shorter than they would be over the
   internet: a hard case for whatleaks's polling watcher, not an easy one.
-- **Provenance.** Every lab row on both platforms and the cost runs used `74439e8`. On
-  Linux, one run of "raw TCP held 2 s" hit the false "proxy reachable" refusal fixed in
-  `2bd7f5e`, and was rerun. The fix changes no capture code. The real-tool runs (section
+- **Provenance.** The macOS lab and cost runs used `da94ba7`, the Linux lab `74439e8`;
+  see the top of this file. On Linux, one run of "raw TCP held 2 s" hit the false
+  "proxy reachable" refusal fixed in `2bd7f5e`, and was rerun. The fix changes no
+  capture code. The real-tool runs (section
   4) used `e38c907`; the later changes don't affect traffic that goes through the proxy.
 - **Small samples.** There are 3 or 10 runs per scenario. Rows between 0 and 100 %
   have wide intervals, given in `lab-after.md` and `lab-linux.md`.
