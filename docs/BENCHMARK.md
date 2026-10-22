@@ -20,8 +20,8 @@ Everything was run on 2026-10-21 and 2026-10-22:
 Every number comes from a script in `bench/` and a result file in `bench/results/`. The
 design is in `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md` (D-24).
 
-"Before" is the build at the start of this work (`8c6baa0`). "After" is:
-`da94ba7` for every lab row on both platforms and for the cost runs.
+"Before" is the build at the start of this work (`7460cb5`). "After" is:
+`961b84e` for every lab row on both platforms and for the cost runs.
 
 ## 1. Headline
 
@@ -324,26 +324,26 @@ decision entries give the reasoning.
 
 | Gap | Fix | Commit |
 |---|---|---|
-| Java ignores proxy variables: 0 % | `JAVA_TOOL_OPTIONS` and a JKS truststore written in-process (D-26) | `63645f9` |
-| Node < 22.21 bypassed the proxy: 0 % | `NODE_OPTIONS` preload with CONNECT tunnels (D-25) | `1d0885b` |
-| An app's own `https.Agent` bypassed the proxy on new Node: 0 % | the preload gives app-made agents `proxyEnv` (D-29) | `f80200a` |
-| Apple's Python and the system Ruby refused the CA; aiohttp ignored the proxy: host only, 50 to 90 % | Python and Ruby hooks (D-31), found by the HTTP Toolkit baseline | `adb4968` |
-| `node:http2` ignores the proxy on every Node: host only, 60 to 100 % | the preload tunnels it (D-32) | `a152a58` |
-| A new TLS connection cost about 6 ms of CPU in the proxy | shared upstream TLS contexts (D-33) | `110f4f9` |
-| Direct sockets closed within ~10 ms: 10 to 20 % on macOS, 20 to 60 % on Linux; UDP via `sendto()`: 0 % | runtime hooks report each socket as it opens (D-34) | `74439e8` |
-| 4 MiB uploads at 79 MiB/s | mockttp's body-data batching fixed when it loads (D-35) | `74439e8` |
-| Fast polling in every run: an app that does nothing cost 1.5 s of CPU | hooked processes announce themselves; fast polling only while one without a hook is alive (D-36) | `da94ba7` |
-| A run could refuse to start ("proxy reachable") when another program held the proxy's port number on a LAN address, or Linux connected the probe to itself (found in the Linux lab) | the probe counts only connections the proxy accepted | `2bd7f5e` |
-| One-datagram UDP at 30 % after polling UDP every 4th time | UDP read every 2nd poll | `f80a1be` |
-| `whatleaks run -- x \| tail` waited the full linger for `tail` (found while measuring startup) | only real subreapers and higher pids | `3d21e93` |
-| Short direct connections missed: 0 to 20 % | macOS `netstat` watcher plus a closing sweep (D-27); adaptive 20/100 ms polling (D-30) | `bc39791`, `4da3fc6` |
-| Short-lived children unattributed: 0 % | sockets kept by pid, the pid looked up while it is alive | `bc39791` |
-| Helpers sending 1.5 s or later after exit: 0 % | orphans started in the app's folder are waited for | `ac7fab7` |
-| WebSockets: 20 messages 15 %, identifiers in message 5 missed half the time | all messages kept within limits and scanned | `ca4e2ef` |
-| Uploads over the cap or abandoned: no body | the first MiB kept and decoded | `dc61fff` |
-| Linux without ps, lsof or netstat: no watcher | `/proc` backend (D-28) | `a9e081c` |
-| A 1 MiB plain-text upload took hours to report | linear email search | `f052aab` |
-| A run took 1 s longer on machines with VPN interfaces | 150 ms loopback probe, scoped link-local addresses | `0d69a9a` |
+| Java ignores proxy variables: 0 % | `JAVA_TOOL_OPTIONS` and a JKS truststore written in-process (D-26) | `61bcbae` |
+| Node < 22.21 bypassed the proxy: 0 % | `NODE_OPTIONS` preload with CONNECT tunnels (D-25) | `509c6b9` |
+| An app's own `https.Agent` bypassed the proxy on new Node: 0 % | the preload gives app-made agents `proxyEnv` (D-29) | `d233414` |
+| Apple's Python and the system Ruby refused the CA; aiohttp ignored the proxy: host only, 50 to 90 % | Python and Ruby hooks (D-31), found by the HTTP Toolkit baseline | `8343fa6` |
+| `node:http2` ignores the proxy on every Node: host only, 60 to 100 % | the preload tunnels it (D-32) | `3e5e016` |
+| A new TLS connection cost about 6 ms of CPU in the proxy | shared upstream TLS contexts (D-33) | `1c804f4` |
+| Direct sockets closed within ~10 ms: 10 to 20 % on macOS, 20 to 60 % on Linux; UDP via `sendto()`: 0 % | runtime hooks report each socket as it opens (D-34) | `c99c699` |
+| 4 MiB uploads at 79 MiB/s | mockttp's body-data batching fixed when it loads (D-35) | `c99c699` |
+| Fast polling in every run: an app that does nothing cost 1.5 s of CPU | hooked processes announce themselves; fast polling only while one without a hook is alive (D-36) | `961b84e` |
+| A run could refuse to start ("proxy reachable") when another program held the proxy's port number on a LAN address, or Linux connected the probe to itself (found in the Linux lab) | the probe counts only connections the proxy accepted | `3af5e25` |
+| One-datagram UDP at 30 % after polling UDP every 4th time | UDP read every 2nd poll | `99861e1` |
+| `whatleaks run -- x \| tail` waited the full linger for `tail` (found while measuring startup) | only real subreapers and higher pids | `e837d62` |
+| Short direct connections missed: 0 to 20 % | macOS `netstat` watcher plus a closing sweep (D-27); adaptive 20/100 ms polling (D-30) | `fb8a297`, `dd5a676` |
+| Short-lived children unattributed: 0 % | sockets kept by pid, the pid looked up while it is alive | `fb8a297` |
+| Helpers sending 1.5 s or later after exit: 0 % | orphans started in the app's folder are waited for | `dd74525` |
+| WebSockets: 20 messages 15 %, identifiers in message 5 missed half the time | all messages kept within limits and scanned | `19b8276` |
+| Uploads over the cap or abandoned: no body | the first MiB kept and decoded | `8d54bc1` |
+| Linux without ps, lsof or netstat: no watcher | `/proc` backend (D-28) | `b5c4123` |
+| A 1 MiB plain-text upload took hours to report | linear email search | `f4b53a2` |
+| A run took 1 s longer on machines with VPN interfaces | 150 ms loopback probe, scoped link-local addresses | `d1d6778` |
 
 The harness had bugs of its own, fixed before these numbers were taken:
 - the curl client hashed with `shasum`, which Debian lacks, so every tool scored
@@ -351,7 +351,7 @@ The harness had bugs of its own, fixed before these numbers were taken:
 - the summary credited the old build with expectations that later rows raised;
 - the perf client crashed when HTTP Toolkit replaced Node's global agent.
 
-The independent code review (12 findings) is fixed in `1a5979d`, `4da3fc6`, `f80200a`
+The independent code review (12 findings) is fixed in `79a4d28`, `dd5a676`, `d233414`
 and the commits above. It covered:
 - process identities that changed between listings on Linux;
 - zombies that were waited for;
@@ -370,11 +370,11 @@ and the commits above. It covered:
 - **Same-machine lab.** The lab is on the same machine, so round trips take
   microseconds. That makes direct connections shorter than they would be over the
   internet: a hard case for whatleaks's polling watcher, not an easy one.
-- **Provenance.** Both lab platforms and the cost runs used `da94ba7`. The Linux
+- **Provenance.** Both lab platforms and the cost runs used `961b84e`. The Linux
   image was rebuilt for the final run and installed mitmproxy 12.3.0 (macOS ran
   12.2.3); its Linux totals were the same as with 12.2.3 on the previous build. The
   real-tool runs (section
-  4) used `e38c907`; the later changes don't affect traffic that goes through the proxy.
+  4) used `7ee2ac6`; the later changes don't affect traffic that goes through the proxy.
 - **Small samples.** There are 3 or 10 runs per scenario. Rows between 0 and 100 %
   have wide intervals, given in `lab-after.md` and `lab-linux.md`.
 - **Baselines run on defaults.** An expert could tune mitmproxy or HTTP Toolkit. For

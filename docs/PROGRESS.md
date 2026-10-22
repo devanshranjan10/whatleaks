@@ -15,24 +15,24 @@ independent code review.
 
 | Milestone | Commit |
 |---|---|
-| Research, spec, plan | fd12eee |
-| M0 scaffold | 7301b37 |
-| M1 HAR model, body decoding, URL templates | f47a67e |
-| M2 analysis: fields, identity, classify, redact, report | 9f9727b |
-| M3 renderers and `report` | a438b69 |
-| Catalogs: 69 hosts, 32 opt-outs, all sourced | 7d5a82b |
-| M4 diff and `diff --strict` | be6f148 |
-| M5 capture core and `run` | 02446d0 |
-| M6 process tree, linger, direct watcher | 497cc4f |
-| M7 `compare` and `opt-outs` | fc9c14c |
-| Fixes found by real runs | b2960bc, 953c87c, 4cdb839 |
-| M8 real e2e, recorded fixtures, accuracy | ec0972f |
-| M9 README and docs | ab14818, fb0eacf, 9441ec7 |
-| Independent review: 20 findings fixed | ba283cc, f4060a2 |
+| Research, spec, plan | 423dc60 |
+| M0 scaffold | f4b4ed8 |
+| M1 HAR model, body decoding, URL templates | a2a8d18 |
+| M2 analysis: fields, identity, classify, redact, report | 3edc5b0 |
+| M3 renderers and `report` | fd6f346 |
+| Catalogs: 69 hosts, 32 opt-outs, all sourced | 2b58f83 |
+| M4 diff and `diff --strict` | 3b2c6db |
+| M5 capture core and `run` | 4fdcaf6 |
+| M6 process tree, linger, direct watcher | 5f88224 |
+| M7 `compare` and `opt-outs` | a6ea302 |
+| Fixes found by real runs | 0118e90, 790d7ba, 7f073c8 |
+| M8 real e2e, recorded fixtures, accuracy | 2c22a62 |
+| M9 README and docs | f74f6fd, 017b184, 0ac6b04 |
+| Independent review: 20 findings fixed | df98763, 259df1e |
 
-| Benchmark (lab, real tools, perf, Linux) and the gaps it found | c2dbf16 … 6856b3b; see `docs/BENCHMARK.md` §7 |
-| HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | fbc545d … 110f4f9 |
-| Socket reports from the hooks, mockttp upload fix, loopback probe fix | 74439e8, 2bd7f5e |
+| Benchmark (lab, real tools, perf, Linux) and the gaps it found | 7cbc5bd … 4f937c5; see `docs/BENCHMARK.md` §7 |
+| HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | 0a5dc4d … 1c804f4 |
+| Socket reports from the hooks, mockttp upload fix, loopback probe fix | c99c699, 3af5e25 |
 
 **Gate on the last commit:** `npm ci`, typecheck, lint, **242 offline tests**, build. It
 passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It returns
@@ -58,10 +58,10 @@ The owner asked for every remaining gap to be fixed.
 - **CPU:** fast polling only while a process without a hook is alive (D-36). An empty
   run went from 1.5 s to about 1.05 s of CPU, and each perf workload is about 20 %
   lower.
-- **Both platforms on `da94ba7`.** The first Linux rerun stopped when the Mac's disk
+- **Both platforms on `961b84e`.** The first Linux rerun stopped when the Mac's disk
   filled up; it was rerun after clearing Docker's build cache.
 - **Found by the Linux lab:** the loopback probe refused to run when another listener
-  held the proxy's port number on a LAN address (`2bd7f5e`).
+  held the proxy's port number on a LAN address (`3af5e25`).
 - **Kept by design:** bodies over 8 MiB are cut off (bounded memory), and whatleaks
   uses the most CPU of the three proxies (the polling watcher).
 

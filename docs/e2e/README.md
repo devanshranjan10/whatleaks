@@ -193,7 +193,7 @@ bypass whatleaks.
     `NEXT_CLI_SESSION_STOPPED`.
   - The last one is sent by a detached helper that Next starts on SIGTERM. On the
     first try whatleaks stopped the proxy while that request was in flight; it was
-    recorded as incomplete. That bug was fixed (commit 4cdb839), and on the re-run all
+    recorded as incomplete. That bug was fixed (commit 7f073c8), and on the re-run all
     4 requests completed with 204.
 - **A Go 1.26.5 program** posting to `https://example.com/`: Go refused the whatleaks
   CA (`x509: certificate signed by unknown authority`). The report listed

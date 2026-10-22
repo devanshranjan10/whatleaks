@@ -177,7 +177,7 @@ system-wide. whatleaks itself ran on the machine's Node 26.0.0.
 
 **D-23 — An independent code review was acted on in full.** The review was read-only
 and run by a separate agent after M8. It reported 20 findings and all 20 were fixed,
-each with a test (commits ba283cc and f4060a2). Choices made along the way:
+each with a test (commits df98763 and 259df1e). Choices made along the way:
 - **Ids become per-report aliases (`‹id-1›`), not partial masks.** This supersedes the
   masking part of D-14. A mask that keeps 8 characters of an install id still lets the
   vendor link a public report to its author. Aliases are shared between the two
