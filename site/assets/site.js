@@ -9,12 +9,16 @@ const DONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 async function copy(text, btn, label) {
   try { await navigator.clipboard.writeText(text); } catch { return; }
   btn.dataset.done = '';
-  const prev = btn.innerHTML;
-  btn.innerHTML = label ? 'Copied' : DONE_ICON;
-  setTimeout(() => { delete btn.dataset.done; btn.innerHTML = prev; }, 1600);
+  // A button with an .ic slot keeps its text and swaps only the icon.
+  const target = btn.querySelector('.ic') ?? btn;
+  const prev = target.innerHTML;
+  target.innerHTML = label ? 'Copied' : DONE_ICON;
+  setTimeout(() => { delete btn.dataset.done; target.innerHTML = prev; }, 1600);
 }
 for (const btn of document.querySelectorAll('[data-copy]')) {
-  if (!btn.innerHTML.trim()) btn.innerHTML = COPY_ICON;
+  const slot = btn.querySelector('.ic');
+  if (slot) slot.innerHTML = COPY_ICON;
+  else if (!btn.innerHTML.trim()) btn.innerHTML = COPY_ICON;
   btn.addEventListener('click', () => copy(btn.dataset.copy, btn));
 }
 for (const block of document.querySelectorAll('.code')) {
@@ -117,8 +121,8 @@ if (canvas && canvas.getContext) {
       ctx.globalAlpha = c.a;
       ctx.beginPath();
       ctx.arc(c.x, c.y, 2, 0, Math.PI * 2);
-      if (c.hollow) { ctx.strokeStyle = '#86b6ef'; ctx.lineWidth = 1; ctx.stroke(); }
-      else { ctx.fillStyle = '#86b6ef'; ctx.fill(); }
+      if (c.hollow) { ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 1; ctx.stroke(); }
+      else { ctx.fillStyle = '#93c5fd'; ctx.fill(); }
     }
     ctx.globalAlpha = 1;
     if (reduced) return;
@@ -140,7 +144,7 @@ if (canvas && canvas.getContext) {
         return [x, y];
       };
       const keep = Math.min(860, w * 0.7) / 2;
-      const col = p.red ? '208, 59, 59' : '42, 120, 214';
+      const col = p.red ? '220, 38, 38' : '37, 99, 235';
       [p.j, ...p.trail].forEach((j, n) => {
         const [x, y] = at(j);
         if (Math.abs(x - w / 2) < keep) return;
@@ -163,6 +167,60 @@ if (canvas && canvas.getContext) {
     }).observe(canvas);
     document.addEventListener('visibilitychange', () => { cancelAnimationFrame(raf); if (!document.hidden && visible) raf = requestAnimationFrame(loop); });
   }
+}
+
+// Dot-matrix text: <canvas class="dottext" data-text="whatleaks." data-tone="dark|light" data-cols="150">.
+// The text is drawn in Geist on a hidden canvas and sampled on a grid; a trailing "." is the red leak.
+function drawDots(cv) {
+  const text = cv.dataset.text ?? '';
+  const dark = cv.dataset.tone === 'dark';
+  const w = cv.clientWidth;
+  if (!w || !text) return;
+  const off = document.createElement('canvas');
+  const o = off.getContext('2d', { willReadFrequently: true });
+  const face = cv.dataset.font === 'mono' ? "'Geist Mono', ui-monospace, monospace" : 'Geist, ui-sans-serif, sans-serif';
+  const weight = cv.dataset.weight || '500';
+  o.font = `${weight} 100px ${face}`;
+  const scale = (w * 0.98) / o.measureText(text).width;
+  const size = 100 * scale;
+  const h = Math.ceil(size * 0.86);
+  off.width = w; off.height = h;
+  o.font = `${weight} ${size}px ${face}`;
+  o.textBaseline = 'alphabetic';
+  const tw = o.measureText(text).width;
+  const x0 = (w - tw) / 2;
+  o.fillText(text, x0, h * 0.8);
+  const leakX = text.endsWith('.') ? x0 + o.measureText(text.slice(0, -1)).width : Infinity;
+  const img = o.getImageData(0, 0, w, h).data;
+  const step = Math.max(4, w / Number(cv.dataset.cols || 120));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.style.height = `${h}px`;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  let seed = 11;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const r = step * 0.33;
+  for (let y = step / 2; y < h; y += step) {
+    for (let x = step / 2; x < w; x += step) {
+      const inside = img[(Math.floor(y) * w + Math.floor(x)) * 4 + 3] > 120;
+      ctx.beginPath();
+      ctx.arc(x, y, inside ? r : r * 0.55, 0, Math.PI * 2);
+      if (!inside) { ctx.fillStyle = dark ? 'rgba(255,255,255,0.05)' : '#e8f0fe'; ctx.fill(); continue; }
+      if (x >= leakX) { ctx.fillStyle = '#ef4444'; ctx.fill(); continue; }
+      const hollow = rand() < 0.14;
+      const col = dark ? (rand() < 0.1 ? '#93c5fd' : '#f5f5f5') : (rand() < 0.15 ? '#93c5fd' : '#2563eb');
+      if (hollow) { ctx.strokeStyle = col; ctx.lineWidth = Math.max(1, r * 0.35); ctx.stroke(); } else { ctx.fillStyle = col; ctx.fill(); }
+    }
+  }
+}
+const dotCanvases = [...document.querySelectorAll('canvas.dottext')];
+if (dotCanvases.length) {
+  const drawAll = () => dotCanvases.forEach(drawDots);
+  Promise.all([document.fonts?.load('500 100px Geist'), document.fonts?.load('800 100px Geist'), document.fonts?.load("500 100px 'Geist Mono'")]).then(drawAll, drawAll);
+  let t;
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(drawAll, 150); });
 }
 
 // Tooltip helper: values lead, labels follow; text only (textContent), never innerHTML.
@@ -244,7 +302,7 @@ for (const viz of document.querySelectorAll('.viz[data-stacks]')) {
   const data = JSON.parse(viz.dataset.stacks);
   const host = viz.querySelector('.stacks');
   const tip = tooltip(viz);
-  const colors = ['#184f95', '#2a78d6', '#86b6ef'];
+  const colors = ['#1e3a8a', '#2563eb', '#6ea8f7'];
   for (const d of data.rows) {
     const row = document.createElement('div'); row.className = 'row' + (d.hl ? ' hl' : '');
     const name = document.createElement('span'); name.className = 'name'; name.textContent = d.name;

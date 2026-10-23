@@ -92,7 +92,10 @@ Cloudflare account's, from the owner's Sumora `.env`) can upload Workers but has
 Workers Routes permission on the zone, so the custom domains whatleaks.me and
 www.whatleaks.me were attached once through the account-level domains API; they persist
 across deploys. Every number on the site is copied from the README, `docs/BENCHMARK.md`
-or `docs/e2e/`, and every terminal block is saved output.
+or `docs/e2e/`, and every terminal block is saved output. The same day the owner asked for a better
+site, on phones too, in the style of context.dev: light headlines with a blue second line,
+a blue-framed terminal, feature cards with live panels, dark sections, an FAQ accordion and
+a dot-matrix wordmark. Every page was checked at 1440 and 390 px wide.
 
 The footer says the site sends nothing about its visitors. Checked in Chrome on every
 page: only whatleaks.me is contacted and the console is clean. Cloudflare had been

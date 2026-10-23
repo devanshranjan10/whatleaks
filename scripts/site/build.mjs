@@ -17,96 +17,134 @@ const out = join(root, '.site-dist');
 
 // ---------- logo: a droplet of dots, the last one red (what leaks) ----------
 const DROP = [[12, 3], [12, 6], [9, 9], [12, 9], [15, 9], [6, 12], [9, 12], [12, 12], [15, 12], [18, 12], [6, 15], [9, 15], [12, 15], [15, 15], [18, 15], [6, 18], [9, 18], [12, 18], [15, 18], [18, 18], [9, 21], [15, 21], [12, 21]];
-const logo = `<svg viewBox="1 1 22 22" aria-hidden="true">${DROP.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="1.3" fill="${i === DROP.length - 1 ? '#d03b3b' : '#2a78d6'}"/>`).join('')}</svg>`;
+const logo = `<svg viewBox="1 1 22 22" aria-hidden="true">${DROP.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="1.35" fill="${i === DROP.length - 1 ? '#dc2626' : '#2563eb'}"/>`).join('')}</svg>`;
 
 // ---------- dot-matrix illustrations ----------
-// A grid of characters: '#' blue dot, '+' light blue, 'o' hollow blue, 'r' red (what leaks), '.' faint grid, ' ' none.
-function canvas(cols, rows) {
-  const g = Array.from({ length: rows }, () => Array(cols).fill('.'));
-  const set = (c, r, ch) => { if (r >= 0 && r < rows && c >= 0 && c < cols) g[r][c] = ch; };
+// A 32 x 18 grid (16:9, so it fills its card). Characters: '#' solid dot, '+' light dot, 'o' hollow dot,
+// 'r' red dot (what leaks), '.' the faint hollow background grid. CSS colours each class per card (site.css).
+const COLS = 32, ROWS = 18;
+function canvas() {
+  const g = Array.from({ length: ROWS }, () => Array(COLS).fill('.'));
+  const set = (c, r, ch) => { if (r >= 0 && r < ROWS && c >= 0 && c < COLS) g[r][c] = ch; };
   return {
     g, set,
     rect(c0, r0, c1, r1, ch) { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) set(c, r, ch); },
     outline(c0, r0, c1, r1, ch) { for (let c = c0; c <= c1; c++) { set(c, r0, ch); set(c, r1, ch); } for (let r = r0; r <= r1; r++) { set(c0, r, ch); set(c1, r, ch); } },
     h(r, c0, c1, ch) { for (let c = c0; c <= c1; c++) set(c, r, ch); },
     v(c, r0, r1, ch) { for (let r = r0; r <= r1; r++) set(c, r, ch); },
+    ring(cx, cy, R, ch, keep = () => true, width = 0.55) {
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (Math.abs(Math.hypot(c - cx, r - cy) - R) < width && keep(c, r)) set(c, r, ch);
+    },
   };
 }
 const ART = {
-  key() {
-    const k = canvas(28, 10);
-    for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
-      const d = Math.hypot(c - 4.5, r - 4.5);
-      if (Math.abs(d - 3.7) < 0.55) k.set(c, r, '#');
-      else if (Math.abs(d - 1.6) < 0.5) k.set(c, r, '+');
-    }
-    k.rect(8, 4, 24, 5, '#');
-    for (const c of [18, 20, 22, 23]) k.v(c, 6, 7, '#');
-    k.set(26, 4, 'r'); k.set(26, 5, 'o');
+  // 01 a padlock: the run's own CA
+  lock() {
+    const k = canvas();
+    k.ring(15.5, 7.2, 4.6, '#', (c, r) => r <= 7);
+    k.v(11, 7, 8, '#'); k.v(20, 7, 8, '#');
+    k.rect(9, 8, 22, 15, '#');
+    for (const [c, r] of [[9, 8], [22, 8], [9, 15], [22, 15]]) k.set(c, r, '.');
+    k.rect(15, 10, 16, 11, '.'); k.rect(15, 12, 16, 13, '.');
+    for (const [c, r] of [[4, 3], [27, 4], [5, 12], [26, 13], [28, 9]]) k.set(c, r, '+');
+    k.set(3, 7, 'o'); k.set(29, 15, 'o');
     return k.g;
   },
+  // 02 the process tree, one helper still sending after its parent exited
   tree() {
-    const t = canvas(28, 11);
-    t.rect(2, 4, 4, 6, '#');
-    t.h(5, 5, 12, '+'); t.v(13, 2, 8, '+');
-    for (const r of [2, 5, 8]) t.h(r, 14, 20, '+');
-    t.rect(21, 1, 23, 3, '#'); t.rect(21, 4, 23, 6, '#'); t.rect(21, 7, 23, 9, 'r');
-    t.h(8, 24, 26, 'r'); t.set(25, 8, '.'); // the helper, still sending after its parent exited
+    const t = canvas();
+    t.rect(2, 7, 5, 10, '#');
+    t.h(8, 6, 10, '+'); t.h(9, 6, 10, '+');
+    t.v(11, 3, 14, '+');
+    for (const r of [3, 8, 14]) t.h(r, 12, 16, '+');
+    t.h(9, 12, 16, '+');
+    t.rect(17, 2, 20, 4, '#'); t.rect(17, 7, 20, 10, '#'); t.rect(17, 13, 20, 15, 'r');
+    for (const c of [23, 25, 27, 29]) t.set(c, 14, 'r');
+    t.set(24, 3, 'o'); t.set(26, 8, '+');
     return t.g;
   },
-  hook() {
-    const p = canvas(28, 11);
-    p.h(5, 0, 3, '+');
-    p.rect(4, 2, 10, 8, '#');
-    p.h(4, 11, 15, '#'); p.h(6, 11, 15, '#');
-    p.outline(17, 1, 25, 9, '+');
-    p.set(18, 4, 'o'); p.set(18, 6, 'o');
-    p.set(22, 5, 'r'); p.h(5, 23, 27, ' '); p.set(24, 5, 'r'); p.set(26, 5, 'r'); // a direct socket, reported as it opens
+  // 03 a plug in its socket: a hook inside the runtime; one direct socket reported on its way out
+  plug() {
+    const p = canvas();
+    p.h(9, 0, 3, '+');
+    p.rect(4, 5, 10, 13, '#');
+    for (const [c, r] of [[4, 5], [10, 5], [4, 13], [10, 13]]) p.set(c, r, '.');
+    p.h(7, 11, 14, '#'); p.h(11, 11, 14, '#');
+    p.outline(16, 3, 24, 15, '+');
+    p.set(17, 7, 'o'); p.set(17, 11, 'o');
+    p.set(24, 9, '.');
+    for (const c of [26, 28, 30]) p.set(c, 9, 'r');
     return p.g;
   },
+  // 04 a radar sweep: connections that go around the proxy are still named
   radar() {
-    const r = canvas(28, 11);
-    const cx = 13.5, cy = 10.4;
-    for (let j = 0; j < 11; j++) for (let i = 0; i < 28; i++) {
-      const dx = i - cx, dy = j - cy, d = Math.hypot(dx, dy);
-      if (d > 10.6) { r.set(i, j, ' '); continue; }
-      if ([3.4, 6.6, 9.8].some((R) => Math.abs(d - R) < 0.5)) r.set(i, j, '+');
-      const a = (Math.atan2(-dy, dx) * 180) / Math.PI;
-      if (Math.abs(a - 62) < 5 && d < 9.9) r.set(i, j, '#');
+    const r = canvas();
+    const cx = 15.5, cy = 17.2;
+    for (const R of [5, 9.6, 14.2]) r.ring(cx, cy, R, '+', (c, y) => y <= 17);
+    for (let y = 0; y < ROWS; y++) for (let c = 0; c < COLS; c++) {
+      const d = Math.hypot(c - cx, y - cy), a = (Math.atan2(cy - y, c - cx) * 180) / Math.PI;
+      if (Math.abs(a - 58) < 4.5 && d < 14.6 && d > 1) r.set(c, y, '#');
     }
-    r.set(18, 5, 'r'); r.set(19, 5, 'r'); r.set(7, 6, 'o'); r.set(10, 9, 'o');
+    r.set(23, 12, 'r'); r.set(24, 12, 'r'); r.set(23, 11, 'r');
+    r.set(5, 8, 'o'); r.set(13, 12, 'o');
     return r.g;
   },
+  // 05 every field inventoried; two of them are identifiers
   fields() {
-    const f = canvas(28, 10);
-    const rows = [[6, 10, '+'], [4, 7, '+'], [7, 12, 'r'], [5, 6, '+'], [6, 9, 'r'], [4, 11, '+'], [7, 5, '+'], [5, 8, '+']];
-    rows.forEach(([k, v, ch], i) => { f.h(i + 1, 2, 1 + k, '#'); f.h(i + 1, 11, 10 + v, ch); });
+    const f = canvas();
+    const rows = [[5, 11, '+'], [3, 7, '+'], [6, 13, 'r'], [4, 6, '+'], [5, 9, 'r'], [3, 12, '+'], [6, 5, '+']];
+    rows.forEach(([k, v, ch], i) => { const y = 3 + i * 2; f.h(y, 3, 2 + k, '#'); f.h(y, 13, 12 + v, ch); });
+    f.v(11, 2, 16, 'o');
     return f.g;
   },
+  // 06 a report with its secrets blacked out and ids aliased
   redact() {
-    const d = canvas(28, 10);
-    d.outline(1, 0, 26, 9, '+');
-    d.h(2, 3, 9, '+'); d.h(2, 11, 16, '#'); d.h(2, 18, 23, '+');
-    d.h(4, 3, 6, '+'); d.h(4, 8, 14, '#'); d.h(4, 16, 24, '+');
-    d.h(6, 3, 10, '#'); d.h(6, 12, 21, '+');
-    d.h(8, 3, 12, '+'); d.h(8, 14, 18, 'o'); d.h(8, 20, 23, '+');
+    const d = canvas();
+    d.outline(4, 1, 27, 16, '+');
+    d.h(4, 7, 11, '+'); d.h(4, 13, 18, '#'); d.h(4, 20, 24, '+');
+    d.h(7, 7, 9, '+'); d.h(7, 11, 16, '#'); d.h(7, 18, 24, '+');
+    d.h(10, 7, 13, '#'); d.h(10, 15, 23, '+');
+    d.h(13, 7, 14, '+'); d.h(13, 16, 19, 'o'); d.h(13, 21, 24, '+');
     return d.g;
   },
+  // a speech bubble with a question mark; its dot is the red one
+  ask() {
+    const q = canvas();
+    q.outline(3, 1, 28, 13, '+');
+    for (const [c, r] of [[3, 1], [28, 1], [3, 13], [28, 13]]) q.set(c, r, '.');
+    q.set(7, 14, '+'); q.set(6, 15, '+'); q.set(5, 16, '+'); q.set(8, 14, '+');
+    q.h(3, 14, 17, '#'); q.set(13, 4, '#'); q.set(18, 4, '#'); q.set(13, 5, '#'); q.set(18, 5, '#');
+    q.set(17, 6, '#'); q.set(16, 7, '#'); q.set(15, 8, '#'); q.set(16, 8, '#'); q.set(15, 9, '#'); q.set(16, 9, '#');
+    q.set(15, 11, 'r'); q.set(16, 11, 'r');
+    q.h(5, 6, 9, '+'); q.h(7, 6, 8, '+'); q.h(5, 22, 25, '+'); q.h(9, 22, 24, '+');
+    return q.g;
+  },
+  // a HAR file under a magnifier, with an identifier found
+  har() {
+    const h = canvas();
+    h.outline(5, 1, 18, 16, '+');
+    for (const [c, r] of [[16, 1], [17, 1], [18, 1], [17, 2], [18, 2], [18, 3]]) h.set(c, r, '.');
+    h.set(16, 2, '+'); h.set(17, 3, '+'); h.set(16, 3, '+');
+    h.h(4, 8, 10, '#'); h.h(6, 9, 15, '+'); h.h(8, 9, 13, '+'); h.h(10, 9, 14, '+'); h.h(12, 8, 10, '#');
+    h.ring(22.5, 10.5, 3.8, '#');
+    for (const [c, r] of [[25, 14], [26, 15], [27, 16], [28, 17]]) h.set(c, r, '#');
+    h.set(22, 10, 'r'); h.set(23, 10, 'r'); h.set(22, 11, 'r'); h.set(23, 11, 'r');
+    return h.g;
+  },
 };
+const DOT_R = { '.': 2.3, '#': 3.3, '+': 3.0, o: 2.6, r: 3.3 };
+const DOT_CLASS = { '.': 'g', '#': 'f', '+': 'l', o: 'o', r: 'x' };
 function artSvg(name) {
   const g = ART[name]?.();
   if (!g) throw new Error(`no art "${name}"`);
-  const S = 10, rows = g.length, cols = g[0].length;
-  const dots = [];
+  const S = 10;
+  const groups = {};
   g.forEach((row, j) => row.forEach((ch, i) => {
-    const x = i * S + S / 2, y = j * S + S / 2;
-    if (ch === '.') dots.push(`<circle cx="${x}" cy="${y}" r="1.3" fill="#dbe6f6"/>`);
-    else if (ch === '+') dots.push(`<circle cx="${x}" cy="${y}" r="3" fill="#86b6ef"/>`);
-    else if (ch === '#') dots.push(`<circle cx="${x}" cy="${y}" r="3.2" fill="#2a78d6"/>`);
-    else if (ch === 'o') dots.push(`<circle cx="${x}" cy="${y}" r="2.6" fill="none" stroke="#2a78d6" stroke-width="1.3"/>`);
-    else if (ch === 'r') dots.push(`<circle cx="${x}" cy="${y}" r="3.2" fill="#d03b3b"/>`);
+    if (!DOT_CLASS[ch]) return;
+    (groups[ch] ??= []).push(`<circle cx="${i * S + S / 2}" cy="${j * S + S / 2}" r="${DOT_R[ch]}"/>`);
   }));
-  return `<svg viewBox="0 0 ${cols * S} ${rows * S}" role="presentation" aria-hidden="true">${dots.join('')}</svg>`;
+  const body = ['.', '+', '#', 'o', 'r'].filter((ch) => groups[ch]).map((ch) => `<g class="${DOT_CLASS[ch]}">${groups[ch].join('')}</g>`).join('');
+  return `<svg viewBox="0 0 ${COLS * S} ${ROWS * S}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${body}</svg>`;
 }
 
 // ---------- partials, assets ----------
