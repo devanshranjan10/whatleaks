@@ -2,10 +2,16 @@
 <html lang="en" class="no-js">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <title>Benchmark · whatleaks vs mitmproxy and HTTP Toolkit</title>
 <meta name="description" content="What whatleaks catches, what it misses and what it costs, measured against exact ground truth and against mitmproxy and HTTP Toolkit: 46 lab scenarios on macOS and 43 on Linux, five real tools, and the threats to validity.">
 <link rel="canonical" href="https://whatleaks.me/benchmark/">
+<meta name="citation_title" content="whatleaks benchmark: what HTTP(S) capture tools silently miss, against exact ground truth">
+<meta name="citation_author" content="Ranjan, Devansh">
+<meta name="citation_publication_date" content="2026/10/22">
+<meta name="citation_public_url" content="https://whatleaks.me/benchmark/">
+<meta name="citation_technical_report_number" content="whatleaks __VERSION__">
 <meta name="theme-color" content="#ffffff">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="whatleaks">
@@ -20,22 +26,21 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/rethinksans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/site.css">
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"whatleaks benchmark: what it catches, misses and costs","url":"https://whatleaks.me/benchmark/","author":{"@type":"Person","name":"Devansh Ranjan","url":"https://github.com/devanshranjan10"},"about":{"@type":"SoftwareApplication","name":"whatleaks","url":"https://whatleaks.me/"},"datePublished":"2026-10-22","dateModified":"2026-10-23"}
-</script>
 <script defer src="/assets/site.js"></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <!-- @nav -->
-<main id="main">
-  <section class="page-head band" style="border-top:0">
+<main id="main" class="rails">
+  <section class="page-head">
+    <canvas class="dots" data-field="edge" aria-hidden="true"></canvas>
     <div class="wrap">
-      <span class="eyebrow">Benchmark · run 2026-10-21 and 22</span>
-      <h1 class="h1" style="margin-top:18px">What it catches, what it <em>misses</em>, and what it costs.</h1>
+      <span class="label">Benchmark · run 2026-10-21 and 22</span>
+      <h1>What it catches, what it <em>misses</em>, and what it costs.</h1>
       <p class="lede">Measured against exact ground truth and against two tools people use today, on macOS and on Linux. Every number comes from a script in <code>bench/</code> and a result file in <code>bench/results/</code>.</p>
+      <p class="updated">Updated <!-- @updated --></p>
       <div class="row">
         <a class="btn dark" href="https://github.com/devanshranjan10/whatleaks/blob/main/docs/BENCHMARK.md">Method and raw results</a>
         <a class="btn" href="#reproduce">Run it yourself <span class="arrow">→</span></a>
@@ -67,6 +72,7 @@
           <li><a href="#linux">Linux</a></li>
           <li><a href="#threats">Threats to validity</a></li>
           <li><a href="#reproduce">Reproduce</a></li>
+          <li><a href="#cite">Cite</a></li>
         </ol>
       </aside>
       <div class="prose">
@@ -304,6 +310,21 @@
 <span class="p">$ </span>npx tsx bench/run-real.ts --tag after   <span class="c"># sends real telemetry; needs the scratch apps in bench/real/tools.ts</span>
 <span class="p">$ </span>docker run --rm -v "$PWD":/w:ro -w /tmp node:22-slim node /w/bench/linux/check.mjs</pre></div>
           <p>The provenance of every result file is in its <code>meta</code>: build, date, machine, load and reruns. Both lab platforms and the cost runs used commit <code>22d85d3</code>; the real-tool runs used <code>7ee2ac6</code>, and the later changes don't affect traffic that goes through the proxy.</p>
+        </section>
+
+        <section id="cite">
+          <h2>Cite</h2>
+          <p>If you use these numbers, cite the benchmark and link this page. The text and data are MIT licensed; the method, the scripts and every result file are in the repository, and the copy of <code>docs/BENCHMARK.md</code> at a release tag never changes.</p>
+          <p>Devansh Ranjan. <em>whatleaks</em> (version __VERSION__), 2026. Benchmark: <a href="https://whatleaks.me/benchmark/">https://whatleaks.me/benchmark/</a>. Fixed copy: <a href="https://github.com/devanshranjan10/whatleaks/blob/v__VERSION__/docs/BENCHMARK.md">docs/BENCHMARK.md at v__VERSION__</a>.</p>
+          <div class="code cite"><pre>@software{ranjan_whatleaks_2026,
+  author  = {Ranjan, Devansh},
+  title   = {whatleaks: see what an app you run sends home, and what it still sends after you opt out},
+  year    = {2026},
+  version = {__VERSION__},
+  url     = {https://whatleaks.me/benchmark/},
+  note    = {Benchmark of HTTP(S) capture tools against exact ground truth; source: https://github.com/devanshranjan10/whatleaks}
+}</pre></div>
+          <p>The repository also has a <code>CITATION.cff</code>, so GitHub's "Cite this repository" gives APA and BibTeX.</p>
         </section>
       </div>
     </div>

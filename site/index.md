@@ -1,7 +1,7 @@
 ---
-title: "whatleaks: see what your tools send home"
+title: "whatleaks: see what your tools send home, and test their telemetry opt-outs"
 url: https://whatleaks.me/
-updated: 2026-10-23
+updated: __UPDATED__
 ---
 
 # whatleaks
@@ -11,10 +11,21 @@ updated: 2026-10-23
 - Website: https://whatleaks.me/
 - Source: https://github.com/devanshranjan10/whatleaks
 - npm: https://www.npmjs.com/package/whatleaks (`npx whatleaks`)
+- Homebrew: `brew install devanshranjan10/tap/whatleaks`
 - Author: Devansh Ranjan
 - License: MIT
-- Current version: 0.1.0 (2026-10-23)
+- Current version: __VERSION__
 - Platforms: macOS and Linux, Node ≥ 22.12
+
+## Key facts, with sources
+
+Each line can be quoted as is; the link is its source.
+
+- With `DO_NOT_TRACK=1` set, `next build` (Next.js 16.4.2) still sent 8 of its 8 telemetry requests; with `NEXT_TELEMETRY_DISABLED=1`, the variable Next.js documents, it sent 0. Measured on 2026-10-21 and again on 2026-10-24 with whatleaks 0.1.0 from npm. https://github.com/devanshranjan10/whatleaks/blob/main/docs/e2e/README.md
+- Every Next.js 16.4.2 telemetry request named the AI agent that ran the build (`meta.agentName`), and two ids (`anonymousId`, `projectId`) were the same in a second run. https://github.com/devanshranjan10/whatleaks/blob/main/docs/e2e/README.md
+- Turborepo 2.11.10 and Wrangler 4.151.3 stopped sending with `DO_NOT_TRACK=1`; Next.js 16.4.2 and Astro 7.4.1 did not, as their documentation says. https://whatleaks.me/benchmark/#real-tools
+- On 46 lab scenarios with exact ground truth (594 attempts on macOS), whatleaks silently missed 3.4 % of attempts, mitmproxy 12.2.3 38 % and HTTP Toolkit server 1.27.3 67 %. On Linux (43 scenarios, 567 attempts): 3.0 %, 40 % and 70 %. https://whatleaks.me/benchmark/
+- mitmproxy saw none of Turborepo's telemetry: turbo exits about 20 ms after starting its last request, and mitmproxy connects upstream before it answers. https://whatleaks.me/benchmark/#real-tools
 
 ## What it does
 
@@ -25,10 +36,14 @@ updated: 2026-10-23
 
 ## Example: Next.js and DO_NOT_TRACK
 
-Real output from `next build` (Next.js 16.4.2, Node 22.23) on 2026-10-21:
+Real output of whatleaks 0.1.0 from npm on `next build` (Next.js 16.4.2, Node 22.23.3), 2026-10-24, with the build's progress lines cut:
 
 ```
-$ npx whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- ./node_modules/.bin/next build
+$ npx whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- next build
+…
+whatleaks diff · before "default" (6.4 s, 9 requests) → after "opted-out" (5.8 s, 9 requests)
+command: next build
+opted out with: DO_NOT_TRACK
 
 The telemetry endpoint was still contacted after opting out.
 Telemetry requests: 8 → 8 · all requests: 9 → 9
@@ -43,7 +58,20 @@ PERSISTENT IDENTIFIERS
   ○ ‹id-2› at context.projectId → POST telemetry.nextjs.org/api/v1/record
 ```
 
-`DO_NOT_TRACK=1` does not stop Next.js telemetry, and Next.js never says it does: its documented switch is `NEXT_TELEMETRY_DISABLED=1`, and with that set telemetry went from 8 requests to 0. Each request also carried the machine's OS, CPU model and memory, and the AI agent that ran the build (`meta.agentName`). Transcripts: https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e
+`DO_NOT_TRACK=1` does not stop Next.js telemetry, and Next.js never says it does: its documented switch is `NEXT_TELEMETRY_DISABLED=1`, and with that set telemetry went from 8 requests to 0. Each request also carried the machine's OS, CPU model and memory, and the AI agent that ran the build (`meta.agentName`). Transcripts: https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e/published-0.1.0
+
+A 55-second video of these runs: https://whatleaks.me/media/whatleaks-demo.mp4
+
+## Real tools
+
+Measured on 2026-10-21 (https://whatleaks.me/benchmark/#real-tools):
+
+| Tool | Command | Telemetry sent | With `DO_NOT_TRACK=1` | With its own switch |
+|---|---|---|---|---|
+| Next.js 16.4.2 | `next build` | 8 requests, 22 events, to telemetry.nextjs.org | still sent (8 → 8) | `NEXT_TELEMETRY_DISABLED=1`: 0 |
+| Turborepo 2.11.10 | `turbo run build` | 1 request with 10 of 17 events, to telemetry.vercel.com | stopped | `TURBO_TELEMETRY_DISABLED=1`: 0 |
+| Astro 7.4.1 | `astro build` | 1 event, to telemetry.astro.build, carrying a hash of the project folder path | still sent (1 → 1) | `ASTRO_TELEMETRY_DISABLED=1`: 0 |
+| Wrangler 4.151.3 | `wrangler whoami` | 3 events, to sparrow.cloudflare.com | stopped | `WRANGLER_SEND_METRICS=false`: 0 |
 
 ## Measured
 
@@ -52,7 +80,7 @@ A lab with exact ground truth: 46 scenarios and 594 attempts on macOS, 43 and 56
 | Tool | macOS | Linux |
 |---|---|---|
 | whatleaks | 3.4 % (20 of 594) | 3.0 % (17 of 567) |
-| mitmproxy 12.2.3, same environment | 38 % (225) | 40 % (225) |
+| mitmproxy 12.2.3 (12.3.0 on Linux), same environment | 38 % (225) | 40 % (225) |
 | HTTP Toolkit server 1.27.3, its own interception | 67 % (399) | 70 % (399) |
 
 - Every remaining miss is in a Go program, which whatleaks loads no hook into.
@@ -79,3 +107,9 @@ Full method and every scenario: https://whatleaks.me/benchmark/
 - Only processes launched through whatleaks are watched; GUI apps, browsers and daemons were not tested.
 - Identity matching is exact: salted hashes can't be recognised. Redaction is pattern-based.
 - The benchmark is the author's own; scripts and result files are public.
+
+## How to cite
+
+Devansh Ranjan. *whatleaks* (version __VERSION__), 2026. https://whatleaks.me. Benchmark: https://whatleaks.me/benchmark/
+
+The repository has a `CITATION.cff` (GitHub's "Cite this repository" gives APA and BibTeX), and the benchmark page has BibTeX: https://whatleaks.me/benchmark/#cite

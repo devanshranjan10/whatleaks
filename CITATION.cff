@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use whatleaks or its benchmark, please cite it as below."
+title: "whatleaks: see what an app you run sends home, and what it still sends after you opt out"
+type: software
+authors:
+  - family-names: Ranjan
+    given-names: Devansh
+repository-code: "https://github.com/devanshranjan10/whatleaks"
+url: "https://whatleaks.me"
+abstract: >-
+  whatleaks runs a command through a local, single-run proxy and reports where its traffic went,
+  which fields each payload carried, whether any of it identifies the machine or user, and what is
+  still sent after opting out of telemetry. Its benchmark measures how often HTTP(S) capture tools
+  silently miss what a program sends, against exact ground truth: 46 lab scenarios (594 attempts)
+  on macOS and 43 (567) on Linux, plus real tools checked against their own debug output.
+keywords:
+  - telemetry
+  - privacy
+  - opt-out
+  - DO_NOT_TRACK
+  - network capture
+  - HTTPS proxy
+  - benchmark
+license: MIT
+version: 0.1.1
+date-released: "2026-10-24"

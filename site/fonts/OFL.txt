@@ -1,4 +1,4 @@
-===== geist (https://github.com/google/fonts/tree/main/ofl/geist)
+===== geistmono (https://github.com/google/fonts/tree/main/ofl/geistmono)
 Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font.git)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
@@ -92,12 +92,12 @@ INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
 DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
-===== geistmono (https://github.com/google/fonts/tree/main/ofl/geistmono)
-Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font.git)
+===== rethinksans (https://github.com/google/fonts/tree/main/ofl/rethinksans)
+Copyright 2022 The Rethink Sans Project Authors (https://github.com/hans-thiessen/Rethink-Sans)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-https://openfontlicense.org
+https://scripts.sil.org/OFL
 
 
 -----------------------------------------------------------

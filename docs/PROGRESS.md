@@ -136,10 +136,28 @@ them. Tag `v0.1.1` points at `63bf5b1`:
 - Homebrew: `brew install devanshranjan10/tap/whatleaks` installs 0.1.1. The formula
   passes `brew test`, `brew audit --strict` and `brew style`.
 
-**Next release:** `npm version x.y.z --no-git-tag-version`, a CHANGELOG section, push main
-and wait for CI; push a `vx.y.z` tag (`release.yml` publishes to npm); `gh release create
-vx.y.z` (mirrors to GitHub Packages); then update `url` and `sha256` in the tap's
-`Formula/whatleaks.rb`.
+**Next release:** `npm version x.y.z --no-git-tag-version`, a CHANGELOG section and the
+version in `CITATION.cff`, push main and wait for CI; push a `vx.y.z` tag (`release.yml`
+publishes to npm); `gh release create vx.y.z` (mirrors to GitHub Packages); then update `url`
+and `sha256` in the tap's `Formula/whatleaks.rb`. The site reads the version from
+`package.json` at build time.
+
+**Site, third design (2026-10-24).** At the owner's request, whatleaks.me now uses the system
+landmine.tech was rebuilt on (Rethink Sans, a nav that floats as a capsule once scrolled,
+two-tone headings, framed cards, hover states throughout), in whatleaks blue with red for what
+leaks. `assets/site.js` draws every visual as dots on canvas: a drifting field that gathers
+round the cursor and now and then "leaks" a red ring, animated card scenes built from the
+real `next build` numbers, the dark band's dot art, dot bar charts, and a footer wordmark
+whose full stop is red. The hero has a picker for the four real tools, showing what each
+sent and whether `DO_NOT_TRACK=1` stopped it (`bench/results/real-after.json`). Animations
+run only on screen and stay still under reduced motion; the site still makes no requests
+beyond its own files. For search engines and agents: per-page JSON-LD (SoftwareApplication
+with the demo video, WebSite, TechArticle, BreadcrumbList, a Dataset for the benchmark,
+FAQPage), visible "updated" dates, a sitemap dated by each build, citation meta tags and
+BibTeX on the benchmark page (`#cite`), `CITATION.cff` in the repo, a key-facts list with
+sources in `/index.md`, and `/.well-known/security.txt`. Links that leave the site open in a
+new tab. Checked in Chrome at 1440 and 390 px on every page: no overflow, a clean console,
+and only whatleaks.me contacted.
 
 ---
 

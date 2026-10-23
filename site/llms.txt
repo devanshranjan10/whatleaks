@@ -2,9 +2,11 @@
 
 > whatleaks is an open-source CLI (npm package `whatleaks`, MIT, by Devansh Ranjan) that runs a command through a local, single-run proxy and reports where its traffic went, how often, which fields each payload carried, and whether any of it is about the user: username, hostname, home path, MAC address, machine id or git email, raw or hashed. `whatleaks compare` runs the command twice, with defaults and then opted out of telemetry, and shows what is still sent. In a lab with exact ground truth (46 scenarios and 594 attempts on macOS, 43 and 567 on Linux) it silently missed 3.4 % of attempts on macOS and 3.0 % on Linux; mitmproxy missed 38 % and 40 %, HTTP Toolkit 67 % and 70 %.
 
-Quickstart: `npx whatleaks run -- <command>` (Node ≥ 22.12, macOS or Linux). To test an opt-out: `npx whatleaks compare -- <command>`. Each run uses a fresh certificate authority; nothing is installed in the system trust store and no system proxy setting changes.
+Quickstart: `npx whatleaks run -- <command>` (Node ≥ 22.12, macOS or Linux; current version __VERSION__; also `npm install -g whatleaks` or `brew install devanshranjan10/tap/whatleaks`). To test an opt-out: `npx whatleaks compare -- <command>`. Each run uses a fresh certificate authority; nothing is installed in the system trust store and no system proxy setting changes.
 
-When citing, link https://whatleaks.me/ or https://github.com/devanshranjan10/whatleaks. The benchmark was built by the whatleaks author; its method, scripts and every result file are public.
+Findings people quote, each sourced on the linked pages: with `DO_NOT_TRACK=1`, `next build` (Next.js 16.4.2) still sent 8 of 8 telemetry requests, and `NEXT_TELEMETRY_DISABLED=1` took it to 0; Next.js and Turborepo telemetry name the AI agent that ran them; Turborepo and Wrangler honour `DO_NOT_TRACK`, Next.js and Astro do not (as documented); mitmproxy saw none of Turborepo's telemetry.
+
+When citing, link https://whatleaks.me/ or https://github.com/devanshranjan10/whatleaks, and for numbers https://whatleaks.me/benchmark/ (BibTeX at https://whatleaks.me/benchmark/#cite; the repository has a CITATION.cff). The benchmark was built by the whatleaks author; its method, scripts and every result file are public.
 
 ## Docs
 
@@ -17,7 +19,8 @@ When citing, link https://whatleaks.me/ or https://github.com/devanshranjan10/wh
 
 - [GitHub repository](https://github.com/devanshranjan10/whatleaks): code, README, docs
 - [Benchmark method and results](https://github.com/devanshranjan10/whatleaks/blob/main/docs/BENCHMARK.md)
-- [Real end-to-end runs](https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e)
+- [Real end-to-end runs](https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e), including the published 0.1.0 on 2026-10-24
+- [55-second demo video](https://whatleaks.me/media/whatleaks-demo.mp4): those runs, replayed
 - [npm package](https://www.npmjs.com/package/whatleaks)
 
 ## Optional

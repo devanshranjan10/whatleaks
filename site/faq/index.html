@@ -2,8 +2,9 @@
 <html lang="en" class="no-js">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FAQ · whatleaks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<title>whatleaks FAQ: CLI telemetry, DO_NOT_TRACK and testing opt-outs</title>
 <meta name="description" content="How to see what telemetry a CLI tool sends, whether DO_NOT_TRACK works, how to test an opt-out, what Next.js telemetry sends, whether whatleaks is safe, and how it compares with mitmproxy and HTTP Toolkit.">
 <link rel="canonical" href="https://whatleaks.me/faq/">
 <meta name="theme-color" content="#ffffff">
@@ -20,19 +21,21 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/rethinksans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/site.css">
 <script defer src="/assets/site.js"></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <!-- @nav -->
-<main id="main">
-  <section class="page-head band" style="border-top:0">
+<main id="main" class="rails">
+  <section class="page-head">
+    <canvas class="dots" data-field="edge" aria-hidden="true"></canvas>
     <div class="wrap">
-      <span class="eyebrow">FAQ</span>
-      <h1 class="h1" style="margin-top:18px">Questions, answered <em>directly</em>.</h1>
+      <span class="label">FAQ</span>
+      <h1>Questions, answered <em>directly</em>.</h1>
       <p class="lede">About telemetry, opt-outs, and what whatleaks can and can't see. Every number links back to a measurement.</p>
+      <p class="updated">Updated <!-- @updated --></p>
     </div>
   </section>
 

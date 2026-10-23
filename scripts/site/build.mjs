@@ -1,6 +1,7 @@
-// Builds whatleaks.me: copies site/ to .site-dist/, filling in the shared nav and footer partials, the logo and the
-// dot-matrix illustrations, and writes the agent-readable copies: /<page>.md for every page, /llms-full.txt, and
-// FAQPage JSON-LD. Usage: node scripts/site/build.mjs
+// Builds whatleaks.me: copies site/ to .site-dist/, filling in the shared nav and footer partials, the logo, the
+// dot-matrix illustrations and each page's structured data (JSON-LD), and writes the agent-readable copies: /<page>.md
+// for every page, /llms-full.txt and a dated sitemap. Links that leave the site open in a new tab.
+// Usage: node scripts/site/build.mjs
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -11,9 +12,11 @@ import { gfm } from 'turndown-plugin-gfm';
 const ORIGIN = 'https://whatleaks.me';
 const REPO = 'https://github.com/devanshranjan10/whatleaks';
 const UPDATED = new Date().toISOString().slice(0, 10);
+const UPDATED_LONG = new Date(`${UPDATED}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const src = join(root, 'site');
 const out = join(root, '.site-dist');
+const VERSION = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
 
 // ---------- logo: a droplet of dots, the last one red (what leaks) ----------
 const DROP = [[12, 3], [12, 6], [9, 9], [12, 9], [15, 9], [6, 12], [9, 12], [12, 12], [15, 12], [18, 12], [6, 15], [9, 15], [12, 15], [15, 15], [18, 15], [6, 18], [9, 18], [12, 18], [15, 18], [18, 18], [9, 21], [15, 21], [12, 21]];
@@ -21,7 +24,7 @@ const logo = `<svg viewBox="1 1 22 22" aria-hidden="true">${DROP.map(([x, y], i)
 
 // ---------- dot-matrix illustrations ----------
 // A 32 x 18 grid (16:9, so it fills its card). Characters: '#' solid dot, '+' light dot, 'o' hollow dot,
-// 'r' red dot (what leaks), '.' the faint hollow background grid. CSS colours each class per card (site.css).
+// 'r' red dot (what leaks), '.' empty (the card's own dotted background shows through).
 const COLS = 32, ROWS = 18;
 function canvas() {
   const g = Array.from({ length: ROWS }, () => Array(COLS).fill('.'));
@@ -132,19 +135,11 @@ const ART = {
     return h.g;
   },
 };
-const DOT_R = { '.': 2.3, '#': 3.3, '+': 3.0, o: 2.6, r: 3.3 };
-const DOT_CLASS = { '.': 'g', '#': 'f', '+': 'l', o: 'o', r: 'x' };
-function artSvg(name) {
+// On the page each illustration is a <canvas data-grid="row|row|…">, drawn and animated by assets/site.js.
+function artGrid(name) {
   const g = ART[name]?.();
   if (!g) throw new Error(`no art "${name}"`);
-  const S = 10;
-  const groups = {};
-  g.forEach((row, j) => row.forEach((ch, i) => {
-    if (!DOT_CLASS[ch]) return;
-    (groups[ch] ??= []).push(`<circle cx="${i * S + S / 2}" cy="${j * S + S / 2}" r="${DOT_R[ch]}"/>`);
-  }));
-  const body = ['.', '+', '#', 'o', 'r'].filter((ch) => groups[ch]).map((ch) => `<g class="${DOT_CLASS[ch]}">${groups[ch].join('')}</g>`).join('');
-  return `<svg viewBox="0 0 ${COLS * S} ${ROWS * S}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${body}</svg>`;
+  return `<canvas data-grid="${g.map((row) => row.join('')).join('|')}" aria-hidden="true"></canvas>`;
 }
 
 // ---------- partials, assets ----------
@@ -209,6 +204,99 @@ function toMarkdown(html, path) {
   return `---\ntitle: "${title.replace(/"/g, "'")}"\nurl: ${ORIGIN}${path}\nupdated: ${UPDATED}\n---\n\n> ${meta(html, 'description')}\n> Source: ${ORIGIN}${path} · Repository: ${REPO}\n\n${body}\n`;
 }
 
+const PERSON = { '@type': 'Person', name: 'Devansh Ranjan', url: 'https://github.com/devanshranjan10' };
+const SOFTWARE_ID = `${ORIGIN}/#software`;
+const crumbs = (name, path) => ({
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'whatleaks', item: `${ORIGIN}/` },
+    { '@type': 'ListItem', position: 2, name, item: `${ORIGIN}${path}` },
+  ],
+});
+const article = (html, path, extra = {}) => ({
+  '@type': 'TechArticle',
+  '@id': `${ORIGIN}${path}#article`,
+  headline: html.match(/<title>([^<]*)<\/title>/)?.[1] ?? 'whatleaks',
+  description: meta(html, 'description'),
+  url: `${ORIGIN}${path}`,
+  inLanguage: 'en',
+  datePublished: '2026-10-23',
+  dateModified: UPDATED,
+  author: PERSON,
+  publisher: PERSON,
+  about: { '@id': SOFTWARE_ID },
+  ...extra,
+});
+// Schema.org data for each page: what the software is, what each page is, and the benchmark as a dataset.
+function pageJsonLd(html, path) {
+  const graph = [];
+  if (path === '/') {
+    graph.push({
+      '@type': 'SoftwareApplication',
+      '@id': SOFTWARE_ID,
+      name: 'whatleaks',
+      applicationCategory: 'DeveloperApplication',
+      applicationSubCategory: 'Network monitoring and privacy',
+      operatingSystem: 'macOS, Linux',
+      softwareVersion: VERSION,
+      softwareRequirements: 'Node.js 22.12 or later',
+      datePublished: '2026-10-23',
+      dateModified: UPDATED,
+      license: 'https://opensource.org/licenses/MIT',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      url: `${ORIGIN}/`,
+      downloadUrl: 'https://www.npmjs.com/package/whatleaks',
+      installUrl: 'https://www.npmjs.com/package/whatleaks',
+      codeRepository: REPO,
+      author: PERSON,
+      sameAs: [REPO, 'https://www.npmjs.com/package/whatleaks', 'https://github.com/devanshranjan10/homebrew-tap'],
+      description: 'Runs a command through a local, single-run proxy and reports where its traffic went, which fields each payload carried, whether any of it identifies the machine or user, and what is still sent after opting out of telemetry.',
+      featureList: [
+        'Captures every request a command sends, through a local proxy with a certificate authority made for that run',
+        'Tests telemetry opt-outs: runs the command twice, defaults then opted out, and diffs what was sent',
+        "Searches payloads for the user's identifiers (username, hostname, home path, MAC address, machine id, git email), raw and hashed",
+        'Follows the whole process tree, including helpers that send after the app exits',
+        'Writes redacted reports for sharing, and reads HAR files from other tools',
+      ],
+      screenshot: `${ORIGIN}/media/whatleaks-demo-poster.png`,
+      video: {
+        '@type': 'VideoObject',
+        name: 'whatleaks demo: what next build sends, with and without DO_NOT_TRACK=1',
+        description: 'Real output of whatleaks 0.1.0 on next build (Next.js 16.4.2), replayed: with DO_NOT_TRACK=1 telemetry went 8 → 8 requests; with NEXT_TELEMETRY_DISABLED=1, 8 → 0.',
+        thumbnailUrl: `${ORIGIN}/media/whatleaks-demo-poster.png`,
+        contentUrl: `${ORIGIN}/media/whatleaks-demo.mp4`,
+        uploadDate: '2026-10-24',
+        duration: 'PT55S',
+      },
+    });
+    graph.push({ '@type': 'WebSite', '@id': `${ORIGIN}/#website`, name: 'whatleaks', url: `${ORIGIN}/`, inLanguage: 'en', publisher: PERSON, about: { '@id': SOFTWARE_ID } });
+  } else if (path === '/docs/') {
+    graph.push(article(html, path), crumbs('Docs', path));
+  } else if (path === '/benchmark/') {
+    graph.push(article(html, path, { datePublished: '2026-10-22' }), crumbs('Benchmark', path), {
+      '@type': 'Dataset',
+      '@id': `${ORIGIN}/benchmark/#dataset`,
+      name: 'whatleaks benchmark: lab scenarios with exact ground truth, and real tools',
+      description: 'How often HTTP(S) capture tools silently miss what a program sends. 46 lab scenarios and 594 attempts on macOS, 43 and 567 on Linux, each attempt written to a ledger before it is made; plus five real-tool runs (Next.js, Turborepo, Astro, Wrangler) checked against each tool\'s own debug output. Tools: whatleaks, mitmproxy 12.2.3, HTTP Toolkit server 1.27.3 and phonehome.',
+      url: `${ORIGIN}/benchmark/`,
+      sameAs: `${REPO}/blob/main/docs/BENCHMARK.md`,
+      creator: PERSON,
+      license: 'https://opensource.org/licenses/MIT',
+      isAccessibleForFree: true,
+      datePublished: '2026-10-22',
+      dateModified: UPDATED,
+      keywords: ['telemetry', 'network capture', 'HTTPS proxy', 'benchmark', 'mitmproxy', 'HTTP Toolkit', 'DO_NOT_TRACK', 'privacy'],
+      variableMeasured: ['share of attempts silently missed', 'share of attempts whose payload was read', 'false attributions', 'planted identifiers found'],
+      measurementTechnique: 'Each lab client writes every attempt to a ledger before making it; each tool\'s output is then scored attempt by attempt against the ledger.',
+      distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: `${REPO}/tree/main/bench/results` }],
+    });
+  } else if (path === '/faq/') {
+    graph.push(crumbs('FAQ', path));
+  }
+  return graph.length ? `<script type="application/ld+json">\n${JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })}\n</script>\n` : '';
+}
+
 function faqJsonLd(html) {
   const items = [...html.matchAll(/<section class="qa" id="([^"]+)">\s*<h2>([\s\S]*?)<\/h2>\s*<div class="a">([\s\S]*?)<\/div>\s*<\/section>/g)];
   if (!items.length) return '';
@@ -238,17 +326,23 @@ function walk(dir) {
     if (statSync(from).isDirectory()) { walk(from); continue; }
     const to = join(out, rel);
     mkdirSync(join(to, '..'), { recursive: true });
+    if (/\.(txt|md|xml)$/.test(name)) { writeFileSync(to, readFileSync(from, 'utf8').replaceAll('__VERSION__', VERSION).replaceAll('__UPDATED__', UPDATED)); continue; }
     if (!name.endsWith('.html')) { cpSync(from, to); continue; }
     // "/docs/index.html" -> "/docs/": mark that nav link as the current page.
     const path = '/' + rel.replace(/index\.html$/, '').replace(/\\/g, '/');
     const pageNav = path === '/' ? nav : nav.replace(`<a href="${path}">`, `<a href="${path}" aria-current="page">`);
     let html = readFileSync(from, 'utf8').replace('<!-- @nav -->', pageNav).replace('<!-- @footer -->', footer);
-    html = html.replace(/<!-- @art (\w+) -->/g, (_m, art) => artSvg(art));
+    html = html.replace(/<!-- @grid (\w+) -->/g, (_m, art) => artGrid(art)).replace(/<!-- @jsonld \w+ -->\n?/, '');
+    html = html.replace('<!-- @updated -->', `<time datetime="${UPDATED}">${UPDATED_LONG}</time>`).replaceAll('__VERSION__', VERSION);
     for (const [asset, v] of Object.entries(assets)) html = html.replaceAll(`"${asset}"`, `"${asset}?v=${v}"`);
     const alt = [`<link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt">`];
     if (MD_FOR[path]) alt.unshift(`<link rel="alternate" type="text/markdown" title="This page as Markdown" href="/${MD_FOR[path]}">`);
-    html = html.replace('<link rel="stylesheet"', `${alt.join('\n')}\n${faqJsonLd(html)}<link rel="stylesheet"`);
+    html = html.replace('<link rel="stylesheet"', `${alt.join('\n')}\n${pageJsonLd(html, path)}${faqJsonLd(html)}<link rel="stylesheet"`);
     if (html.includes('<!-- @')) throw new Error(`unfilled partial in ${rel}`);
+    // Links that leave whatleaks.me (GitHub, npm, sources…) open in a new tab.
+    html = html.replace(/<a ([^>]*?)href="(https?:\/\/(?!whatleaks\.me)[^"]+)"([^>]*)>/g, (tag, before, href, after) =>
+      /\btarget=/.test(tag) ? tag : `<a ${before}href="${href}" target="_blank" rel="noopener"${after}>`,
+    );
     writeFileSync(to, html);
     if (GENERATED_MD[path]) markdown[GENERATED_MD[path]] = toMarkdown(html, path);
   }
@@ -256,8 +350,15 @@ function walk(dir) {
 walk(src);
 
 for (const [file, md] of Object.entries(markdown)) writeFileSync(join(out, file), md);
-markdown['index.md'] = readFileSync(join(src, 'index.md'), 'utf8');
+markdown['index.md'] = readFileSync(join(src, 'index.md'), 'utf8').replaceAll('__VERSION__', VERSION).replaceAll('__UPDATED__', UPDATED);
 const order = ['index.md', 'docs.md', 'benchmark.md', 'faq.md'];
 const full = order.map((f) => `<!-- ${ORIGIN}/${f} -->\n\n${markdown[f].trim()}\n`).join('\n\n---\n\n');
 writeFileSync(join(out, 'llms-full.txt'), `# whatleaks: everything on whatleaks.me, as Markdown (generated ${UPDATED})\n\n${full}`);
-console.log(`built ${relative(root, out)}/ (+ ${Object.keys(GENERATED_MD).length} generated .md, llms-full.txt)`);
+// The sitemap, dated by this build.
+const PAGES = [['/', '1.0'], ['/docs/', '0.8'], ['/benchmark/', '0.8'], ['/faq/', '0.7']];
+writeFileSync(join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${PAGES.map(([path, priority]) => `  <url><loc>${ORIGIN}${path}</loc><lastmod>${UPDATED}</lastmod><priority>${priority}</priority></url>`).join('\n')}
+</urlset>
+`);
+console.log(`built ${relative(root, out)}/ (+ ${Object.keys(GENERATED_MD).length} generated .md, llms-full.txt, sitemap.xml)`);
