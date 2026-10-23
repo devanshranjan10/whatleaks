@@ -1,0 +1,72 @@
+$ npx whatleaks run -- next build
+whatleaks: recording next through http://127.0.0.1:61376 (loopback only, single-run CA)
+(node:88660) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config took 34ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 592ms
+  Running TypeScript ...
+  Finished TypeScript in 6ms ...
+  Collecting page data using 4 workers ...
+(node:89365) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:89360) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:89368) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:89371) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 4 workers (0/3) ...
+✓ Generating static pages using 4 workers (3/3) in 773ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+whatleaks: next exited; waiting up to 10 s for processes it left running
+whatleaks: capture saved to /private/tmp/wl-demo/my-app/whatleaks-run-20261024-004418.har (raw traffic, readable only by you: share the report, not the HAR)
+
+whatleaks · next build · 7.1 s · exit 0
+9 requests to 2 destinations · ≈10.6 KB sent · 8 to known telemetry endpoints
+activity |      ▆ █  ▂ ▂      | over 7.1 s
+
+WHAT IT SENT ABOUT YOU
+  ○ Repeated identifiers: 3 ids reused across requests (‹id-1› ×8, ‹id-2› ×8, ‹id-3› ×8)
+      in context.anonymousId, context.projectId, context.sessionId
+
+WHERE IT WENT
+  DESTINATION           CATEGORY                       REQUESTS      SENT
+  telemetry.nextjs.org  analytics · Next.js telemetry         8  ≈10.3 KB
+  registry.npmjs.org    other                                 1    ≈321 B
+
+ENDPOINTS
+  POST telemetry.nextjs.org/api/v1/record  analytics · Next.js telemetry
+      8 requests · first +2.4s · every ~85 ms · ≈10.3 KB · status 204×8
+      fields: context.anonymousId (id, same in every request), context.projectId (id, same in every request), context.sessionId (id, same in every request), events[].eventName, meta.agentName, meta.ciName, meta.cpuCount, meta.cpuModel …+83
+      sample (+2.4s):
+        {
+          "context": {
+            "anonymousId": "‹id-1›",
+            "projectId": "‹id-2›",
+            "sessionId": "‹id-3›"
+          },
+          "meta": {
+            "systemPlatform": "darwin",
+            "systemRelease": "25.6.0",
+            "systemArchitecture": "arm64",
+            "cpuCount": 8,
+            "cpuModel": "Apple M1",
+            "cpuSpeed": 2400,
+            "memoryInMb": 8192,
+        … 55 more lines (see --md)
+  POST registry.npmjs.org/-/npm/v1/security/advisories/bulk  other
+      1 request · first +2.4s · ≈321 B · status 200
+      fields: next[]
+
+Redacted: ‹labels› replace local identifiers and secrets; ids are replaced by aliases. Use --raw to see everything.

@@ -1,0 +1,41 @@
+name: What a tool sends
+description: Share what whatleaks found for a tool, or an endpoint or opt-out the catalog is missing.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for checking a tool. Paste the **report**, not the HAR file: the HAR holds the raw traffic.
+        Reports are redacted by pattern, so read yours before posting.
+  - type: input
+    id: tool
+    attributes:
+      label: Tool and version
+      placeholder: "next 16.4.2"
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      placeholder: "whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- ./node_modules/.bin/next build"
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Report or diff
+      description: The terminal output, or the Markdown from --md.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: The tool's own documentation
+      description: Where the tool documents this endpoint or its opt-out, if you know (a docs page, or its source pinned to a commit).
+  - type: input
+    id: env
+    attributes:
+      label: whatleaks version, OS and Node version
+      placeholder: "whatleaks 0.1.0, macOS 26.6, Node 22.23.3"

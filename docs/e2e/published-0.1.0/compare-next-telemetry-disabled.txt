@@ -1,0 +1,87 @@
+$ npx whatleaks compare --no-known-opt-outs --off-env NEXT_TELEMETRY_DISABLED=1 -- next build
+whatleaks: run 1 of 2 — defaults (opt-out variables removed)
+whatleaks: recording next through http://127.0.0.1:61514 (loopback only, single-run CA)
+(node:95125) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config took 27ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 844ms
+  Running TypeScript ...
+  Finished TypeScript in 5ms ...
+  Collecting page data using 4 workers ...
+(node:95906) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:95904) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:95905) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:95908) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 4 workers (0/3) ...
+✓ Generating static pages using 4 workers (3/3) in 831ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+whatleaks: capture saved to /private/tmp/wl-demo/my-app/whatleaks-default-20261024-004503.har (raw traffic, readable only by you: share the report, not the HAR)
+whatleaks: run 2 of 2 — opted out (1 variable set)
+whatleaks: recording next through http://127.0.0.1:61552 (loopback only, single-run CA)
+(node:97080) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config took 30ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 515ms
+  Running TypeScript ...
+  Finished TypeScript in 3ms ...
+  Collecting page data using 4 workers ...
+(node:97571) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:97569) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:97573) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:97572) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 4 workers (0/3) ...
+✓ Generating static pages using 4 workers (3/3) in 802ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+whatleaks: capture saved to /private/tmp/wl-demo/my-app/whatleaks-opted-out-20261024-004503.har (raw traffic, readable only by you: share the report, not the HAR)
+
+whatleaks diff · before "default" (7.1 s, 9 requests) → after "opted-out" (5.2 s, 1 request)
+command: next build
+opted out with: NEXT_TELEMETRY_DISABLED
+
+The telemetry endpoint stopped after opting out.
+Telemetry requests: 8 → 0 · all requests: 9 → 1
+
+STOPPED
+  ✓ POST telemetry.nextjs.org/api/v1/record  analytics · Next.js telemetry  8 → 0 requests
+
+OTHER TRAFFIC
+  (not identified as telemetry; check it yourself)
+  = POST registry.npmjs.org/-/npm/v1/security/advisories/bulk  other  1 → 1
+
+STILL SENT ABOUT YOU
+  ✓ nothing identifying in the second run's visible traffic
+  no longer sent: stable-id
+
+NOTES
+  • "Stopped" means not seen in the second run. Some tools send certain events only on first use, or upload on a later run, so repeat the comparison before relying on a stop.
+whatleaks: full reports: whatleaks report /private/tmp/wl-demo/my-app/whatleaks-default-20261024-004503.har  (and …-opted-out-20261024-004503.har)

@@ -7,6 +7,10 @@
 
 **See what an app you run sends home, and what it still sends after you opt out.**
 
+[![whatleaks compare on next build: with DO_NOT_TRACK=1 set, Next.js still sent 8 of 8 telemetry requests; with NEXT_TELEMETRY_DISABLED=1, 0](https://raw.githubusercontent.com/devanshranjan10/whatleaks/main/docs/media/whatleaks-demo.gif)](https://whatleaks.me/media/whatleaks-demo.mp4)
+
+<sub>Real output of whatleaks 0.1.0 from npm on `next build` (Next.js 16.4.2), recorded on 2026-10-24 and replayed, abridged and sped up ([recordings](https://github.com/devanshranjan10/whatleaks/tree/main/scripts/video)). The 55-second video: [whatleaks.me/media/whatleaks-demo.mp4](https://whatleaks.me/media/whatleaks-demo.mp4).</sub>
+
 whatleaks runs a command through a local, single-run proxy and tells you:
 - where the app's traffic went
 - how often
@@ -45,7 +49,8 @@ PERSISTENT IDENTIFIERS
 That is real output from Next.js 16.4.2 on 2026-10-21. `DO_NOT_TRACK=1` does not stop
 Next.js telemetry. Next.js never says it does: its documented switch is
 `NEXT_TELEMETRY_DISABLED=1`, and with that set whatleaks saw telemetry go from 8
-requests to 0. The run log is in [`docs/e2e/`](docs/e2e/README.md).
+requests to 0. The run log is in [`docs/e2e/`](docs/e2e/README.md). On 2026-10-24 the published
+0.1.0, run with `npx`, gave the same results: 8 → 8, and 8 → 0.
 
 The idea comes from hand-made telemetry investigations, like the
 [Trae IDE writeup](https://news.ycombinator.com/item?id=44703164) (954 points on Hacker
@@ -65,6 +70,12 @@ or install the `whatleaks` command:
 
 ```
 npm install -g whatleaks
+```
+
+or, with Homebrew, which brings its own Node:
+
+```
+brew install devanshranjan10/tap/whatleaks
 ```
 
 The install pulls about 195 packages (41 MB), mostly the proxy library,

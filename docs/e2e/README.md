@@ -214,3 +214,34 @@ bypass whatleaks.
   captured (status 405 from the server).
 - **`https.request` with a gzip-encoded body,** run against example.com: captured, and
   the body was decoded.
+
+## 5. The published package, 2026-10-24
+
+The same Next.js checks, run again with **whatleaks 0.1.0 from npm** (`npx whatleaks`),
+three days after the runs above: on 2026-10-24 at 00:44 local time (2026-10-23 19:14
+UTC, the time the reports give).
+
+**Setup.** As in §1: a two-file app with `next@16.4.2` installed with `--ignore-scripts`,
+and the official Node **22.23.3** binary, checked against nodejs.org's SHASUMS256, first
+on `PATH`. Each command ran under `scripts/video/record.mjs`, which forces colour and
+records every chunk of output with its time.
+
+| Command | Result |
+|---|---|
+| `npx whatleaks run -- next build` | 9 requests to 2 destinations, ≈10.6 KB; 8 to `telemetry.nextjs.org`, status 204 |
+| `npx whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- next build` | telemetry **8 → 8**; `context.anonymousId` and `context.projectId` the same in both runs |
+| `npx whatleaks compare --no-known-opt-outs --off-env NEXT_TELEMETRY_DISABLED=1 -- next build` | telemetry **8 → 0** |
+
+- The same results as §1, from the published package.
+- The report again found none of this machine's identifiers.
+- Every telemetry body carried `meta.agentName: "claude-code_2-1-309_agent"`: Claude
+  Code 2.1.309 ran these builds.
+
+Output, with colour codes removed:
+[`run.txt`](published-0.1.0/run.txt),
+[`run-report.md`](published-0.1.0/run-report.md) (`whatleaks report --md` on the same
+capture), [`compare-do-not-track.txt`](published-0.1.0/compare-do-not-track.txt) and
+[`compare-next-telemetry-disabled.txt`](published-0.1.0/compare-next-telemetry-disabled.txt).
+
+These recordings are the demo video and the README GIF: `scripts/video/recordings.js`
+holds them with their timing, and `scripts/video/demo.html` replays them.

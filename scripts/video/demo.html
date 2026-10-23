@@ -1,0 +1,451 @@
+<!doctype html>
+<!--
+  The whatleaks demo video, as a page. render.mjs seeks it frame by frame (window.seek(t)) and pipes the frames to
+  ffmpeg. ?gif lays out the README GIF instead: the two comparisons, terminal only. Open the page in a browser with
+  ?play (or ?gif&play) to watch it in real time.
+
+  The terminals are replayed, not retyped. recordings.js holds the output of scripts/video/record.mjs for three
+  commands run on 2026-10-24 with whatleaks 0.1.0 from npm, the official Node 22.23.3 and Next.js 16.4.2 (the
+  two-file app from docs/e2e): every line, its colours and the time it was printed. This page only drops Node's
+  proxy warning and Next's route table, cuts the single-run report after WHERE IT WENT, and plays each recording at
+  the speed shown in the terminal's title bar. The payload is sample 1 of `whatleaks report --md` on the same
+  capture. The benchmark numbers are from docs/BENCHMARK.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>whatleaks demo</title>
+<style>
+@font-face { font-family: 'Geist'; font-weight: 300 800; src: url(../../site/fonts/geist.woff2) format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 400 600; src: url(../../site/fonts/geistmono.woff2) format('woff2'); }
+:root {
+  --ink: #0a0a0a; --ink-2: #404040; --ink-3: #737373; --line: #ececec; --line-2: #e2e2e2;
+  --blue: #2563eb; --blue-ink: #1d4ed8; --blue-100: #dbeafe; --blue-200: #bfdbfe; --red: #dc2626; --green-ink: #15803d;
+  --t-bg: #0b0d12; --t-line: #20242f; --t-fg: #e7e9ef; --t-dim: #8a90a0;
+  --t-red: #ff7b7b; --t-green: #6fd896; --t-amber: #f4bd63; --t-blue: #8ab8ff; --t-violet: #b9a6ff; --t-cyan: #7fd4e6;
+  --sans: 'Geist', system-ui, sans-serif; --mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+  --fs: 18px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #fff; color: var(--ink); }
+body { position: relative; font: 400 24px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+.scene { position: absolute; inset: 0; opacity: 0; }
+em { font-style: normal; color: var(--blue); }
+code { font-family: var(--mono); font-size: .84em; letter-spacing: 0; }
+svg.logo { width: 34px; height: 34px; flex: none; }
+
+/* site furniture: hairline rails, the brand, the address */
+.rails { position: absolute; inset: 0 96px; border-inline: 1px solid var(--line); }
+.brand { position: absolute; left: 144px; top: 52px; display: flex; align-items: center; gap: 12px; font: 500 28px/1 var(--sans); letter-spacing: -.035em; }
+.addr { position: absolute; right: 144px; top: 60px; font: 450 20px/1 var(--mono); color: var(--ink-3); }
+
+/* left column: what the step is */
+.cap { position: absolute; left: 144px; top: 300px; width: 452px; }
+.eyebrow { display: flex; align-items: center; gap: 12px; font: 450 17px/1 var(--mono); color: var(--ink-3); letter-spacing: .04em; text-transform: uppercase; }
+.eyebrow .n { color: var(--blue); }
+.cap h2 { margin: 22px 0 0; font: 400 54px/1.04 var(--sans); letter-spacing: -.045em; text-wrap: balance; }
+.cap p { margin: 22px 0 0; font: 400 22px/1.5 var(--sans); color: var(--ink-2); }
+.cap p code { color: var(--ink); }
+.res { margin-top: 30px; padding: 18px 22px; border-radius: 14px; border: 1px solid var(--line-2); background: #fff; font: 400 25px/1.35 var(--sans); letter-spacing: -.02em; box-shadow: 0 18px 40px -26px rgba(9, 20, 60, .35); }
+.res b { display: block; margin-top: 6px; font: 400 54px/1 var(--sans); letter-spacing: -.05em; }
+.res.r b { color: var(--red); }
+.res.g b { color: var(--green-ink); }
+.res.bl b { color: var(--blue); }
+.res small { display: block; margin-top: 8px; font-size: 18px; color: var(--ink-3); letter-spacing: 0; }
+
+/* right: the blue plate and the terminal, as on whatleaks.me */
+.plate { position: absolute; left: 648px; top: 112px; width: 1128px; height: 928px; border-radius: 30px; padding: 22px; background-color: var(--blue); background-image: radial-gradient(circle, transparent 2px, rgba(255, 255, 255, .32) 2.1px, rgba(255, 255, 255, .32) 3px, transparent 3.1px); background-size: 18px 18px; background-position: 5px 5px; box-shadow: 0 0 0 8px var(--blue-100); }
+.term { position: relative; height: 100%; background: var(--t-bg); color: var(--t-fg); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 30px 60px -30px rgba(9, 20, 60, .6); }
+.term .bar { height: 50px; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid var(--t-line); font: 500 17px/1 var(--mono); color: var(--t-dim); }
+.term .lights { display: flex; gap: 8px; }
+.term .lights i { width: 13px; height: 13px; border-radius: 50%; background: #ff5f57; }
+.term .lights i:nth-child(2) { background: #febc2e; }
+.term .lights i:nth-child(3) { background: #28c840; }
+.term .chip { margin-left: auto; display: inline-flex; align-items: center; gap: 9px; font: 450 15px/1 var(--mono); }
+.term .chip .on { width: 7px; height: 7px; border-radius: 50%; background: var(--t-green); box-shadow: 0 0 0 3px rgba(111, 216, 150, .15); }
+.term .view { position: absolute; left: 0; right: 0; top: 50px; bottom: 0; overflow: hidden; }
+.term .shade { position: absolute; left: 0; right: 0; top: 50px; bottom: 0; z-index: 2; background: rgba(11, 13, 18, .6); opacity: 0; }
+.term .body { padding: 20px 28px; font: 400 var(--fs)/1.5 var(--mono); }
+.ln { position: relative; min-height: 1.5em; white-space: pre-wrap; word-break: break-all; visibility: hidden; }
+.ln.on { visibility: visible; }
+.ln .band { position: absolute; z-index: 0; left: -28px; right: -28px; top: 0; bottom: 0; opacity: 0; }
+.ln.hl-r .band { background: rgba(255, 123, 123, .13); box-shadow: inset 4px 0 0 var(--t-red); }
+.ln.hl-g .band { background: rgba(111, 216, 150, .13); box-shadow: inset 4px 0 0 var(--t-green); }
+.ln > span { position: relative; z-index: 1; }
+.p { color: var(--t-blue); }
+.caret { display: inline-block; width: .6em; height: 1.2em; vertical-align: -.25em; background: var(--t-fg); }
+
+/* the payload, as written by whatleaks report --md */
+.doc { position: absolute; z-index: 3; left: 760px; top: 168px; width: 980px; border-radius: 16px; background: #fff; border: 1px solid var(--line-2); box-shadow: 0 40px 90px -40px rgba(9, 20, 60, .55); overflow: hidden; }
+.doc .dh { display: flex; justify-content: space-between; gap: 20px; padding: 16px 24px; border-bottom: 1px solid var(--line-2); background: #fafafa; font: 450 16px/1.2 var(--mono); color: var(--ink-3); }
+.doc .dh b { color: var(--ink); font-weight: 500; }
+.doc .db { padding: 14px 0 16px; font: 400 18px/1.48 var(--mono); color: var(--ink-2); }
+.doc .dl { position: relative; padding: 0 24px; white-space: pre; }
+.doc .dl .k { color: var(--ink); }
+.doc .dl .s { color: var(--blue-ink); }
+.doc .dl .band { position: absolute; inset: 0; opacity: 0; }
+.doc .dl.am .band { background: #fef3c7; box-shadow: inset 4px 0 0 #d97706; }
+.doc .dl.rd .band { background: #fee2e2; box-shadow: inset 4px 0 0 var(--red); }
+.doc .dl > span { position: relative; }
+.doc .dl .note { position: absolute; right: 24px; top: 0; font: 500 16px/1.48 var(--sans); opacity: 0; }
+.doc .dl.am .note { color: #b45309; }
+.doc .dl.rd .note { color: var(--red); }
+
+/* title and end cards */
+.center { padding: 0 144px; display: flex; flex-direction: column; justify-content: center; }
+.kick { display: flex; align-items: center; gap: 14px; font: 500 30px/1 var(--sans); letter-spacing: -.035em; }
+.kick span { margin-left: 10px; font: 450 20px/1 var(--mono); color: var(--ink-3); letter-spacing: 0; }
+.big { margin: 44px 0 0; font: 400 104px/1.0 var(--sans); letter-spacing: -.05em; }
+.big code { font-size: .8em; letter-spacing: -.02em; }
+.sub { margin: 40px 0 0; font: 400 26px/1.4 var(--sans); color: var(--ink-3); }
+.cmd { align-self: flex-start; display: inline-flex; gap: 20px; margin-top: 56px; padding: 26px 36px; border-radius: 16px; background: var(--t-bg); color: #fff; font: 450 42px/1 var(--mono); box-shadow: 0 0 0 8px var(--blue-100); }
+.cmd .p { color: var(--t-blue); }
+.cmd .arg { color: var(--t-dim); }
+.links { margin-top: 44px; font: 400 30px/1.6 var(--sans); color: var(--ink-2); }
+.links b { color: var(--ink); font-weight: 500; }
+.drop { position: absolute; right: 200px; top: 50%; width: 520px; height: 520px; margin-top: -260px; }
+.drop circle { transform-box: fill-box; transform-origin: center; }
+.dots { position: absolute; right: 96px; top: 0; bottom: 0; width: 560px; background-image: radial-gradient(circle, transparent 2.4px, var(--blue-200) 2.5px, var(--blue-200) 3.4px, transparent 3.5px); background-size: 22px 22px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 70%); mask-image: linear-gradient(90deg, transparent, #000 70%); }
+
+/* benchmark: emphasis bars, values at the tips, as on whatleaks.me/benchmark */
+.bench { position: absolute; left: 144px; right: 144px; top: 150px; }
+.bench h2 { margin: 22px 0 0; font: 400 66px/1.04 var(--sans); letter-spacing: -.045em; }
+.bench > p { margin: 22px 0 0; max-width: 1240px; font: 400 24px/1.5 var(--sans); color: var(--ink-2); }
+.chart { position: relative; margin-top: 52px; }
+.chart .row { display: grid; grid-template-columns: 420px 1fr; align-items: center; height: 104px; }
+.chart .name { font: 400 28px/1.15 var(--sans); color: var(--ink-2); letter-spacing: -.02em; }
+.chart .name small { display: block; margin-top: 6px; font: 400 19px/1.2 var(--sans); color: var(--ink-3); letter-spacing: 0; }
+.chart .hl .name { color: var(--ink); font-weight: 600; }
+.chart .track { position: relative; height: 40px; margin-right: 150px; }
+.chart .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 0 6px 6px 0; background: #a3a3a3; }
+.chart .hl .fill { background: var(--blue); }
+.chart .val { position: absolute; top: 50%; transform: translateY(-50%); padding-left: 16px; font: 500 34px/1 var(--sans); letter-spacing: -.03em; white-space: nowrap; opacity: 0; }
+.chart .grid { position: absolute; left: 420px; right: 150px; top: 0; bottom: 34px; }
+.chart .grid i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.chart .grid i:first-child { background: var(--line-2); }
+.chart .grid span { position: absolute; bottom: -34px; transform: translateX(-50%); font: 450 17px/1 var(--mono); color: var(--ink-3); }
+.chart .grid i:first-child + span { transform: none; }
+.chart .axis { height: 34px; }
+.bench .foot { margin-top: 34px; font: 400 24px/1.5 var(--sans); color: var(--ink-2); }
+.bench .foot b { color: var(--ink); font-weight: 600; }
+
+/* ?gif: just the comparison terminal, filling the frame */
+body.gif { width: 1200px; height: 800px; --fs: 16.5px; }
+body.gif .scene:not(#s-compare), body.gif #s-compare > :not(.plate) { display: none; }
+body.gif .plate { left: 0; top: 0; width: 1200px; height: 800px; border-radius: 0; padding: 16px; box-shadow: none; background-size: 15px 15px; background-image: radial-gradient(circle, transparent 1.7px, rgba(255, 255, 255, .32) 1.8px, rgba(255, 255, 255, .32) 2.6px, transparent 2.7px); }
+body.gif .term { border-radius: 12px; }
+body.gif .term .bar { height: 42px; font-size: 14.5px; }
+body.gif .term .chip { font-size: 13px; }
+body.gif .term .view { top: 42px; }
+body.gif .term .body { padding: 16px 22px; }
+body.gif .ln .band { left: -22px; right: -22px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="1 1 22 22"></symbol></svg>
+
+<!-- 0: title -->
+<section class="scene center" id="s-title" data-in="-1" data-out="3.8">
+  <div class="dots"></div><svg class="drop" viewBox="1 1 22 22"></svg>
+  <div class="kick"><svg class="logo"><use href="#logo"/></svg>whatleaks</div>
+  <h1 class="big">With <code>DO_NOT_TRACK=1</code>,<br><code>next build</code> still sent<br><em>8 telemetry requests.</em></h1>
+  <p class="sub">Next.js 16.4.2, recorded with whatleaks 0.1.0 on 2026-10-24.</p>
+</section>
+
+<!-- 1 and 2: one run, its report, then the payload -->
+<section class="scene" id="s-run" data-in="3.8" data-out="@run-out">
+  <div class="rails"></div>
+  <div class="brand"><svg class="logo"><use href="#logo"/></svg>whatleaks</div><div class="addr">whatleaks.me</div>
+  <div class="plate"><div class="term" id="term-run"><div class="bar"><span class="lights"><i></i><i></i><i></i></span><span>~/my-app</span><span class="chip"><span class="on"></span><span class="speed"></span></span></div><div class="view"><div class="body"></div></div><div class="shade" data-in="@payload"></div></div></div>
+  <div class="cap" data-in="3.8" data-out="@payload">
+    <div class="eyebrow"><span class="n">01</span>Run it</div>
+    <h2>Run any command <em>through whatleaks.</em></h2>
+    <p>A loopback proxy for one run, with a certificate authority made for that run. Nothing is installed system-wide.</p>
+    <div class="res bl" data-in="@run+0.3">Where it went<b>8 of 9 requests</b><small>to telemetry.nextjs.org</small></div>
+  </div>
+  <div class="cap" data-in="@payload+0.35" data-out="@run-out">
+    <div class="eyebrow"><span class="n">02</span>Read it</div>
+    <h2>Every payload, decoded <em>and checked for you.</em></h2>
+    <p>It looked for your username, hostname, home path, MAC address, machine id and git email, raw and hashed: none were found. Two ids came back the same in a second run, and every request named the AI agent that ran the build.</p>
+  </div>
+  <div class="doc" id="doc" data-in="@payload+0.2" data-rise>
+    <div class="dh"><span><b>whatleaks report --md</b> · request 1 of 8, redacted</span><span>POST telemetry.nextjs.org/api/v1/record</span></div>
+    <div class="db"></div>
+  </div>
+</section>
+
+<!-- 3 and 4: the two comparisons, in one terminal (the GIF is this scene) -->
+<section class="scene" id="s-compare" data-in="@run-out" data-out="@compare-out">
+  <div class="rails"></div>
+  <div class="brand"><svg class="logo"><use href="#logo"/></svg>whatleaks</div><div class="addr">whatleaks.me</div>
+  <div class="plate"><div class="term" id="term-compare"><div class="bar"><span class="lights"><i></i><i></i><i></i></span><span>~/my-app</span><span class="chip"><span class="on"></span><span class="speed"></span></span></div><div class="view"><div class="body"></div></div></div></div>
+  <div class="cap" data-in="@run-out" data-out="@ntd-type">
+    <div class="eyebrow"><span class="n">03</span>Test the opt-out</div>
+    <h2>Does the opt-out <em>actually work?</em></h2>
+    <p><code>compare</code> runs the command twice, first with defaults and then opted out, and diffs what was sent.</p>
+    <div class="res r" data-in="@dnt+0.3"><code>DO_NOT_TRACK=1</code><b>8 → 8 requests</b><small>still sent, with the same two ids</small></div>
+  </div>
+  <div class="cap" data-in="@ntd-type+0.35" data-out="@compare-out">
+    <div class="eyebrow"><span class="n">04</span>Check, don't assume</div>
+    <h2>Next.js documents <em>its own switch.</em></h2>
+    <p>It never says it honours <code>DO_NOT_TRACK</code>. The variable it documents is <code>NEXT_TELEMETRY_DISABLED</code>.</p>
+    <div class="res g" data-in="@ntd+0.3"><code>NEXT_TELEMETRY_DISABLED=1</code><b>8 → 0 requests</b><small>stopped</small></div>
+  </div>
+</section>
+
+<!-- 5: the benchmark -->
+<section class="scene" id="s-bench" data-in="@compare-out" data-out="@bench-out">
+  <div class="rails"></div>
+  <div class="brand"><svg class="logo"><use href="#logo"/></svg>whatleaks</div><div class="addr">whatleaks.me/benchmark</div>
+  <div class="bench">
+    <div class="eyebrow"><span class="n">05</span>Measured</div>
+    <h2>It misses less than <em>mitmproxy and HTTP Toolkit.</em></h2>
+    <p>46 lab scenarios on macOS with exact ground truth: each client writes down every attempt before making it. Share of attempts each tool silently missed; lower is better.</p>
+    <div class="chart">
+      <div class="grid"><i style="left:0"></i><span style="left:0">0%</span><i style="left:25%"></i><span style="left:25%">25%</span><i style="left:50%"></i><span style="left:50%">50%</span><i style="left:75%"></i><span style="left:75%">75%</span><i style="left:100%"></i><span style="left:100%">100%</span></div>
+      <div class="row hl"><div class="name">whatleaks</div><div class="track"><div class="fill" data-bar="3.4" data-at="@compare-out+0.9"></div><div class="val">3.4%</div></div></div>
+      <div class="row"><div class="name">mitmproxy 12.2.3<small>given the same environment</small></div><div class="track"><div class="fill" data-bar="38" data-at="@compare-out+1.15"></div><div class="val">38%</div></div></div>
+      <div class="row"><div class="name">HTTP Toolkit 1.27.3<small>with its own interception</small></div><div class="track"><div class="fill" data-bar="67" data-at="@compare-out+1.4"></div><div class="val">67%</div></div></div>
+      <div class="axis"></div>
+    </div>
+    <p class="foot" data-in="@compare-out+2.6">Real tools, against their own debug output: <b>whatleaks 5 of 5</b>, HTTP Toolkit 4 of 5, mitmproxy 3 of 5. Our own benchmark: the scripts, every result file and the threats to validity are public.</p>
+  </div>
+</section>
+
+<!-- 6: end -->
+<section class="scene center" id="s-end" data-in="@bench-out" data-out="999">
+  <div class="dots"></div><svg class="drop" viewBox="1 1 22 22" data-pop="@bench-out+0.2"></svg>
+  <div class="kick"><svg class="logo"><use href="#logo"/></svg>whatleaks<span>open source · MIT · macOS and Linux</span></div>
+  <h1 class="big">See what your tools<br><em>send home.</em></h1>
+  <div class="cmd"><span class="p">$</span><span>npx whatleaks run -- <span class="arg">&lt;command&gt;</span></span></div>
+  <div class="links"><b>whatleaks.me</b> · github.com/devanshranjan10/whatleaks</div>
+</section>
+
+<script src="recordings.js"></script>
+<script>
+const GIF = location.search.includes('gif');
+if (GIF) document.body.classList.add('gif');
+
+// The logo: a droplet of dots, the last one red (scripts/site/build.mjs).
+const DROP = [[12, 3], [12, 6], [9, 9], [12, 9], [15, 9], [6, 12], [9, 12], [12, 12], [15, 12], [18, 12], [6, 15], [9, 15], [12, 15], [15, 15], [18, 15], [6, 18], [9, 18], [12, 18], [15, 18], [18, 18], [9, 21], [15, 21], [12, 21]];
+const dropDots = DROP.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="1.35" fill="${i === DROP.length - 1 ? '#dc2626' : '#2563eb'}"/>`).join('');
+document.getElementById('logo').innerHTML = dropDots;
+for (const svg of document.querySelectorAll('svg.drop')) svg.innerHTML = dropDots;
+
+// ---------- the recordings: ANSI to HTML, line by line, each line at the time it was printed ----------
+const COLORS = { 31: 'var(--t-red)', 32: 'var(--t-green)', 33: 'var(--t-amber)', 34: 'var(--t-blue)', 35: 'var(--t-violet)', 36: 'var(--t-cyan)', 37: 'var(--t-fg)', 90: 'var(--t-dim)', 91: 'var(--t-red)', 92: 'var(--t-green)', 93: 'var(--t-amber)', 94: 'var(--t-blue)', 95: 'var(--t-violet)', 96: 'var(--t-cyan)', 97: '#fff' };
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function sgr(st, params) {
+  const p = params === '' ? [0] : params.split(';').map(Number);
+  for (let i = 0; i < p.length; i++) {
+    const c = p[i];
+    if (c === 0) Object.assign(st, { b: 0, d: 0, u: 0, fg: null });
+    else if (c === 1) st.b = 1;
+    else if (c === 2) st.d = 1;
+    else if (c === 22) st.b = st.d = 0;
+    else if (c === 4) st.u = 1;
+    else if (c === 24) st.u = 0;
+    else if (c === 39) st.fg = null;
+    else if (c === 38 && p[i + 1] === 2) { st.fg = `rgb(${p[i + 2]},${p[i + 3]},${p[i + 4]})`; i += 4; }
+    else if (COLORS[c]) st.fg = COLORS[c];
+  }
+}
+function html(raw, st) {
+  let out = '';
+  let last = 0;
+  const seg = (s) => {
+    if (!s) return;
+    const css = [];
+    if (st.fg) css.push(`color:${st.fg}`); else if (st.d) css.push('color:var(--t-dim)'); else if (st.b) css.push('color:#fff');
+    if (st.fg && st.d) css.push('opacity:.75');
+    if (st.b) css.push('font-weight:600');
+    if (st.u) css.push('text-decoration:underline');
+    out += `<span style="${css.join(';')}">${esc(s)}</span>`;
+  };
+  for (const m of raw.matchAll(/\x1b\[([0-9;?]*)([A-Za-z])/g)) {
+    seg(raw.slice(last, m.index));
+    last = m.index + m[0].length;
+    if (m[2] === 'm') sgr(st, m[1]);
+  }
+  seg(raw.slice(last));
+  return out || '<span></span>';
+}
+// Lines dropped from every recording: Node 22's warning about its own proxy support (printed by each Next.js worker)
+// and Next's route table. Both are real output; they are cut for room.
+const DROP_LINES = [/\[UNDICI-EHPA\]/, /trace-warnings/, /^Route \(app\)/, /^[┌└├] ○ /, /^○ {2}\(Static\)/];
+function lines(rec, { cut } = {}) {
+  const out = [];
+  const st = { b: 0, d: 0, u: 0, fg: null };
+  let buf = '';
+  const push = (t) => {
+    const text = buf.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
+    const h = html(buf, st);
+    buf = '';
+    if (DROP_LINES.some((re) => re.test(text))) return;
+    // Next prints blank lines around the route table; with the table gone, keep at most one.
+    if (text === '' && out.length && out.at(-1).text === '') return;
+    out.push({ t, text, html: h });
+  };
+  for (const [t, d] of rec.chunks) for (const ch of d) { if (ch === '\n') push(t); else buf += ch; }
+  if (buf) push(rec.ms);
+  if (cut) { const i = out.findIndex((l) => cut.test(l.text)); out.length = i + 1; out.push({ t: out[i].t, text: '…', html: '<span style="color:var(--t-dim)">…</span>' }); }
+  return out;
+}
+
+// ---------- timeline ----------
+const CUES = {};
+const R = window.RECORDINGS;
+const TERMS = [
+  { id: 'term-run', start: 4.2, steps: [
+    { rec: 'run', cue: 'run', cps: 26, speed: 2.5, cut: /^ {2}registry\.npmjs\.org +other/ },
+  ] },
+  { id: 'term-compare', start: null, steps: [
+    { rec: 'dnt', cue: 'dnt', cps: 40, speed: 3, hl: [[/still contacted after opting out/, 'r'], [/^Telemetry requests: 8 → 8/, 'r'], [/^ {2}● POST telemetry\.nextjs\.org/, 'r']] },
+    { rec: 'ntd', cue: 'ntd', cps: 46, speed: 3.5, pause: 3.4, hl: [[/stopped after opting out/, 'g'], [/^Telemetry requests: 8 → 0/, 'g'], [/^ {2}✓ POST telemetry\.nextjs\.org/, 'g']] },
+  ] },
+];
+const HOLD = { run: 2.8, payload: 7.0, ntd: 3.4, bench: 7.2 };
+
+const typers = [];
+const shown = []; // terminal lines: { el, t }
+const bands = []; // highlight bands: { el, t }
+const speeds = []; // { chip, from, text }
+function addLine(body, inner, t, cls) {
+  const el = document.createElement('div');
+  el.className = `ln${cls ? ` ${cls}` : ''}`;
+  el.innerHTML = (cls ? '<i class="band"></i>' : '') + inner;
+  body.append(el);
+  shown.push({ el, t, body });
+  if (cls) bands.push({ el: el.querySelector('.band'), t: t + 0.35 });
+  return el;
+}
+function buildTerm(term, start) {
+  const root = document.getElementById(term.id);
+  const body = root.querySelector('.body');
+  const chip = root.querySelector('.speed');
+  let t = start;
+  for (const step of term.steps) {
+    const rec = R[step.rec];
+    if (step.pause) t += step.pause;
+    const shownAt = t - (step.pause ?? 0.3);
+    const prompt = addLine(body, '<span class="p">$ </span><span class="typed"></span>', shownAt);
+    const t0 = t + 0.35;
+    typers.push({ el: prompt.querySelector('.typed'), text: rec.cmd, t0, cps: step.cps, idleFrom: shownAt });
+    CUES[`${step.cue}-type`] = t - 0.3;
+    const enter = t0 + rec.cmd.length / step.cps + 0.3;
+    typers.at(-1).enter = enter;
+    speeds.push({ chip, from: t - 0.3, text: `real output · abridged · ${step.speed}× speed` });
+    for (const l of lines(rec, step)) {
+      const hl = step.hl?.find(([re]) => re.test(l.text));
+      addLine(body, l.html, enter + l.t / 1000 / step.speed, hl ? `hl-${hl[1]}` : '');
+    }
+    t = enter + rec.ms / 1000 / step.speed + 0.1;
+    CUES[step.cue] = t;
+  }
+  const last = addLine(body, '<span class="p">$ </span><span class="typed"></span>', t);
+  typers.push({ el: last.querySelector('.typed'), text: '', t0: t, cps: 1, idleFrom: t, enter: Infinity });
+  return t;
+}
+const runEnd = buildTerm(TERMS[0], TERMS[0].start);
+CUES.payload = runEnd + HOLD.run;
+CUES['run-out'] = CUES.payload + HOLD.payload;
+const compareEnd = buildTerm(TERMS[1], CUES['run-out'] + 0.7);
+CUES['compare-out'] = compareEnd + HOLD.ntd;
+CUES['bench-out'] = CUES['compare-out'] + HOLD.bench;
+const DURATION = CUES['bench-out'] + 6;
+// The GIF: from the first prompt of the comparisons to just before the scene fades out.
+const RANGE = GIF ? [CUES['run-out'] + 0.45, CUES['compare-out'] - 0.05] : [0, DURATION];
+
+// The payload: sample 1 of the Markdown report, from its first line to the first event name.
+{
+  const db = document.querySelector('#doc .db');
+  const sample = R.sample.lines;
+  const end = sample.findIndex((l) => l.includes('"eventName"'));
+  const notes = { anonymousId: ['am', 'same in a second run'], projectId: ['am', 'same in a second run'], agentName: ['rd', 'the AI agent that ran the build'] };
+  const at = { am: CUES.payload + 1.4, rd: CUES.payload + 2.6 };
+  sample.slice(0, end + 1).concat('…').forEach((raw) => {
+    const el = document.createElement('div');
+    el.className = 'dl';
+    const key = Object.keys(notes).find((k) => raw.includes(`"${k}"`));
+    const body = esc(raw).replace(/^(\s*)(&quot;|")([^"]+)"(:)/, '$1<span class="k">"$3"</span>$4').replace(/: "([^"]*)"/, ': <span class="s">"$1"</span>');
+    el.innerHTML = key ? `<i class="band"></i><span>${body}</span><span class="note">${notes[key][1]}</span>` : `<span>${body}</span>`;
+    if (key) { el.classList.add(notes[key][0]); bands.push({ el: el.querySelector('.band'), t: at[notes[key][0]] }, { el: el.querySelector('.note'), t: at[notes[key][0]] }); }
+    db.append(el);
+  });
+}
+
+// ---------- seek ----------
+const FADE = 0.4;
+const clamp = (x) => Math.max(0, Math.min(1, x));
+const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const when = (v) => {
+  if (v == null) return null;
+  const m = /^@([\w-]+)([+-][\d.]+)?$/.exec(v);
+  return m ? CUES[m[1]] + Number(m[2] ?? 0) : Number(v);
+};
+const faders = [...document.querySelectorAll('[data-in]')].map((el) => ({ el, tin: when(el.dataset.in), tout: el.hasAttribute('data-out') ? when(el.dataset.out) : Infinity, rise: el.hasAttribute('data-rise') }));
+const pops = [...document.querySelectorAll('[data-pop]')].map((el) => ({ dots: [...el.querySelectorAll('circle')], at: when(el.dataset.pop) }));
+const bars = [...document.querySelectorAll('[data-bar]')].map((el) => ({ el, val: el.nextElementSibling, v: Number(el.dataset.bar), at: when(el.dataset.at) }));
+
+// How far each terminal must scroll once a line is showing: measured once the fonts are in, with everything laid out.
+// Scrolling snaps to whole lines, as a terminal does: the top line is never cut in half.
+function measure() {
+  for (const s of shown) {
+    const pad = parseFloat(getComputedStyle(s.body).paddingTop);
+    const lh = parseFloat(getComputedStyle(s.body).lineHeight);
+    const need = s.el.offsetTop + s.el.offsetHeight + 20 - s.body.parentElement.clientHeight;
+    s.need = need <= 0 ? 0 : Math.round(pad + Math.ceil((need - pad + 4) / lh) * lh - 4);
+  }
+}
+
+function seek(t) {
+  for (const f of faders) {
+    // Panels that rise in fade quickly, so the terminal doesn't show through them for long.
+    const o = GIF && f.el.id === 's-compare' ? 1 : Math.min(ease((t - f.tin) / (f.rise ? 0.15 : FADE)), 1 - ease((t - f.tout) / FADE));
+    f.el.style.opacity = o;
+    if (f.rise) f.el.style.transform = `translateY(${(1 - ease((t - f.tin) / 0.6)) * 40}px)`;
+  }
+  const scroll = new Map();
+  for (const s of shown) {
+    const on = t >= s.t;
+    s.el.classList.toggle('on', on);
+    if (on) scroll.set(s.body, Math.max(scroll.get(s.body) ?? 0, s.need));
+  }
+  for (const [body, y] of scroll) body.style.transform = `translateY(${-y}px)`;
+  const blink = Math.floor(t * 1.9) % 2 === 0;
+  for (const ty of typers) {
+    const n = Math.max(0, Math.min(ty.text.length, Math.floor((t - ty.t0) * ty.cps)));
+    const typing = t >= ty.t0 && n < ty.text.length;
+    const waiting = t >= ty.idleFrom && t < ty.enter;
+    ty.el.textContent = ty.text.slice(0, n);
+    if (waiting && (typing || blink)) { const c = document.createElement('span'); c.className = 'caret'; ty.el.append(c); }
+  }
+  for (const b of bands) b.el.style.opacity = ease((t - b.t) / 0.45);
+  for (const sp of speeds) if (t >= sp.from) sp.chip.textContent = sp.text;
+  for (const p of pops) p.dots.forEach((d, i) => { const k = ease((t - p.at - i * 0.035) / 0.35); d.style.transform = `scale(${k})`; });
+  for (const b of bars) {
+    const w = b.v * ease((t - b.at) / 0.9);
+    b.el.style.width = `${w}%`;
+    b.val.style.left = `${w}%`;
+    b.val.style.opacity = ease((t - b.at - 0.5) / 0.4);
+  }
+}
+window.seek = seek;
+window.DURATION = DURATION;
+window.RANGE = RANGE;
+window.CUES = CUES;
+window.READY = Promise.all(['400 24px Geist', '600 24px Geist', '400 18px "Geist Mono"', '600 18px "Geist Mono"'].map((f) => document.fonts.load(f)))
+  .then(() => document.fonts.ready)
+  .then(() => {
+    measure();
+    seek(RANGE[0]);
+    if (location.search.includes('play')) {
+      const t0 = performance.now();
+      const tick = () => { seek(RANGE[0] + (((performance.now() - t0) / 1000) % (RANGE[1] - RANGE[0]))); requestAnimationFrame(tick); };
+      tick();
+    }
+    return true;
+  });
+</script>
+</body>
+</html>

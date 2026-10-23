@@ -16,6 +16,11 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="whatleaks: see what your tools send home. Next.js kept sending 8 telemetry requests with DO_NOT_TRACK=1 set.">
+<meta property="og:video" content="https://whatleaks.me/media/whatleaks-demo.mp4">
+<meta property="og:video:secure_url" content="https://whatleaks.me/media/whatleaks-demo.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta property="og:video:width" content="1920">
+<meta property="og:video:height" content="1080">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="whatleaks: see what your tools send home">
 <meta name="twitter:description" content="Run any command through a local, single-run proxy and see what it sends, what it says about you, and what it still sends after you opt out.">
@@ -96,7 +101,7 @@ Telemetry requests: <span class="b">8 → 0</span> · all requests: 9 → 1
   <span class="g">✓</span> nothing identifying in the second run's visible traffic</pre></div>
           </div>
         </div>
-        <figcaption class="caption"><span>Real output from <code>next build</code> (Next.js 16.4.2, Node 22.23), 2026-10-21, abridged. Next.js documents <code>NEXT_TELEMETRY_DISABLED</code>, not <code>DO_NOT_TRACK</code>.</span><a href="https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e">Full transcripts →</a></figcaption>
+        <figcaption class="caption"><span>Real output from <code>next build</code> (Next.js 16.4.2, Node 22.23), 2026-10-21, abridged. Next.js documents <code>NEXT_TELEMETRY_DISABLED</code>, not <code>DO_NOT_TRACK</code>.</span><a href="/media/whatleaks-demo.mp4">Watch the 55-second video</a><a href="https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e">Full transcripts →</a></figcaption>
       </figure>
     </div>
   </section>
@@ -309,7 +314,7 @@ Telemetry requests: <span class="b">8 → 0</span> · all requests: 9 → 1
           <div class="big">Try it on your next build</div>
           <div class="cmdline"><code><span class="p">$</span> npx whatleaks run -- <span class="arg">&lt;command&gt;</span></code><button type="button" data-copy="npx whatleaks run -- " aria-label="Copy command"></button></div>
           <a class="btn dark lg" href="/docs/#quickstart">Read the quickstart</a>
-          <p class="alt">or <code>npm install -g whatleaks</code> · Node ≥ 22.12</p>
+          <p class="alt">or <code>npm install -g whatleaks</code><br>or <code>brew install devanshranjan10/tap/whatleaks</code></p>
         </div>
       </div>
     </div>

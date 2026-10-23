@@ -11,8 +11,8 @@
     "directory": "../../.site-dist",
     "binding": "ASSETS",
     // The Worker runs first for pages and small files (redirects, Markdown for agents, Link headers, no-transform on
-    // every HTML response including the 404 page). CSS, JS and fonts are served straight from the edge, so they cost
-    // no Worker requests.
+    // every HTML response including the 404 page, byte ranges for the demo video). CSS, JS and fonts are served
+    // straight from the edge, so they cost no Worker requests.
     "run_worker_first": ["/*", "!/assets/*", "!/fonts/*"],
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash"

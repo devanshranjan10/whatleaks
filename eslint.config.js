@@ -36,8 +36,9 @@ export default tseslint.config(
       globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', setTimeout: 'readonly', fetch: 'readonly', URL: 'readonly', WebSocket: 'readonly' },
     },
   },
-  // whatleaks.me: the page script runs in browsers, the build in Node, the edge script in a Worker.
-  { files: ['site/**/*.js'], languageOptions: { globals: globals.browser } },
+  // whatleaks.me: the page script runs in browsers, the build in Node, the edge script in a Worker. The demo video's
+  // recordings are loaded by a page too.
+  { files: ['site/**/*.js', 'scripts/video/*.js'], languageOptions: { globals: globals.browser } },
   { files: ['scripts/**/*.mjs'], languageOptions: { globals: globals.node } },
   { files: ['scripts/site/worker.js'], languageOptions: { globals: globals.serviceworker } },
 );

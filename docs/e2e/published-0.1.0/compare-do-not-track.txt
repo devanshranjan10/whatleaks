@@ -1,0 +1,90 @@
+$ npx whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- next build
+whatleaks: run 1 of 2 — defaults (opt-out variables removed)
+whatleaks: recording next through http://127.0.0.1:61445 (loopback only, single-run CA)
+(node:91058) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config took 14ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 475ms
+  Running TypeScript ...
+  Finished TypeScript in 3ms ...
+  Collecting page data using 4 workers ...
+(node:91613) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:91614) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:91615) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:91616) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 4 workers (0/3) ...
+✓ Generating static pages using 4 workers (3/3) in 759ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+whatleaks: next exited; waiting up to 10 s for processes it left running
+whatleaks: capture saved to /private/tmp/wl-demo/my-app/whatleaks-default-20261024-004445.har (raw traffic, readable only by you: share the report, not the HAR)
+whatleaks: run 2 of 2 — opted out (1 variable set)
+whatleaks: recording next through http://127.0.0.1:61474 (loopback only, single-run CA)
+(node:92915) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config took 42ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 236ms
+  Running TypeScript ...
+  Finished TypeScript in 2ms ...
+  Collecting page data using 4 workers ...
+(node:93444) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:93447) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:93445) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:93446) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 4 workers (0/3) ...
+✓ Generating static pages using 4 workers (3/3) in 858ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+whatleaks: capture saved to /private/tmp/wl-demo/my-app/whatleaks-opted-out-20261024-004445.har (raw traffic, readable only by you: share the report, not the HAR)
+
+whatleaks diff · before "default" (6.4 s, 9 requests) → after "opted-out" (5.8 s, 9 requests)
+command: next build
+opted out with: DO_NOT_TRACK
+
+The telemetry endpoint was still contacted after opting out.
+Telemetry requests: 8 → 8 · all requests: 9 → 9
+
+STILL SENDING AFTER OPT-OUT
+  ● POST telemetry.nextjs.org/api/v1/record  analytics · Next.js telemetry  8 → 8 requests
+      still sent: context.anonymousId, context.projectId, context.sessionId, events[].eventName, meta.agentName, meta.ciName, meta.cpuCount, meta.cpuModel, meta.cpuSpeed, meta.isCI …+81
+
+OTHER TRAFFIC
+  (not identified as telemetry; check it yourself)
+  = POST registry.npmjs.org/-/npm/v1/security/advisories/bulk  other  1 → 1
+
+STILL SENT ABOUT YOU
+  ○ Repeated identifiers — 8 requests, in context.anonymousId, context.projectId, context.sessionId
+
+PERSISTENT IDENTIFIERS
+  same value in both runs: stored by the app or built into it, so it can link runs together
+  ○ ‹id-1› at context.anonymousId → POST telemetry.nextjs.org/api/v1/record
+  ○ ‹id-2› at context.projectId → POST telemetry.nextjs.org/api/v1/record
+whatleaks: full reports: whatleaks report /private/tmp/wl-demo/my-app/whatleaks-default-20261024-004445.har  (and …-opted-out-20261024-004445.har)

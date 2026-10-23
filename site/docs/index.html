@@ -72,7 +72,8 @@
         <section id="install">
           <h2>Install</h2>
           <div class="code"><pre><span class="p">$ </span>npx whatleaks run -- &lt;command&gt;     <span class="c"># no install</span>
-<span class="p">$ </span>npm install -g whatleaks           <span class="c"># the whatleaks command</span></pre></div>
+<span class="p">$ </span>npm install -g whatleaks           <span class="c"># the whatleaks command</span>
+<span class="p">$ </span>brew install devanshranjan10/tap/whatleaks   <span class="c"># Homebrew, with its own Node</span></pre></div>
           <p>It needs Node 22.12 or later and runs on macOS and Linux. The install pulls about 195 packages (41 MB), mostly the proxy library, <a href="https://github.com/httptoolkit/mockttp">mockttp</a>.</p>
           <p>Recent npm versions may say they skipped an install script for <code>tls-impersonate</code>. Nothing needs approving: mockttp loads that native module only to mirror TLS fingerprints, which whatleaks never turns on, and it ships prebuilt binaries anyway.</p>
         </section>

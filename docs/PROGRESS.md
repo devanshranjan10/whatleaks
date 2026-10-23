@@ -102,7 +102,27 @@ page: only whatleaks.me is contacted and the console is clean. Cloudflare had be
 injecting its Web Analytics beacon into the HTML (the zone has automatic setup on), which
 the Worker now prevents by sending `Cache-Control: no-transform` on every HTML response.
 The Worker runs first for everything except `/assets/` and `/fonts/`, so that covers the
-404 page too.
+404 page too. It also answers byte-range requests for `/media/`: static assets ignore
+`Range`, and Safari won't play a video without it (landmine.tech has the same fix).
+
+**Launch assets (2026-10-24).** A demo video and a README GIF, both replayed from real
+runs of the published 0.1.0 (`docs/e2e/README.md` §5: `next build` 9 requests, 8 → 8 with
+`DO_NOT_TRACK=1`, 8 → 0 with `NEXT_TELEMETRY_DISABLED=1`, the same as on 2026-10-21):
+- `scripts/video/record.mjs` recorded each command's output with its timing;
+  `recordings.js` holds the three recordings and the payload sample.
+- `scripts/video/demo.html` replays them in the site's style. It drops only Node's proxy
+  warning and Next's route table, cuts the single-run report after WHERE IT WENT, and
+  shows each run's speed in the terminal's title bar.
+- `node scripts/video/render.mjs` seeks the page frame by frame in headless Chrome (over
+  the DevTools protocol, no dependencies) and writes `site/media/whatleaks-demo.mp4`
+  (1920×1080, 55 s), its poster, and `docs/media/whatleaks-demo.gif` (the two
+  comparisons, 1200×800, 12 fps).
+
+The README opens with the GIF, linked to the video; the home page links the video and
+carries og:video tags. Also new: `SECURITY.md` (and private vulnerability reporting is on
+for the repo), `CONTRIBUTING.md`, `CHANGELOG.md`, issue forms, and a 400 px square logo
+for directory listings (`docs/media/whatleaks-logo-400.png`). The npm page still shows
+0.1.0's README until the next release.
 
 ---
 

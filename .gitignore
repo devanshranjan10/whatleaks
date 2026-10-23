@@ -11,3 +11,4 @@ whatleaks-*.json
 whatleaks-*.tgz
 .site-dist/
 .wrangler/
+video-out/
