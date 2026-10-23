@@ -66,6 +66,10 @@ hand is not a failure, and it runs on Node 24, whose npm can use trusted publish
 GitHub Packages mirror (`@devanshranjan10/whatleaks`) publishes with each GitHub release,
 as landmine's does.
 
+**Launch.** The repo is public at github.com/devanshranjan10/whatleaks (2026-10-23), with
+a description and 14 topics. CI is green on all 8 jobs from its second run on. npm waits
+for the owner's `npm login`, and publishing needs their 2FA approval in the browser.
+
 ---
 
 ## Benchmark session, third round (2026-10-22)

@@ -78,8 +78,8 @@ npm ci && npm run build
 node dist/cli.js --help
 ```
 
-The source build, and the packed package installed into an empty project, were tested
-on macOS 26.6.2.
+CI builds and tests every commit on Ubuntu and macOS with Node 22.12.0, 22, 24 and 26,
+then installs the packed package into an empty project and captures a real request.
 
 ## Usage
 
