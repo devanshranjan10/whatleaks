@@ -1,6 +1,8 @@
 name: release
-# Publishes to npm with provenance when a version tag (v0.1.0) is pushed. Needs the NPM_TOKEN secret, or switch to
-# npm trusted publishing (OIDC) once the package exists on npm. Provenance needs package.json `repository` to match this repo.
+# Publishes to npm with provenance when a version tag (v0.2.0) is pushed. Once npm trusts this workflow for the package
+# (`npm trust github whatleaks --repo devanshranjan10/whatleaks --file release.yml`) no token is needed; that takes npm
+# 11.5.1 or later, which Node 24 ships. Otherwise it uses the NPM_TOKEN secret. A version npm already has is skipped, so
+# tagging one that went out by hand is not an error. Provenance needs package.json `repository` to match this repo.
 on:
   push:
     tags: ['v*']
@@ -14,13 +16,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci
       - name: tag matches package.json
         run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - name: skip a version npm already has
+        id: npm
+        run: |
+          if npm view "whatleaks@${GITHUB_REF_NAME#v}" version > /dev/null 2>&1; then echo "has=true" >> "$GITHUB_OUTPUT"; fi
       # prepublishOnly runs the full check and prepack builds dist/ fresh.
-      - run: npm publish --provenance --access public
+      - if: steps.npm.outputs.has != 'true'
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -58,6 +58,11 @@ the absolute path of the machine it was compiled on. It is out of every commit n
 only by that file, commit messages and doc citations follow the new hashes, and no blob in
 the history holds the machine's username or a personal email.
 
+The release workflow skips a version npm already has, so tagging a version published by
+hand is not a failure, and it runs on Node 24, whose npm can use trusted publishing. A
+GitHub Packages mirror (`@devanshranjan10/whatleaks`) publishes with each GitHub release,
+as landmine's does.
+
 ---
 
 ## Benchmark session, third round (2026-10-22)
