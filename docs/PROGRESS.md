@@ -67,8 +67,21 @@ GitHub Packages mirror (`@devanshranjan10/whatleaks`) publishes with each GitHub
 as landmine's does.
 
 **Launch.** The repo is public at github.com/devanshranjan10/whatleaks (2026-10-23), with
-a description and 14 topics. CI is green on all 8 jobs from its second run on. npm waits
-for the owner's `npm login`, and publishing needs their 2FA approval in the browser.
+a description, 14 topics and the npm page as its homepage. CI is green on all 8 jobs from
+its second run on.
+
+`whatleaks@0.1.0` is on npm, published by hand from `d352e94` with the owner's 2FA
+approval. Installed from the registry into an empty project, it printed its version and
+captured a real request.
+
+Tag `v0.1.0` and the GitHub release "whatleaks 0.1.0" point at the same commit:
+- The release workflow found the version on npm and skipped publishing.
+- The GitHub Packages mirror ran the full check (241 tests passed, 2 skipped) and
+  published `@devanshranjan10/whatleaks@0.1.0`.
+
+npm now trusts `release.yml` in this repo to publish `whatleaks`, and the repo has no
+NPM_TOKEN secret. The next release therefore needs only a version bump and a tag. That
+path has not run yet; the next tag is its first use.
 
 ---
 
