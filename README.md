@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/whatleaks)](https://www.npmjs.com/package/whatleaks)
 [![ci](https://github.com/devanshranjan10/whatleaks/actions/workflows/ci.yml/badge.svg)](https://github.com/devanshranjan10/whatleaks/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![website](https://img.shields.io/badge/website-whatleaks.me-2a78d6)](https://whatleaks.me)
 
 **See what an app you run sends home, and what it still sends after you opt out.**
 
@@ -15,6 +16,8 @@ whatleaks runs a command through a local, single-run proxy and tells you:
 
 `whatleaks compare` runs the command twice, first with defaults and then opted out of
 telemetry, and shows what is *still* sent.
+
+Docs, the benchmark and an FAQ are at [whatleaks.me](https://whatleaks.me).
 
 ```
 $ whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- ./node_modules/.bin/next build

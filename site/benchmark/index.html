@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark · whatleaks vs mitmproxy and HTTP Toolkit</title>
+<meta name="description" content="What whatleaks catches, what it misses and what it costs, measured against exact ground truth and against mitmproxy and HTTP Toolkit: 46 lab scenarios on macOS and 43 on Linux, five real tools, and the threats to validity.">
+<link rel="canonical" href="https://whatleaks.me/benchmark/">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="whatleaks">
+<meta property="og:url" content="https://whatleaks.me/benchmark/">
+<meta property="og:title" content="whatleaks benchmark: 3.4% silently missed, against 38% for mitmproxy and 67% for HTTP Toolkit">
+<meta property="og:description" content="46 lab scenarios with exact ground truth on macOS, 43 on Linux, five real tools checked against their own debug output, and every caveat.">
+<meta property="og:image" content="https://whatleaks.me/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://whatleaks.me/og.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"whatleaks benchmark: what it catches, misses and costs","url":"https://whatleaks.me/benchmark/","author":{"@type":"Person","name":"Devansh Ranjan","url":"https://github.com/devanshranjan10"},"about":{"@type":"SoftwareApplication","name":"whatleaks","url":"https://whatleaks.me/"},"datePublished":"2026-10-22","dateModified":"2026-10-23"}
+</script>
+<script defer src="/assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<!-- @nav -->
+<main id="main">
+  <section class="page-head band" style="border-top:0">
+    <div class="wrap">
+      <span class="eyebrow">Benchmark · run 2026-10-21 and 22</span>
+      <h1 class="h1" style="margin-top:18px">What it catches, what it <em>misses</em>, and what it costs.</h1>
+      <p class="lede">Measured against exact ground truth and against two tools people use today, on macOS and on Linux. Every number comes from a script in <code>bench/</code> and a result file in <code>bench/results/</code>.</p>
+      <div class="row">
+        <a class="btn dark" href="https://github.com/devanshranjan10/whatleaks/blob/main/docs/BENCHMARK.md">Method and raw results</a>
+        <a class="btn" href="#reproduce">Run it yourself <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="band flush">
+    <div class="wrap">
+      <div class="facts">
+        <div class="frame"><div class="card"><div class="num acc">3.4%</div><p>of 594 attempts silently missed on macOS, and 3.0% of 567 on Linux. mitmproxy missed 38% and 40%, HTTP Toolkit 67% and 70%.</p></div></div>
+        <div class="frame"><div class="card"><div class="num">0</div><p>false attributions. In every run, nothing the app did not send was credited to it.</p></div></div>
+        <div class="frame"><div class="card"><div class="num">5 of 5</div><p>real tools matched against their own debug output. HTTP Toolkit matched 4, mitmproxy 3.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap doc">
+      <aside class="toc" aria-label="On this page">
+        <h4>On this page</h4>
+        <ol>
+          <li><a href="#headline">Headline</a></li>
+          <li><a href="#lab">How the lab works</a></li>
+          <li><a href="#scenarios">Every scenario</a></li>
+          <li><a href="#misses">Where it still misses</a></li>
+          <li><a href="#real-tools">Real tools</a></li>
+          <li><a href="#cost">Cost</a></li>
+          <li><a href="#linux">Linux</a></li>
+          <li><a href="#threats">Threats to validity</a></li>
+          <li><a href="#reproduce">Reproduce</a></li>
+        </ol>
+      </aside>
+      <div class="prose">
+        <section id="headline">
+          <h2>Headline</h2>
+          <p><strong>Lab, exact ground truth: 46 scenarios and 594 attempts on macOS, 43 and 567 on Linux.</strong> The baselines are <a href="https://mitmproxy.org">mitmproxy</a> 12.2.3 (12.3.0 in the Linux image), run with the same proxy and CA variables whatleaks sets, and <a href="https://httptoolkit.com">HTTP Toolkit</a> server 1.27.3, driven the way its desktop app drives it: its "existing terminal" setup, which sets proxy and CA variables plus its own Node, Python, Ruby and Java hooks.</p>
+
+          <div class="frame" style="margin:26px 0"><div class="card viz" data-stacks='{"keys":["payload read","request seen, body cut","host named"],"rows":[{"name":"whatleaks","parts":[74,0.5,22],"missed":3.4,"count":"20 of 594","hl":true},{"name":"mitmproxy","parts":[57,0,5],"missed":38,"count":"225 of 594"},{"name":"HTTP Toolkit","parts":[31,0,2],"missed":67,"count":"399 of 594"},{"name":"whatleaks before","parts":[33,11,7],"missed":48,"count":"273 of 564"}]}'>
+            <div class="vhead"><div><h3 class="h3">Outcome of every attempt, macOS</h3><p class="sub">Best outcome first. "whatleaks before" is the build at the start of this work, on the 43 scenarios it ran.</p></div></div>
+            <div class="stack-legend" aria-hidden="true"><span><i class="o-payload"></i>payload read</span><span><i class="o-request"></i>request seen, body cut</span><span><i class="o-host"></i>host named</span><span><i class="o-missed"></i>silently missed</span></div>
+            <div class="stacks"></div>
+          </div></div>
+
+          <p>Payload: read with a byte-identical body. Body cut: request seen, body missing or cut off. Host only: not decrypted, but the destination named. Best possible: the share of attempts at the best outcome whatleaks's rules allow (see <a href="#lab">how the lab works</a>).</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>macOS</th><th class="num">payload</th><th class="num">body cut</th><th class="num">host only</th><th class="num">silently missed</th><th class="num">best possible</th></tr></thead>
+            <tbody>
+              <tr><td>whatleaks before (43 scenarios)</td><td class="num">33%</td><td class="num">11%</td><td class="num">7%</td><td class="num">48% (273 of 564)</td><td class="num">38%</td></tr>
+              <tr class="hl"><td>whatleaks</td><td class="num">74%</td><td class="num">0.5%</td><td class="num">22%</td><td class="num">3.4% (20)</td><td class="num">97%</td></tr>
+              <tr><td>mitmproxy</td><td class="num">57%</td><td class="num">0%</td><td class="num">5%</td><td class="num">38% (225)</td><td class="num">59%</td></tr>
+              <tr><td>HTTP Toolkit</td><td class="num">31%</td><td class="num">0%</td><td class="num">2%</td><td class="num">67% (399)</td><td class="num">33%</td></tr>
+            </tbody>
+          </table></div>
+
+          <div class="frame" style="margin:26px 0"><div class="card viz" data-stacks='{"keys":["payload read","request seen, body cut","host named"],"rows":[{"name":"whatleaks","parts":[74,1,22],"missed":3.0,"missedLabel":"3.0%","count":"17 of 567","hl":true},{"name":"mitmproxy","parts":[60,0,1],"missed":40,"count":"225 of 567"},{"name":"HTTP Toolkit","parts":[29,0,1],"missed":70,"count":"399 of 567"}]}'>
+            <div class="vhead"><div><h3 class="h3">Outcome of every attempt, Linux</h3><p class="sub">Debian in Docker, Node 20, 22 and 26, Python, Go and OpenJDK 17.</p></div></div>
+            <div class="stack-legend" aria-hidden="true"><span><i class="o-payload"></i>payload read</span><span><i class="o-request"></i>request seen, body cut</span><span><i class="o-host"></i>host named</span><span><i class="o-missed"></i>silently missed</span></div>
+            <div class="stacks"></div>
+          </div></div>
+
+          <div class="table-wrap"><table>
+            <thead><tr><th>Linux</th><th class="num">payload</th><th class="num">body cut</th><th class="num">host only</th><th class="num">silently missed</th><th class="num">best possible</th></tr></thead>
+            <tbody>
+              <tr class="hl"><td>whatleaks</td><td class="num">74%</td><td class="num">1%</td><td class="num">22%</td><td class="num">3.0% (17)</td><td class="num">97%</td></tr>
+              <tr><td>mitmproxy</td><td class="num">60%</td><td class="num">0%</td><td class="num">1%</td><td class="num">40% (225)</td><td class="num">60%</td></tr>
+              <tr><td>HTTP Toolkit</td><td class="num">29%</td><td class="num">0%</td><td class="num">1%</td><td class="num">70% (399)</td><td class="num">30%</td></tr>
+            </tbody>
+          </table></div>
+
+          <ul>
+            <li><strong>Every miss left is a program whatleaks loads no hook into.</strong> On the 43 scenarios the old build also ran, whatleaks missed 0 of 564 attempts on macOS. All 20 misses on macOS and all 17 on Linux are in rows added to measure that limit: Go programs that bypass the proxy. No other tool here names those either.</li>
+            <li><strong>whatleaks reached the best possible outcome in every scenario where another tool did.</strong> In no scenario did a baseline read a payload whatleaks only named. The one row where a baseline went past it is the 9 MiB upload: mitmproxy kept the whole body, and whatleaks caps buffering at 8 MiB by design.</li>
+            <li><strong>No false attributions.</strong> In every run, nothing the app did not send was credited to it.</li>
+            <li><strong>Identity detection:</strong> all 8 planted identifiers were found in every run, and all 3 planted in a WebSocket message. None of the 4 decoys was flagged.</li>
+            <li><strong>Cost:</strong> the lowest median latency of the three proxies on keep-alive requests and on new TLS connections. Large uploads were roughly even with mitmproxy. It uses more CPU than mitmproxy, mostly a fixed second per run.</li>
+          </ul>
+        </section>
+
+        <section id="lab">
+          <h2>How the lab works</h2>
+          <p>A lab server runs on the machine's LAN address with its own CA: HTTP/1.1, WebSocket, HTTP/2, raw TCP and UDP. It is reached as an sslip.io name, so clients make real non-loopback connections that use DNS.</p>
+          <p>Each scenario is a real client: Node 20, 22 and 26, Bun, curl, Python (urllib, requests, httpx, aiohttp, Apple's build), Ruby, Go or Java. <strong>The client writes every attempt to a ledger before making it. That ledger is the ground truth.</strong> The lab also logs what actually arrived. Each tool runs every scenario through its real interface, and its output is scored per attempt:</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Outcome</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td>payload</td><td>The request is in the capture with a byte-identical body (SHA-256).</td></tr>
+              <tr><td>request</td><td>The request is in the capture, body missing or cut off.</td></tr>
+              <tr><td>host</td><td>Not decrypted, but the destination is named (refused, passthrough, direct connection).</td></tr>
+              <tr><td>missed</td><td>Nothing in the output points to it.</td></tr>
+            </tbody>
+          </table></div>
+          <p>"Best possible" is the best outcome whatleaks can reach without breaking its own rules: <code>payload</code> for clients that use the proxy or that its hooks route to it; <code>host</code> for clients that refuse the CA or ignore the proxy, because whatleaks never touches the system trust store or proxy settings and never gets around pinning; <code>request</code> for the 9 MiB upload, which is over the buffering cap by design. Every column is scored against the same expectation, including the old build's.</p>
+          <p><strong>Baselines.</strong> mitmproxy gets the same environment variables whatleaks sets, its own CA and the lab CA upstream, with default settings. HTTP Toolkit's official server release runs with a private config folder; each scenario gets a fresh session and its existing-terminal variables. Both are stopped 10 s after the last client exits, as a person would stop them. Runs per scenario: 3 for proxy-aware clients and 10 for timing-dependent ones, each row with a 95% Wilson interval in the result files.</p>
+        </section>
+
+        <section id="scenarios">
+          <h2>Every scenario (macOS)</h2>
+          <p>Share of attempts at the best possible outcome. Linux differences are <a href="#linux">below</a>.</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Scenario</th><th>Best possible</th><th class="num">before</th><th class="num">whatleaks</th><th class="num">mitmproxy</th><th class="num">HTTP Toolkit</th></tr></thead>
+            <tbody>
+              <tr><td>Node 26 fetch</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>Node 26 https.request</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Node 26 https.request with its own keep-alive Agent</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Node 22.23 https.request with its own keep-alive Agent</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Node 26 gzip, brotli, zstd bodies</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Node 22.23 fetch</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Node 22.23 https.request</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Node 20 fetch (ignores NODE_USE_ENV_PROXY)</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Node 20 https.request (ignores NODE_USE_ENV_PROXY)</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Bun fetch</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>curl (macOS)</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>curl --http2</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Python 3.14 urllib (Homebrew)</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Python requests</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Python httpx</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Apple /usr/bin/python3 urllib (LibreSSL)</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Ruby 2.6 Net::HTTP (macOS system)</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Go 1.26 net/http (reads only the keychain)</td><td>host</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Java 25 HttpClient</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Node WebSocket, 2 messages</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>Node WebSocket, 20 messages</td><td>payload</td><td class="num">15%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>9 MiB upload</td><td>request</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>client pinning its own trust store</td><td>host</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Node http2 module (ignores proxy variables)</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>Python aiohttp (ignores proxy variables by default)</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>raw TCP held 10 ms</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>raw TCP held 100 ms</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>raw TCP held 500 ms</td><td>host</td><td class="num">20%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>raw TCP held 2 s</td><td>host</td><td class="num">100%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>raw TCP reset by the client after 10 ms</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>raw TCP reset by the client after 50 ms</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>raw TCP reset by the client after 200 ms</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>raw TCP, server closes at once (client socket lives ~1 ms)</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>one UDP datagram, connected socket (like QUIC)</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>one UDP datagram, unconnected socket (sendto)</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>Go raw TCP reset after 10 ms (no runtime hook)</td><td>host</td><td class="num">–</td><td class="num w">10%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>Go raw TCP, server closes at once (no runtime hook)</td><td>host</td><td class="num">–</td><td class="num w">90%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>Go UDP datagram, unconnected socket (no runtime hook)</td><td>host</td><td class="num">–</td><td class="num w">0%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>detached helper sends 0.2 s after the app exits</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>detached helper sends 1.5 s after the app exits</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>detached helper sends 3 s after the app exits</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>detached helper sends 8 s after the app exits</td><td>payload</td><td class="num">0%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>grandchild sends after its parent exited</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>child process lives ~100 ms and connects directly</td><td>host</td><td class="num">0%</td><td class="num w">100%</td><td class="num">0%</td><td class="num">0%</td></tr>
+              <tr><td>body with this machine's identifiers and decoys</td><td>payload</td><td class="num">100%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+              <tr><td>identifiers in the 5th of 6 WebSocket messages</td><td>payload</td><td class="num">50%</td><td class="num w">100%</td><td class="num">100%</td><td class="num">0%</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <section id="misses">
+          <h2>Where whatleaks still misses</h2>
+          <p>20 attempts on macOS, 17 on Linux. Only in programs whatleaks loads no hook into (Go here; also Rust, C and other native code), and only when their connection bypasses the proxy:</p>
+          <ul>
+            <li><strong>A TCP connection reset within about 10 ms:</strong> Go was caught 10% and 30% of the time in two macOS runs, 20% and 30% in two Linux runs. The polling watcher must see it while it's open, and a reset leaves no closed-socket record behind.</li>
+            <li><strong>UDP sent with <code>sendto()</code> on an unconnected socket:</strong> 0%. The socket never has a remote address for any watcher to read.</li>
+          </ul>
+          <p>The same connections from Node, Python or Ruby are reported by whatleaks's runtime hooks as they open: 100% in the lab. A Go connection the server closes at once is usually still named (90% and 100% in two macOS runs, 100% on Linux), because the client keeps its socket a moment longer.</p>
+          <p>Seeing every connection from every program would take a kernel-level hook (eBPF, a network extension). whatleaks avoids that, because it needs neither root nor installation. The lab's server is on the same machine, so these connections close within a few milliseconds; over the internet a TLS request takes several round trips, and the "reset after 50 ms" rows are 100% on both platforms.</p>
+          <h3>Where the baselines miss</h3>
+          <ul>
+            <li><strong>mitmproxy</strong> sees only clients that read proxy variables and trust its CA. It misses Node 20, app-made Node agents, Java, Apple's Python and the system Ruby (refused, and not named), aiohttp, <code>node:http2</code>, and every direct connection.</li>
+            <li><strong>HTTP Toolkit</strong>'s hooks cover more clients than mitmproxy: Node 20, app-made agents, Java, Apple's Python, the system Ruby and aiohttp. With v1.27.3 on Node 26, the built-in <code>fetch</code> and <code>WebSocket</code> went around it; that covers the Node 26 rows, the 9 MiB upload, the helpers and the identity rows, which all use <code>fetch</code>. Node 22's <code>fetch</code> was caught. It has no watcher for direct connections.</li>
+          </ul>
+        </section>
+
+        <section id="real-tools">
+          <h2>Real tools</h2>
+          <p>Each tool ran four ways: with its debug mode, which prints events and sends nothing (the ground truth); twice with defaults; once with <code>DO_NOT_TRACK=1</code>; and once with its documented opt-out. Then it ran under mitmproxy and under HTTP Toolkit, and while <a href="https://github.com/zyralab/phonehome">phonehome</a>, a per-process connection watcher, watched. These runs sent each tool's real telemetry.</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Tool</th><th>Ground truth (debug)</th><th>whatleaks, 2 default runs</th><th>DO_NOT_TRACK=1</th><th>Opt-out</th><th>mitmproxy</th><th>HTTP Toolkit</th><th>phonehome</th></tr></thead>
+            <tbody>
+              <tr><td>Next.js 16.4.2 <code>next build</code>, Node 22.23</td><td>22 events</td><td class="w">22, 22 (8 requests)</td><td>still sends 22</td><td>0</td><td>22</td><td>22</td><td>destination seen, not labelled</td></tr>
+              <tr><td>Next.js 16.4.2 <code>next build</code>, Node 20</td><td>22 events</td><td class="w">22, 22</td><td>still sends 22</td><td>0</td><td><strong>0</strong> (Node 20 ignores the proxy)</td><td>22</td><td>destination seen, not labelled</td></tr>
+              <tr><td>Turborepo 2.11.10 <code>turbo run build</code></td><td>17 events</td><td class="w">10, 10 (1 request)</td><td>0</td><td>0</td><td><strong>0</strong> (also with <code>connection_strategy=lazy</code>)</td><td>10</td><td>not seen</td></tr>
+              <tr><td>Astro 7.4.1 <code>astro build</code></td><td>none printed (see below)</td><td class="w">1, 1</td><td>still sends 1</td><td>0</td><td>1 in this run, 0 in an earlier one</td><td><strong>0</strong> (Node 26 <code>fetch</code>)</td><td>not seen</td></tr>
+              <tr><td>Wrangler 4.151.3 <code>wrangler whoami</code></td><td>3 events</td><td class="w">3, 3</td><td>0</td><td>0</td><td>3</td><td>3</td><td>destination seen, not labelled</td></tr>
+            </tbody>
+          </table></div>
+          <ul>
+            <li><strong>Turborepo.</strong> The 7 missing events never leave the process: turbo exits about 20 ms after starting its last request. mitmproxy connects upstream before it answers the client's CONNECT, which takes longer than turbo waits, so it sees no turbo event at all. whatleaks answers at once. HTTP Toolkit also caught the 10.</li>
+            <li><strong>Astro.</strong> <code>DEBUG=astro:telemetry</code> printed nothing on 7.4.1: the debug hook is installed by a logger module that <code>astro build</code> does not load. The ground truth there is the agreement between whatleaks and mitmproxy: 1 event. whatleaks also flagged that the event carries a hash of the project folder path.</li>
+            <li><strong>DO_NOT_TRACK.</strong> The results match each tool's documentation, as checked from its source: Next.js and Astro document no <code>DO_NOT_TRACK</code> support and still send with it set; Turborepo and Wrangler honour it.</li>
+            <li><strong>phonehome</strong> samples connections once a second. It named the telemetry destination for 3 of 5 tools and missed the short-lived ones. It never labelled one as telemetry and cannot show contents.</li>
+          </ul>
+        </section>
+
+        <section id="cost">
+          <h2>Cost</h2>
+          <p>One Node https client against the lab, run directly, under whatleaks, under mitmproxy and under HTTP Toolkit, at load average 2.0.</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Workload</th><th class="num">direct p50 / p95</th><th class="num">whatleaks</th><th class="num">mitmproxy</th><th class="num">HTTP Toolkit</th></tr></thead>
+            <tbody>
+              <tr><td>300 × 1 KiB POST, keep-alive</td><td class="num">0.2 / 0.5 ms</td><td class="num w">0.5 / 1.1 ms</td><td class="num">1.2 / 1.4 ms</td><td class="num">13.3 / 25.1 ms</td></tr>
+              <tr><td>100 × 1 KiB POST, new TLS connection each</td><td class="num">6.1 / 8.0 ms</td><td class="num w">8.5 / 11.1 ms</td><td class="num">10.7 / 15.7 ms</td><td class="num">13.1 / 28.5 ms</td></tr>
+              <tr><td>10 × 4 MiB POST, throughput</td><td class="num">406 MiB/s</td><td class="num w">211 MiB/s</td><td class="num">239 MiB/s</td><td class="num">93 MiB/s</td></tr>
+            </tbody>
+          </table></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>CPU s / peak RSS</th><th class="num">whatleaks</th><th class="num">mitmproxy</th><th class="num">HTTP Toolkit</th></tr></thead>
+            <tbody>
+              <tr><td>keep-alive</td><td class="num">1.5 s / 136 MiB</td><td class="num">0.8 s / 91 MiB</td><td class="num">2.9 s / 338 MiB</td></tr>
+              <tr><td>new connection each</td><td class="num">1.7 s / 127 MiB</td><td class="num">1.2 s / 88 MiB</td><td class="num">1.0 s / 239 MiB</td></tr>
+              <tr><td>4 MiB uploads</td><td class="num">1.8 s / 305 MiB</td><td class="num">0.7 s / 301 MiB</td><td class="num">0.6 s / 272 MiB</td></tr>
+            </tbody>
+          </table></div>
+          <ul>
+            <li><strong>Upload throughput varies from run to run.</strong> Over three runs mitmproxy measured 160 to 239 MiB/s and whatleaks 187 and 211. Treat uploads as roughly even.</li>
+            <li><strong>CPU:</strong> whatleaks's figure is its total minus the bare client's. About 1 s of it is a fixed cost per run: loading mockttp, creating a CA, and the watcher's process listings during the 1 s wait after the app exits.</li>
+            <li><strong>Memory:</strong> its RSS is the largest process it waited for, so it can include the app. It keeps every body it buffers (up to 8 MiB) for analysis.</li>
+            <li><strong>Startup and exit</strong>, one-request app, median of 10: bare 92 ms, under whatleaks 1964 ms. 1 s of that is the grace period that catches late senders (<code>--grace</code>); the rest is loading mockttp (about 0.5 s), a fresh CA (about 0.1 s) and the loopback-only safety probe.</li>
+          </ul>
+        </section>
+
+        <section id="linux">
+          <h2>Linux</h2>
+          <p>The same lab runs inside Docker (a Debian image with the runtimes) against the same build. Bun, Apple's Python and the system Ruby are macOS-only rows. The rows where Linux differs from macOS:</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Scenario</th><th>Best possible</th><th class="num">whatleaks</th><th class="num">mitmproxy</th><th class="num">HTTP Toolkit</th></tr></thead>
+            <tbody>
+              <tr><td>Go 1.26 net/http (reads <code>SSL_CERT_FILE</code> on Linux)</td><td>payload</td><td class="num w">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>Java 17 HttpClient (OpenJDK)</td><td>payload</td><td class="num w">100%</td><td class="num">0%</td><td class="num">100%</td></tr>
+              <tr><td>Go raw TCP reset after 10 ms (no runtime hook)</td><td>host</td><td class="num w">30%</td><td class="num">0%</td><td class="num">0%</td></tr>
+            </tbody>
+          </table></div>
+          <p>On Linux a closed socket has no owner in <code>/proc</code>, so the polling watcher names a direct connection only if it sees it open. The Node rows are reported by the preload: 100%.</p>
+          <p><strong>No tools installed.</strong> A check in <code>node:22-slim</code>, which has no <code>ps</code>, <code>lsof</code>, <code>netstat</code> or curl, against real hosts:</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Check</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>Node fetch captured with its body</td><td>pass</td></tr>
+              <tr><td><code>node:http2</code> (ignores the proxy) captured through the preload</td><td>pass</td></tr>
+              <tr><td>raw TCP held 10 ms named, 20 runs</td><td>20 of 20</td></tr>
+              <tr><td>detached helper sending 2 s after its parent exited</td><td>pass</td></tr>
+              <tr><td>a finished helper left as a zombie (PID 1 never reaps) is not waited for</td><td>4.3 s; the pre-fix build took 10.9 s</td></tr>
+              <tr><td>process tree and watcher work with no tools installed</td><td>pass</td></tr>
+            </tbody>
+          </table></div>
+          <p>The benchmark also found and fixed 20 gaps along the way, from Java ignoring proxy variables to helpers sending 1.5 s after exit. Each is listed with its commit in <a href="https://github.com/devanshranjan10/whatleaks/blob/main/docs/BENCHMARK.md#7-what-the-benchmark-found-and-fixed">the method document</a>.</p>
+        </section>
+
+        <section id="threats">
+          <h2>Threats to validity</h2>
+          <ul>
+            <li><strong>It's our benchmark.</strong> The whatleaks author built the lab and chose the scenarios. Every script and result file is public, so it can be rerun and challenged.</li>
+            <li><strong>One machine.</strong> A working desktop with a VPN, Wi-Fi that dropped several times, and three LAN address changes during the runs. The runner waits out outages and reruns any scenario that overlapped one. Perf numbers carry the load average they ran under.</li>
+            <li><strong>Linux runs in a VM.</strong> Docker on macOS runs a linuxkit VM, not bare-metal Linux. The <code>/proc</code> watcher and the runtimes are real Linux; timing may differ.</li>
+            <li><strong>Same-machine lab.</strong> Round trips take microseconds, which makes direct connections shorter than over the internet: a hard case for the polling watcher, not an easy one.</li>
+            <li><strong>Small samples.</strong> 3 or 10 runs per scenario. Rows between 0 and 100% have wide intervals, given in the result files.</li>
+            <li><strong>Baselines run on defaults.</strong> An expert could tune mitmproxy or HTTP Toolkit. For mitmproxy, the one setting that plausibly matters here, <code>connection_strategy=lazy</code>, was measured and did not change the turbo result. HTTP Toolkit was driven by its terminal script, not its desktop app's launchers for specific apps.</li>
+            <li><strong>Real tools change.</strong> The versions are pinned above; newer releases may behave differently.</li>
+            <li><strong>Debug output is not always ground truth.</strong> Debug modes show what a tool <em>intends</em> to send: Turborepo's shows 17 events and 10 cross the wire, and Astro's printed nothing.</li>
+          </ul>
+        </section>
+
+        <section id="reproduce">
+          <h2>Reproduce</h2>
+          <div class="code"><pre><span class="p">$ </span>npm ci &amp;&amp; npm run build
+<span class="p">$ </span>./bench/setup.sh        <span class="c"># Go client, Python venv, mitmproxy, HTTP Toolkit server (all under /tmp/wlb)</span>
+<span class="p">$ </span>npx tsx bench/run-lab.ts --tag after --tools whatleaks,mitmproxy,httptoolkit   <span class="c"># about 2 h; --resume continues</span>
+<span class="p">$ </span>npx tsx bench/summarize.ts
+<span class="p">$ </span>bench/linux/lab.sh --tag linux --tools whatleaks,mitmproxy,httptoolkit
+<span class="p">$ </span>npx tsx bench/run-perf.ts --tag after
+<span class="p">$ </span>npx tsx bench/run-real.ts --tag after   <span class="c"># sends real telemetry; needs the scratch apps in bench/real/tools.ts</span>
+<span class="p">$ </span>docker run --rm -v "$PWD":/w:ro -w /tmp node:22-slim node /w/bench/linux/check.mjs</pre></div>
+          <p>The provenance of every result file is in its <code>meta</code>: build, date, machine, load and reruns. Both lab platforms and the cost runs used commit <code>22d85d3</code>; the real-tool runs used <code>7ee2ac6</code>, and the later changes don't affect traffic that goes through the proxy.</p>
+        </section>
+      </div>
+    </div>
+  </section>
+</main>
+<!-- @footer -->
+</body>
+</html>

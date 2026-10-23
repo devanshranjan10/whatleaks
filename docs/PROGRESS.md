@@ -67,7 +67,7 @@ GitHub Packages mirror (`@devanshranjan10/whatleaks`) publishes with each GitHub
 as landmine's does.
 
 **Launch.** The repo is public at github.com/devanshranjan10/whatleaks (2026-10-23), with
-a description, 14 topics and the npm page as its homepage. CI is green on all 8 jobs from
+a description, 14 topics and whatleaks.me as its homepage. CI is green on all 8 jobs from
 its second run on.
 
 `whatleaks@0.1.0` is on npm, published by hand from `d352e94` with the owner's 2FA
@@ -82,6 +82,24 @@ Tag `v0.1.0` and the GitHub release "whatleaks 0.1.0" point at the same commit:
 npm now trusts `release.yml` in this repo to publish `whatleaks`, and the repo has no
 NPM_TOKEN secret. The next release therefore needs only a version bump and a tag. That
 path has not run yet; the next tag is its first use.
+
+**Website.** whatleaks.me is live (2026-10-23): docs, the benchmark, an FAQ, Markdown
+copies of every page for agents (`/<page>.md`, `/llms.txt`, `/llms-full.txt`), FAQPage
+JSON-LD, a sitemap and a social card. `site/` holds the pages; `scripts/site/build.mjs`
+fills in the partials and draws the dot-matrix illustrations, and `npm run site:deploy`
+uploads `.site-dist/` to the Cloudflare Worker `whatleaks-site`. The deploy token (the
+Cloudflare account's, from the owner's Sumora `.env`) can upload Workers but has no
+Workers Routes permission on the zone, so the custom domains whatleaks.me and
+www.whatleaks.me were attached once through the account-level domains API; they persist
+across deploys. Every number on the site is copied from the README, `docs/BENCHMARK.md`
+or `docs/e2e/`, and every terminal block is saved output.
+
+The footer says the site sends nothing about its visitors. Checked in Chrome on every
+page: only whatleaks.me is contacted and the console is clean. Cloudflare had been
+injecting its Web Analytics beacon into the HTML (the zone has automatic setup on), which
+the Worker now prevents by sending `Cache-Control: no-transform` on every HTML response.
+The Worker runs first for everything except `/assets/` and `/fonts/`, so that covers the
+404 page too.
 
 ---
 

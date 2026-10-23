@@ -1,0 +1,43 @@
+<!doctype html>
+<!-- Social card source. Rendered to site/og.png by scripts/site/render-images.sh -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: 'Geist'; font-weight: 300 800; src: url(../../site/fonts/geist.woff2) format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 400 600; src: url(../../site/fonts/geistmono.woff2) format('woff2'); }
+html, body { margin: 0; width: 1200px; height: 630px; background: #fff; color: #0b0b0b; overflow: hidden; }
+body { position: relative; font-family: Geist, sans-serif; }
+.rail { position: absolute; top: 0; bottom: 0; width: 1px; background: #ebeae6; }
+.rail.l { left: 60px; } .rail.r { right: 60px; }
+.band { position: absolute; top: 0; bottom: 0; width: 60px; background-image: radial-gradient(circle, #86b6ef 1.6px, transparent 2px); background-size: 14px 14px; opacity: .55; }
+.band.l { left: 0; -webkit-mask-image: linear-gradient(160deg, #000 0 30%, transparent 70%); }
+.band.r { right: 0; -webkit-mask-image: linear-gradient(-20deg, #000 0 30%, transparent 70%); }
+.in { position: absolute; left: 100px; right: 100px; top: 58px; bottom: 54px; display: flex; flex-direction: column; }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.brand { display: flex; align-items: center; gap: 12px; font: 600 32px/1 Geist; letter-spacing: -.035em; }
+.brand svg { width: 36px; height: 36px; }
+.url { font: 500 21px/1 'Geist Mono'; color: #6b6a65; }
+h1 { font: 500 84px/.98 Geist; letter-spacing: -.052em; margin: 40px 0 0; max-width: 960px; }
+h1 em { font-style: normal; color: #2a78d6; }
+.term { margin-top: auto; background: #0d1017; color: #e6e8ef; border-radius: 16px; padding: 22px 28px 24px; font: 450 20px/1.6 'Geist Mono'; box-shadow: 0 30px 60px -30px rgba(13, 16, 23, .5); }
+.term > div { white-space: pre; }
+.term .p { color: #8bbcff; } .term .r { color: #ff7d7d; } .term .b { color: #fff; font-weight: 600; } .term .dim { color: #8b91a3; }
+.term .lights { display: flex; gap: 8px; margin-bottom: 14px; }
+.term .lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; } .term .lights i:nth-child(2) { background: #febc2e; } .term .lights i:nth-child(3) { background: #28c840; }
+</style></head>
+<body>
+<div class="rail l"></div><div class="rail r"></div><div class="band l"></div><div class="band r"></div>
+<div class="in">
+  <div class="top">
+    <div class="brand"><svg viewBox="1 1 22 22"><circle cx="12" cy="3" r="1.3" fill="#2a78d6"/><circle cx="12" cy="6" r="1.3" fill="#2a78d6"/><circle cx="9" cy="9" r="1.3" fill="#2a78d6"/><circle cx="12" cy="9" r="1.3" fill="#2a78d6"/><circle cx="15" cy="9" r="1.3" fill="#2a78d6"/><circle cx="6" cy="12" r="1.3" fill="#2a78d6"/><circle cx="9" cy="12" r="1.3" fill="#2a78d6"/><circle cx="12" cy="12" r="1.3" fill="#2a78d6"/><circle cx="15" cy="12" r="1.3" fill="#2a78d6"/><circle cx="18" cy="12" r="1.3" fill="#2a78d6"/><circle cx="6" cy="15" r="1.3" fill="#2a78d6"/><circle cx="9" cy="15" r="1.3" fill="#2a78d6"/><circle cx="12" cy="15" r="1.3" fill="#2a78d6"/><circle cx="15" cy="15" r="1.3" fill="#2a78d6"/><circle cx="18" cy="15" r="1.3" fill="#2a78d6"/><circle cx="6" cy="18" r="1.3" fill="#2a78d6"/><circle cx="9" cy="18" r="1.3" fill="#2a78d6"/><circle cx="12" cy="18" r="1.3" fill="#2a78d6"/><circle cx="15" cy="18" r="1.3" fill="#2a78d6"/><circle cx="18" cy="18" r="1.3" fill="#2a78d6"/><circle cx="9" cy="21" r="1.3" fill="#2a78d6"/><circle cx="15" cy="21" r="1.3" fill="#2a78d6"/><circle cx="12" cy="21" r="1.3" fill="#d03b3b"/></svg>whatleaks</div>
+    <div class="url">whatleaks.me</div>
+  </div>
+  <h1>See what your tools <em>send&nbsp;home</em>.</h1>
+  <div class="term">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div><span class="p">$</span> npx whatleaks compare --no-known-opt-outs \</div>
+    <div>    --off-env DO_NOT_TRACK=1 -- ./node_modules/.bin/next build</div>
+    <div class="r">The telemetry endpoint was still contacted after opting out.</div>
+    <div>Telemetry requests: <span class="b">8 → 8</span> <span class="dim">· Next.js 16.4.2, real output</span></div>
+  </div>
+</div>
+</body></html>

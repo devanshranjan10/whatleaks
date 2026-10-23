@@ -9,3 +9,5 @@ __pycache__/
 whatleaks-*.md
 whatleaks-*.json
 whatleaks-*.tgz
+.site-dist/
+.wrangler/

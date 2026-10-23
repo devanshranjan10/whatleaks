@@ -1,8 +1,9 @@
 import js from '@eslint/js';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'test/fixtures/**', 'test/golden/**', 'coverage/**', 'docs/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'test/fixtures/**', 'test/golden/**', 'coverage/**', 'docs/**', '.site-dist/**', '.wrangler/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
@@ -35,4 +36,8 @@ export default tseslint.config(
       globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', setTimeout: 'readonly', fetch: 'readonly', URL: 'readonly', WebSocket: 'readonly' },
     },
   },
+  // whatleaks.me: the page script runs in browsers, the build in Node, the edge script in a Worker.
+  { files: ['site/**/*.js'], languageOptions: { globals: globals.browser } },
+  { files: ['scripts/**/*.mjs'], languageOptions: { globals: globals.node } },
+  { files: ['scripts/site/worker.js'], languageOptions: { globals: globals.serviceworker } },
 );

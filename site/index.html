@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>whatleaks: see what your tools send home</title>
+<meta name="description" content="whatleaks runs any command through a local, single-run proxy and shows where its traffic went, which fields it carried, whether any of it is about you, and what it still sends after you opt out. Open source, for macOS and Linux.">
+<link rel="canonical" href="https://whatleaks.me/">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="whatleaks">
+<meta property="og:url" content="https://whatleaks.me/">
+<meta property="og:title" content="whatleaks: see what your tools send home">
+<meta property="og:description" content="Run any command through a local, single-run proxy and see where its traffic went, which fields it carried, whether any of it is about you, and what it still sends after you opt out.">
+<meta property="og:image" content="https://whatleaks.me/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="whatleaks: see what your tools send home. Next.js kept sending 8 telemetry requests with DO_NOT_TRACK=1 set.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="whatleaks: see what your tools send home">
+<meta name="twitter:description" content="Run any command through a local, single-run proxy and see what it sends, what it says about you, and what it still sends after you opt out.">
+<meta name="twitter:image" content="https://whatleaks.me/og.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"whatleaks","applicationCategory":"DeveloperApplication","operatingSystem":"macOS, Linux","license":"https://opensource.org/licenses/MIT","url":"https://whatleaks.me/","downloadUrl":"https://www.npmjs.com/package/whatleaks","installUrl":"https://www.npmjs.com/package/whatleaks","codeRepository":"https://github.com/devanshranjan10/whatleaks","softwareVersion":"0.1.0","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Devansh Ranjan","url":"https://github.com/devanshranjan10"},"sameAs":["https://github.com/devanshranjan10/whatleaks","https://www.npmjs.com/package/whatleaks"],"description":"Runs a command through a local, single-run proxy and reports where its traffic went, which fields each payload carried, whether any of it identifies the machine or user, and what is still sent after opting out of telemetry."}
+</script>
+<script defer src="/assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<!-- @nav -->
+<main id="main">
+
+  <section class="hero">
+    <canvas class="field" aria-hidden="true"></canvas>
+    <div class="wrap">
+      <a class="kicker" href="https://github.com/devanshranjan10/whatleaks/releases/tag/v0.1.0"><span class="v">v0.1.0</span><span>Open-source CLI · MIT<span class="hide-sm"> · macOS and Linux</span></span><span aria-hidden="true">→</span></a>
+      <h1 class="h1">See what your tools <em>send home</em>.</h1>
+      <p class="lede">whatleaks runs any command through a local, single-run proxy and shows where its traffic went, which fields it carried, whether any of it is about you, and what it still sends after you opt out.</p>
+      <div class="actions">
+        <div class="cmd"><code><span class="p">$</span>npx whatleaks run -- <span class="arg">&lt;command&gt;</span></code><button type="button" data-copy="npx whatleaks run -- " aria-label="Copy command"></button></div>
+        <a class="btn dark" href="/docs/#quickstart" style="height:48px;padding:0 22px">Get started <span class="arrow">→</span></a>
+      </div>
+      <p class="fine"><span>Node ≥ 22.12</span><span>No account</span><span>Nothing added to your trust store</span></p>
+
+      <figure class="stage">
+        <div class="plate">
+          <div class="term">
+            <div class="bar">
+              <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+              <div class="tabs" role="tablist" aria-label="Example output">
+                <button type="button" role="tab" id="t-compare" aria-controls="p-compare" aria-selected="true">compare</button>
+                <button type="button" role="tab" id="t-run" aria-controls="p-run" aria-selected="false" tabindex="-1">run</button>
+                <button type="button" role="tab" id="t-stop" aria-controls="p-stop" aria-selected="false" tabindex="-1">an opt-out that works</button>
+              </div>
+              <span class="chip"><span class="on"></span>real output · Next.js 16.4.2</span>
+            </div>
+<div role="tabpanel" id="p-compare" aria-labelledby="t-compare" tabindex="0"><pre><span class="p">$ </span><span class="c">npx whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- ./node_modules/.bin/next build</span>
+
+<span class="dim">whatleaks diff · before "default" (3.7 s, 9 requests) → after "opted-out" (3.1 s, 9 requests)
+command: ./node_modules/.bin/next build
+opted out with: DO_NOT_TRACK</span>
+
+<span class="r">The telemetry endpoint was still contacted after opting out.</span>
+Telemetry requests: <span class="b">8 → 8</span> · all requests: 9 → 9
+
+<span class="b">STILL SENDING AFTER OPT-OUT</span>
+  <span class="r">●</span> POST <span class="b">telemetry.nextjs.org</span>/api/v1/record  <span class="a">analytics · Next.js telemetry</span>  8 → 8 requests
+      <span class="dim">still sent:</span> context.anonymousId, context.projectId, context.sessionId, events[].eventName, meta.agentName, meta.ciName, meta.cpuCount, meta.cpuModel, meta.cpuSpeed, meta.isCI <span class="dim">…+81</span>
+
+<span class="b">OTHER TRAFFIC</span>
+  <span class="dim">(not identified as telemetry; check it yourself)</span>
+  = POST registry.npmjs.org/-/npm/v1/security/advisories/bulk  <span class="dim">other</span>  1 → 1
+
+<span class="b">STILL SENT ABOUT YOU</span>
+  <span class="a">○</span> Repeated identifiers — 8 requests, in context.anonymousId, context.projectId, context.sessionId
+
+<span class="b">PERSISTENT IDENTIFIERS</span>
+  <span class="dim">same value in both runs: stored by the app or built into it, so it can link runs together</span>
+  <span class="a">○</span> <span class="v">‹id-1›</span> at context.anonymousId → POST telemetry.nextjs.org/api/v1/record
+  <span class="a">○</span> <span class="v">‹id-2›</span> at context.projectId → POST telemetry.nextjs.org/api/v1/record</pre></div>
+<div role="tabpanel" id="p-run" aria-labelledby="t-run" tabindex="0" hidden><pre><span class="p">$ </span><span class="c">npx whatleaks run --label next-build -- ./node_modules/.bin/next build</span>
+<span class="dim">…</span>
+<span class="b">whatleaks</span> · ./node_modules/.bin/next build · 3.7 s · exit 0
+9 requests to 2 destinations · ≈10.6 KB sent · <span class="a">8 to known telemetry endpoints</span>
+<span class="dim">activity |</span>  <span class="bl">█ ▃   █ ▃▃</span>        <span class="dim">| over 3.7 s</span>
+
+<span class="b">WHAT IT SENT ABOUT YOU</span>
+  <span class="a">○</span> Repeated identifiers: 3 ids reused across requests (<span class="v">‹id-1›</span> ×8, <span class="v">‹id-2›</span> ×8, <span class="v">‹id-3›</span> ×8)
+      in context.anonymousId, context.projectId, context.sessionId
+
+<span class="b">WHERE IT WENT</span>
+  <span class="dim">DESTINATION           CATEGORY                       REQUESTS      SENT</span>
+  telemetry.nextjs.org  <span class="a">analytics · Next.js telemetry</span>         8  ≈10.3 KB
+  registry.npmjs.org    <span class="dim">other</span>                                 1    ≈321 B
+
+<span class="b">ENDPOINTS</span>
+  POST <span class="b">telemetry.nextjs.org</span>/api/v1/record  <span class="a">analytics · Next.js telemetry</span>
+      8 requests · first +0.5s · every ~223 ms · ≈10.3 KB · status 204×8
+      <span class="dim">fields:</span> context.anonymousId (id, same in every request), context.projectId (id, same in every request), context.sessionId (id, same in every request), events[].eventName, meta.agentName, meta.ciName, meta.cpuCount, meta.cpuModel <span class="dim">…+83</span>
+      <span class="dim">sample (+0.5s):</span>
+        {
+          "context": {
+            "anonymousId": "<span class="v">‹id-1›</span>",
+            "projectId": "<span class="v">‹id-2›</span>",
+            "sessionId": "<span class="v">‹id-3›</span>"
+          },
+          "meta": {
+            "systemPlatform": "darwin",
+            "systemRelease": "25.6.0",
+            "systemArchitecture": "arm64",
+            "cpuCount": 8,
+            "cpuModel": "Apple M1",
+            "cpuSpeed": 2400,
+            "memoryInMb": 8192,
+        <span class="dim">… 55 more lines (see --md)</span></pre></div>
+<div role="tabpanel" id="p-stop" aria-labelledby="t-stop" tabindex="0" hidden><pre><span class="p">$ </span><span class="c">npx whatleaks compare --no-known-opt-outs --off-env NEXT_TELEMETRY_DISABLED=1 --strict -- ./node_modules/.bin/next build</span>
+
+<span class="dim">whatleaks diff · before "default" (7.2 s, 9 requests) → after "opted-out" (4.3 s, 1 request)
+command: ./node_modules/.bin/next build
+opted out with: NEXT_TELEMETRY_DISABLED</span>
+
+<span class="g">The telemetry endpoint stopped after opting out.</span>
+Telemetry requests: <span class="b">8 → 0</span> · all requests: 9 → 1
+
+<span class="b">STOPPED</span>
+  <span class="g">✓</span> POST <span class="b">telemetry.nextjs.org</span>/api/v1/record  <span class="a">analytics · Next.js telemetry</span>  8 → 0 requests
+
+<span class="b">OTHER TRAFFIC</span>
+  <span class="dim">(not identified as telemetry; check it yourself)</span>
+  = POST registry.npmjs.org/-/npm/v1/security/advisories/bulk  <span class="dim">other</span>  1 → 1
+
+<span class="b">STILL SENT ABOUT YOU</span>
+  <span class="g">✓</span> nothing identifying in the second run's visible traffic
+  <span class="dim">no longer sent: stable-id</span></pre></div>
+          </div>
+        </div>
+        <figcaption class="caption"><span>Real output from <code>next build</code> (Next.js 16.4.2, Node 22.23) on 2026-10-21, printed from the saved captures. Next.js documents <code>NEXT_TELEMETRY_DISABLED</code>, not <code>DO_NOT_TRACK</code>.</span><a href="https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e">Full transcripts →</a></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="band flush">
+    <div class="wrap">
+      <div class="pills" aria-label="Clients tested in the benchmark">
+        <span class="pill lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/></svg>Benchmarked with real clients</span>
+        <span class="pill">Node 20 · 22 · 26</span><span class="pill">Bun</span><span class="pill">curl</span><span class="pill">Python: urllib, requests, httpx, aiohttp</span><span class="pill">Ruby</span><span class="pill">Go</span><span class="pill">Java</span><span class="pill">WebSockets</span><span class="pill">HTTP/2</span><span class="pill">raw TCP and UDP</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="band head" id="about-you">
+    <div class="wrap reveal">
+      <span class="eyebrow"><span class="n">01</span> · What it finds</span>
+      <h2 class="h2" style="margin-top:18px">Find out what it says <em>about you</em>.</h2>
+      <p class="lede">Every payload is decoded and every field inventoried. whatleaks searches it for this machine's identifiers, raw and hashed, and flags the ids an app keeps between runs.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap split">
+      <div class="reveal">
+        <h3 class="h3">It looks for you in every request</h3>
+        <ul class="ticks">
+          <li><span>Your username, hostname, home path, MAC address, machine id and git email, raw or as md5, sha1 and sha256 hex or base64.</span></li>
+          <li><span>Ids that repeat across requests, and ids that stay the same between runs: stored by the app, so they can link your runs together.</span></li>
+          <li><span>Where each field appeared and how often, with a redacted sample you can post.</span></li>
+        </ul>
+        <p class="lede" style="margin-top:28px;font-size:15.5px">In this run Next.js sent none of this machine's identifiers. It sent its own persistent ids, the hardware it ran on, and the AI agent that ran the build.</p>
+      </div>
+      <div class="file reveal" aria-label="One telemetry request from next build, as whatleaks reports it">
+        <div class="tab"><b>POST telemetry.nextjs.org/api/v1/record</b><span class="right">sample 1 of 8</span></div>
+<pre>{
+  <span class="k">"context"</span>: {
+    <span class="k">"anonymousId"</span>: <span class="alias">"‹id-1›"</span>,   <span class="muted">// same in a second run</span>
+    <span class="k">"projectId"</span>: <span class="alias">"‹id-2›"</span>,     <span class="muted">// same in a second run</span>
+    <span class="k">"sessionId"</span>: <span class="alias">"‹id-3›"</span>
+  },
+  <span class="k">"meta"</span>: {
+    <span class="k">"systemPlatform"</span>: <span class="s">"darwin"</span>,
+    <span class="k">"systemRelease"</span>: <span class="s">"25.6.0"</span>,
+    <span class="k">"systemArchitecture"</span>: <span class="s">"arm64"</span>,
+    <span class="k">"cpuCount"</span>: <span class="n">8</span>,
+    <span class="k">"cpuModel"</span>: <span class="s">"Apple M1"</span>,
+    <span class="k">"cpuSpeed"</span>: <span class="n">2400</span>,
+    <span class="k">"memoryInMb"</span>: <span class="n">8192</span>,
+    <span class="k">"isDocker"</span>: <span class="n">false</span>,
+    <span class="k">"isNowDev"</span>: <span class="n">false</span>,
+    <span class="k">"isWsl"</span>: <span class="n">false</span>,
+    <span class="k">"isCI"</span>: <span class="n">false</span>,
+    <span class="k">"ciName"</span>: <span class="n">null</span>,
+    <span class="k">"nextVersion"</span>: <span class="s">"16.4.2"</span>,
+    <span class="leak"><span class="k">"agentName"</span>: "claude-code_2-1-306_agent"</span>
+  },
+  <span class="k">"events"</span>: [ <span class="muted">… NEXT_CLI_SESSION_STARTED and 39 config fields</span> ]
+}</pre>
+        <div class="foot"><span class="mark">●</span><span>Next.js 16.4.2 put the AI agent running the build in all 8 requests. <code>anonymousId</code> and <code>projectId</code> were identical in a second run. Ids are shown as whatleaks's aliases.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band head" id="opt-outs">
+    <div class="wrap reveal">
+      <span class="eyebrow"><span class="n">02</span> · Opt-outs, tested</span>
+      <h2 class="h2" style="margin-top:18px">Opted out? <em>Check.</em></h2>
+      <p class="lede"><code>whatleaks compare</code> runs your command twice in fresh processes, first with defaults and then opted out, and shows what is still sent. The restart is built in, so nobody can say you forgot it.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <div class="grid c2">
+        <div class="timeline reveal">
+          <div class="inner">
+            <div class="top"><span>next build</span><span>Next.js 16.4.2 · real runs</span></div>
+            <ol>
+              <li><span class="mk"></span><span class="what">Defaults<small>8 requests to telemetry.nextjs.org, 22 events</small></span><span class="st">8 requests</span></li>
+              <li><span class="mk red"></span><span class="what"><code>DO_NOT_TRACK=1</code><small>Not a switch Next.js documents. It kept sending.</small></span><span class="st red">8 → 8 · still sending</span></li>
+              <li><span class="mk green"></span><span class="what"><code>NEXT_TELEMETRY_DISABLED=1</code><small>The switch Next.js documents.</small></span><span class="st green">8 → 0 · stopped</span></li>
+            </ol>
+            <div class="bottom"><span><code>--strict</code> exits 1 when a known telemetry endpoint is still contacted</span><span class="nowrap">CI-ready</span></div>
+          </div>
+        </div>
+        <div class="frame reveal">
+          <div class="card">
+            <h3 class="h3">32 documented opt-outs, in one flag</h3>
+            <p>By default the second run sets every opt-out variable whatleaks knows, each with a source. Or test one switch with <code>--no-known-opt-outs --off-env KEY=VALUE</code>.</p>
+            <div class="pills" style="margin-top:20px">
+              <span class="pill mono">DO_NOT_TRACK=1</span><span class="pill mono">NEXT_TELEMETRY_DISABLED=1</span><span class="pill mono">ASTRO_TELEMETRY_DISABLED=1</span><span class="pill mono">TURBO_TELEMETRY_DISABLED=1</span><span class="pill mono">GATSBY_TELEMETRY_DISABLED=1</span><span class="pill mono">NG_CLI_ANALYTICS=false</span><span class="pill mono">STORYBOOK_DISABLE_TELEMETRY=true</span><span class="pill mono">WRANGLER_SEND_METRICS=false</span><span class="pill mono">HOMEBREW_NO_ANALYTICS=1</span><span class="pill mono">DOTNET_CLI_TELEMETRY_OPTOUT=1</span><span class="pill mono">GH_TELEMETRY=0</span><span class="pill mono">HF_HUB_DISABLE_TELEMETRY=1</span><span class="pill blue">+20 more</span>
+            </div>
+            <div class="code" style="margin:22px 0 0"><pre><span class="p">$ </span>npx whatleaks opt-outs    <span class="c"># the list, with the tools each one covers</span></pre></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band head" id="measured">
+    <div class="wrap reveal">
+      <div class="row">
+        <div>
+          <span class="eyebrow"><span class="n">03</span> · Measured</span>
+          <h2 class="h2" style="margin-top:18px">It catches what other tools <em>miss silently</em>.</h2>
+          <p class="lede">46 lab scenarios with exact ground truth: each client writes every attempt to a ledger before making it, and each tool's output is scored per attempt.</p>
+        </div>
+        <a class="btn" href="/benchmark/">The full benchmark <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <div class="grid c12">
+        <div class="frame reveal">
+          <div class="card stat">
+            <div class="num">3.4%</div>
+            <p class="cap">of 594 attempts silently missed on macOS, 3.0% of 567 on Linux. Every remaining miss is a Go program whatleaks loads no hook into.</p>
+          </div>
+        </div>
+        <div class="frame reveal">
+          <div class="card viz" data-bars='{"metric":"silently missed","sets":{"macOS":[{"name":"whatleaks","value":3.4,"count":"20 of 594","hl":true},{"name":"mitmproxy","value":38,"count":"225 of 594"},{"name":"HTTP Toolkit","value":67,"count":"399 of 594"}],"Linux":[{"name":"whatleaks","value":3.0,"label":"3.0%","count":"17 of 567","hl":true},{"name":"mitmproxy","value":40,"count":"225 of 567"},{"name":"HTTP Toolkit","value":70,"count":"399 of 567"}]}}'>
+            <div class="vhead">
+              <div><h3 class="h3">Attempts silently missed</h3><p class="sub">Lower is better. Same scenarios, same ground truth.</p></div>
+              <div class="seg" role="group" aria-label="Platform"><button type="button" aria-pressed="true" data-set="macOS">macOS</button><button type="button" aria-pressed="false" data-set="Linux">Linux</button></div>
+            </div>
+            <div class="bars"></div>
+            <p class="note">mitmproxy 12.2.3 with the same environment whatleaks sets; HTTP Toolkit server 1.27.3 with its own interception.</p>
+            <details class="table-view">
+              <summary>View as table</summary>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Tool</th><th class="num">macOS</th><th class="num">Linux</th></tr></thead>
+                <tbody>
+                  <tr class="hl"><td>whatleaks</td><td class="num">3.4% (20 of 594)</td><td class="num">3.0% (17 of 567)</td></tr>
+                  <tr><td>mitmproxy</td><td class="num">38% (225 of 594)</td><td class="num">40% (225 of 567)</td></tr>
+                  <tr><td>HTTP Toolkit</td><td class="num">67% (399 of 594)</td><td class="num">70% (399 of 567)</td></tr>
+                </tbody>
+              </table></div>
+            </details>
+          </div>
+        </div>
+      </div>
+      <div class="grid c3" style="margin-top:8px">
+        <div class="frame reveal"><div class="card"><div class="h3">No false credit</div><p>Nothing the app did not send was ever credited to it, in any run.</p></div></div>
+        <div class="frame reveal"><div class="card"><div class="h3">8 of 8 identifiers, 0 of 4 decoys</div><p>Every planted identifier was found in every run, including 3 hidden in a WebSocket message. No decoy was flagged.</p></div></div>
+        <div class="frame reveal"><div class="card"><div class="h3">5 of 5 real tools</div><p>Matched against each tool's own debug output: Next.js on Node 22 and 20, Turborepo, Astro and Wrangler. HTTP Toolkit matched 4, mitmproxy 3.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band head" id="how">
+    <div class="wrap reveal">
+      <span class="eyebrow"><span class="n">04</span> · How it works</span>
+      <h2 class="h2" style="margin-top:18px">Built for the traffic <em>proxies miss</em>.</h2>
+      <p class="lede">A proxy sees only what is sent through it. whatleaks also follows the app's processes, hooks the runtimes that ignore proxy settings, and names whatever still goes around.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <div class="grid c3">
+        <div class="frame reveal"><div class="card"><h3 class="h3">A CA that lives for one run</h3><p>Each run makes a fresh certificate authority. Its key stays in memory and its certificate is deleted when the run ends. Your system trust store is never touched.</p><div class="art"><!-- @art key --></div></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">The whole process tree</h3><p>Child processes are followed, including detached helpers that keep sending after the app exits. <code>--duration</code> and Ctrl-C stop them all.</p><div class="art"><!-- @art tree --></div></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Hooks for Node, Python and Ruby</h3><p>Small preloads route clients that ignore proxy variables, like <code>node:http2</code> and aiohttp, and report each direct socket as it opens.</p><div class="art"><!-- @art hook --></div></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Names what goes around</h3><p>Connections that bypass the proxy are listed by address and process: <code>netstat</code> on macOS, <code>/proc</code> on Linux. Pinned clients are named and counted, never broken into.</p><div class="art"><!-- @art radar --></div></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Every field, inventoried</h3><p>JSON, NDJSON, form and binary bodies are decoded. 69 known telemetry hosts carry a source link; keyword guesses are marked <code>?</code> and never count toward a verdict.</p><div class="art"><!-- @art fields --></div></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Reports you can post</h3><p>Your identifiers become labels, secrets become <code>‹redacted›</code>, ids become aliases. The raw HAR stays on your machine, readable only by you.</p><div class="art"><!-- @art redact --></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band head" id="limits">
+    <div class="wrap reveal">
+      <span class="eyebrow"><span class="n">05</span> · Limits</span>
+      <h2 class="h2" style="margin-top:18px">What it <em>can't</em> see.</h2>
+      <p class="lede">Measured, not guessed. The numbers are in the benchmark.</p>
+    </div>
+  </section>
+  <section class="band limits">
+    <div class="wrap">
+      <div class="grid c3">
+        <div class="frame reveal"><div class="card"><h3 class="h3">Apps that refuse the CA</h3><p>Pinned clients, and Go programs on macOS (they read only the keychain), fail that request. whatleaks names the host and counts it. It never tries to get around pinning.</p></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Very short sockets from native code</h3><p>Go, Rust or C connections that skip the proxy are found by polling. One reset within about 10 ms is often missed (Go in the lab: caught 10 to 30% of the time), and UDP sent with <code>sendto()</code> is never seen.</p></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Windows</h3><p>No process-watching backend yet, so it is untested there. macOS and Linux are benchmarked.</p></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Apps you don't launch</h3><p>Only processes started through whatleaks are watched. GUI apps, Electron apps, browsers and system daemons were not tested.</p></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">Exact matching only</h3><p>Salted hashes of your identifiers can't be recognised. Redaction is pattern-based, so read a report before you post it.</p></div></div>
+        <div class="frame reveal"><div class="card"><h3 class="h3">It's our benchmark</h3><p>We built the lab. Every script and result file is public, and the threats to validity are written down next to the numbers.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band closing">
+    <div class="wrap reveal">
+      <h2 class="h2">Find out what your tools <em>say about you</em>.</h2>
+      <div class="actions">
+        <div class="cmd"><code><span class="p">$</span>npx whatleaks run -- <span class="arg">&lt;command&gt;</span></code><button type="button" data-copy="npx whatleaks run -- " aria-label="Copy command"></button></div>
+        <a class="btn" href="https://github.com/devanshranjan10/whatleaks" style="height:48px"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>Star on GitHub</a>
+        <a class="btn" href="/docs/" style="height:48px">Read the docs <span class="arrow">→</span></a>
+      </div>
+      <p class="alt">Or <code>npm install -g whatleaks</code>. Needs Node ≥ 22.12, on macOS or Linux. Each run saves its capture as a HAR file that only you can read.</p>
+    </div>
+  </section>
+</main>
+<!-- @footer -->
+</body>
+</html>

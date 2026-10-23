@@ -1,0 +1,24 @@
+// whatleaks.me: a Worker serving .site-dist/ (built by scripts/site/build.mjs). Deploy: npm run site:deploy.
+// The custom domains whatleaks.me and www.whatleaks.me are attached to this Worker once (Workers > whatleaks-site >
+// Domains, or PUT /accounts/<id>/workers/domains) and stay attached across deploys. They are not listed as routes
+// here because the deploy token has no Workers Routes permission on the zone; with one, add
+// "routes": [{ "pattern": "whatleaks.me", "custom_domain": true }, { "pattern": "www.whatleaks.me", "custom_domain": true }].
+{
+  "name": "whatleaks-site",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "../../.site-dist",
+    "binding": "ASSETS",
+    // The Worker runs first for pages and small files (redirects, Markdown for agents, Link headers, no-transform on
+    // every HTML response including the 404 page). CSS, JS and fonts are served straight from the edge, so they cost
+    // no Worker requests.
+    "run_worker_first": ["/*", "!/assets/*", "!/fonts/*"],
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  // No request logs beyond Cloudflare's defaults: the site promises not to watch its visitors.
+  "observability": { "enabled": false }
+}

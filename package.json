@@ -9,7 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/devanshranjan10/whatleaks.git"
   },
-  "homepage": "https://github.com/devanshranjan10/whatleaks#readme",
+  "homepage": "https://whatleaks.me",
   "bugs": {
     "url": "https://github.com/devanshranjan10/whatleaks/issues"
   },
@@ -41,7 +41,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "site:build": "node scripts/site/build.mjs",
+    "site:images": "sh scripts/site/render-images.sh",
+    "site:deploy": "node scripts/site/build.mjs && WRANGLER_SEND_METRICS=false npx --yes wrangler@4 deploy -c scripts/site/wrangler.jsonc",
+    "site:ping": "sh scripts/site/indexnow.sh"
   },
   "dependencies": {
     "commander": "^15.0.0",
@@ -52,8 +56,11 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.5",
     "eslint": "^10.13.0",
+    "globals": "^17.13.0",
     "tsup": "^9.0.0",
     "tsx": "^4.23.15",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.5"

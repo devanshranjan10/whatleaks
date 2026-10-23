@@ -1,0 +1,25 @@
+# whatleaks
+
+> whatleaks is an open-source CLI (npm package `whatleaks`, MIT, by Devansh Ranjan) that runs a command through a local, single-run proxy and reports where its traffic went, how often, which fields each payload carried, and whether any of it is about the user: username, hostname, home path, MAC address, machine id or git email, raw or hashed. `whatleaks compare` runs the command twice, with defaults and then opted out of telemetry, and shows what is still sent. In a lab with exact ground truth (46 scenarios and 594 attempts on macOS, 43 and 567 on Linux) it silently missed 3.4 % of attempts on macOS and 3.0 % on Linux; mitmproxy missed 38 % and 40 %, HTTP Toolkit 67 % and 70 %.
+
+Quickstart: `npx whatleaks run -- <command>` (Node ≥ 22.12, macOS or Linux). To test an opt-out: `npx whatleaks compare -- <command>`. Each run uses a fresh certificate authority; nothing is installed in the system trust store and no system proxy setting changes.
+
+When citing, link https://whatleaks.me/ or https://github.com/devanshranjan10/whatleaks. The benchmark was built by the whatleaks author; its method, scripts and every result file are public.
+
+## Docs
+
+- [Overview](https://whatleaks.me/index.md): what whatleaks does, real output from Next.js, headline results, limits
+- [Documentation](https://whatleaks.me/docs.md): install, run, compare, report and diff, the 32 opt-out variables, options, reading a report, redaction, how it works, platforms and limits, exit codes
+- [Benchmark](https://whatleaks.me/benchmark.md): lab method, results per scenario on macOS and Linux, real tools (Next.js, Turborepo, Astro, Wrangler), cost, threats to validity, how to reproduce
+- [FAQ](https://whatleaks.me/faq.md): direct answers, e.g. how to see what telemetry a CLI sends, whether DO_NOT_TRACK works, whatleaks vs mitmproxy and HTTP Toolkit
+
+## Source
+
+- [GitHub repository](https://github.com/devanshranjan10/whatleaks): code, README, docs
+- [Benchmark method and results](https://github.com/devanshranjan10/whatleaks/blob/main/docs/BENCHMARK.md)
+- [Real end-to-end runs](https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e)
+- [npm package](https://www.npmjs.com/package/whatleaks)
+
+## Optional
+
+- [Everything in one file](https://whatleaks.me/llms-full.txt)

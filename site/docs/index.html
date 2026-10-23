@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs · whatleaks</title>
+<meta name="description" content="Install whatleaks, capture what any command sends, test whether a telemetry opt-out works with compare, read and share reports, and see how it works and where its limits are.">
+<link rel="canonical" href="https://whatleaks.me/docs/">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="whatleaks">
+<meta property="og:url" content="https://whatleaks.me/docs/">
+<meta property="og:title" content="whatleaks docs: see what your tools send home">
+<meta property="og:description" content="Quickstart, run, compare, report and diff, the 32 opt-out variables, options, redaction, how it works, limits and exit codes.">
+<meta property="og:image" content="https://whatleaks.me/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://whatleaks.me/og.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"whatleaks documentation","url":"https://whatleaks.me/docs/","author":{"@type":"Person","name":"Devansh Ranjan","url":"https://github.com/devanshranjan10"},"about":{"@type":"SoftwareApplication","name":"whatleaks","url":"https://whatleaks.me/"},"dateModified":"2026-10-23","proficiencyLevel":"Beginner"}
+</script>
+<script defer src="/assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<!-- @nav -->
+<main id="main">
+  <section class="page-head band" style="border-top:0">
+    <div class="wrap">
+      <span class="eyebrow">Docs · v0.1</span>
+      <h1 class="h1" style="margin-top:18px">Everything whatleaks does, on one page.</h1>
+      <p class="lede">Run a command through it, read what it sent, test whether an opt-out works. Needs Node ≥ 22.12 on macOS or Linux. Nothing is installed in your system trust store, and no system proxy setting changes.</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap doc">
+      <aside class="toc" aria-label="On this page">
+        <h4>On this page</h4>
+        <ol>
+          <li><a href="#quickstart">Quickstart</a></li>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#run">run</a></li>
+          <li><a href="#compare">compare</a></li>
+          <li><a href="#report">report and diff</a></li>
+          <li><a href="#opt-outs">The 32 opt-outs</a></li>
+          <li><a href="#options">Options</a></li>
+          <li><a href="#reading">Reading a report</a></li>
+          <li><a href="#redaction">Redaction and HAR files</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#limits">Platforms and limits</a></li>
+          <li><a href="#exit-codes">Exit codes</a></li>
+          <li><a href="#develop">From source</a></li>
+        </ol>
+      </aside>
+      <div class="prose">
+        <section id="quickstart">
+          <h2>Quickstart</h2>
+          <p>Put <code>npx whatleaks run --</code> in front of any command:</p>
+          <div class="code"><pre><span class="p">$ </span>npx whatleaks run -- npm run build          <span class="c"># what does my build send?</span>
+<span class="p">$ </span>npx whatleaks compare -- ./node_modules/.bin/next build   <span class="c"># does opting out work?</span></pre></div>
+          <p>The command runs as usual. When it exits, whatleaks prints a report: where the traffic went, how often, which fields each payload carried, and whether any of it is about you. The raw capture is saved in the current folder as <code>whatleaks-&lt;label&gt;-&lt;time&gt;.har</code>, readable only by you.</p>
+          <div class="callout"><p><strong>Start with <code>compare</code></strong> when the question is "does the opt-out work?" It runs the command twice in fresh processes, defaults first, and shows exactly what is still sent.</p></div>
+        </section>
+
+        <section id="install">
+          <h2>Install</h2>
+          <div class="code"><pre><span class="p">$ </span>npx whatleaks run -- &lt;command&gt;     <span class="c"># no install</span>
+<span class="p">$ </span>npm install -g whatleaks           <span class="c"># the whatleaks command</span></pre></div>
+          <p>It needs Node 22.12 or later and runs on macOS and Linux. The install pulls about 195 packages (41 MB), mostly the proxy library, <a href="https://github.com/httptoolkit/mockttp">mockttp</a>.</p>
+          <p>Recent npm versions may say they skipped an install script for <code>tls-impersonate</code>. Nothing needs approving: mockttp loads that native module only to mirror TLS fingerprints, which whatleaks never turns on, and it ships prebuilt binaries anyway.</p>
+        </section>
+
+        <section id="run">
+          <h2>run</h2>
+          <div class="code"><pre><span class="p">$ </span>whatleaks run [options] -- &lt;command&gt; [args...]</pre></div>
+          <p>Captures one run and prints a report. The app runs with its normal output; whatleaks writes its own notes to stderr.</p>
+          <div class="code"><pre><span class="p">$ </span>whatleaks run -- npm run build
+<span class="p">$ </span>whatleaks run --duration 60 -- some-dev-server     <span class="c"># long-running apps: stop after 60 s</span>
+<span class="p">$ </span>whatleaks run -e NODE_ENV=production -- node app.js
+<span class="p">$ </span>whatleaks run --md report.md -- ./my-tool         <span class="c"># also write a Markdown report</span></pre></div>
+          <p>After the app exits, whatleaks waits up to 10 s (<code>--linger</code>) for processes it left running, and keeps recording for at least 1 s (<code>--grace</code>) for helpers that start sending a moment later. Some tools send telemetry from a detached helper after they exit.</p>
+        </section>
+
+        <section id="compare">
+          <h2>compare</h2>
+          <div class="code"><pre><span class="p">$ </span>whatleaks compare [options] -- &lt;command&gt; [args...]</pre></div>
+          <p>Runs the command twice, in fresh processes, and diffs the two captures:</p>
+          <ol>
+            <li><strong>Defaults.</strong> Every known opt-out variable is removed from the environment.</li>
+            <li><strong>Opted out.</strong> All 32 documented opt-out variables are set, or only the ones you name.</li>
+          </ol>
+          <div class="code"><pre><span class="p">$ </span>whatleaks compare -- ./node_modules/.bin/next build
+<span class="c"># test one switch, and fail CI if telemetry is still sent</span>
+<span class="p">$ </span>whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 --strict -- ./node_modules/.bin/turbo run build</pre></div>
+          <p>The diff has these parts: <strong>still sending after opt-out</strong>, <strong>stopped</strong>, <strong>other traffic</strong> (not identified as telemetry; check it yourself), <strong>still sent about you</strong>, and <strong>persistent identifiers</strong>: values that were the same in both runs, so the app stored them or built them in, and they can link your runs together.</p>
+          <div class="callout warn"><p><strong>Defaults run first.</strong> Events a tool sends only on first use can make a "stopped" result look better than it is. A "still sending" result is always a direct observation. Repeat a comparison before trusting a stop.</p></div>
+          <h3>Tools whose opt-out is a setting</h3>
+          <p>When the switch is in the tool's settings rather than an environment variable, make two captures and diff them:</p>
+          <div class="code"><pre><span class="p">$ </span>whatleaks run --label on -- my-tool
+<span class="c"># turn telemetry off in the tool's settings</span>
+<span class="p">$ </span>whatleaks run --label off -- my-tool
+<span class="p">$ </span>whatleaks diff whatleaks-on-*.har whatleaks-off-*.har</pre></div>
+        </section>
+
+        <section id="report">
+          <h2>report and diff</h2>
+          <div class="code"><pre><span class="p">$ </span>whatleaks report &lt;file.har&gt;                <span class="c"># analyse a HAR from whatleaks or another tool</span>
+<span class="p">$ </span>whatleaks diff &lt;before.har&gt; &lt;after.har&gt;    <span class="c"># what is still sent in the second</span></pre></div>
+          <p><code>report</code> reads whatleaks captures and browser-devtools-style and mitmproxy-style HAR, including their WebSocket messages. It was tested with hand-made samples, not real exports from Proxyman, Charles or HTTP Toolkit. Both commands take <code>--md</code>, <code>--json</code> and <code>--raw</code>; <code>diff</code> also takes <code>--strict</code>.</p>
+        </section>
+
+        <section id="opt-outs">
+          <h2>The 32 opt-outs</h2>
+          <p><code>compare</code> and <code>run --opt-out</code> set every documented opt-out variable below. <code>whatleaks opt-outs --json</code> lists each one with its source.</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Variable</th><th>Tools</th></tr></thead>
+            <tbody>
+              <tr><td><code>DO_NOT_TRACK=1</code></td><td>Bun, Turborepo, Nuxt, Netlify CLI, Wrangler, GitHub CLI, Hugging Face Hub, Prisma CLI 8 (a cross-tool convention; only tools that implement it honour it)</td></tr>
+              <tr><td><code>NEXT_TELEMETRY_DISABLED=1</code></td><td>Next.js</td></tr>
+              <tr><td><code>ASTRO_TELEMETRY_DISABLED=1</code></td><td>Astro</td></tr>
+              <tr><td><code>NUXT_TELEMETRY_DISABLED=1</code></td><td>Nuxt</td></tr>
+              <tr><td><code>GATSBY_TELEMETRY_DISABLED=1</code></td><td>Gatsby</td></tr>
+              <tr><td><code>NG_CLI_ANALYTICS=false</code></td><td>Angular CLI</td></tr>
+              <tr><td><code>TURBO_TELEMETRY_DISABLED=1</code></td><td>Turborepo</td></tr>
+              <tr><td><code>VERCEL_TELEMETRY_DISABLED=1</code></td><td>Vercel CLI</td></tr>
+              <tr><td><code>CHECKPOINT_DISABLE=1</code></td><td>Prisma 7, Terraform, Packer (also turns off version checks)</td></tr>
+              <tr><td><code>PRISMA_DISABLE_TELEMETRY=1</code></td><td>Prisma CLI 8</td></tr>
+              <tr><td><code>STORYBOOK_DISABLE_TELEMETRY=true</code></td><td>Storybook</td></tr>
+              <tr><td><code>EXPO_NO_TELEMETRY=1</code></td><td>Expo CLI</td></tr>
+              <tr><td><code>NETLIFY_TELEMETRY_DISABLED=1</code></td><td>Netlify CLI ≥27.13</td></tr>
+              <tr><td><code>WRANGLER_SEND_METRICS=false</code></td><td>Wrangler</td></tr>
+              <tr><td><code>YARN_ENABLE_TELEMETRY=0</code></td><td>Yarn Berry</td></tr>
+              <tr><td><code>HOMEBREW_NO_ANALYTICS=1</code></td><td>Homebrew</td></tr>
+              <tr><td><code>DOTNET_CLI_TELEMETRY_OPTOUT=1</code></td><td>.NET CLI</td></tr>
+              <tr><td><code>AZURE_CORE_COLLECT_TELEMETRY=false</code></td><td>Azure CLI</td></tr>
+              <tr><td><code>SAM_CLI_TELEMETRY=0</code></td><td>AWS SAM CLI</td></tr>
+              <tr><td><code>CDK_DISABLE_CLI_TELEMETRY=true</code></td><td>AWS CDK CLI</td></tr>
+              <tr><td><code>CLOUDSDK_CORE_DISABLE_USAGE_REPORTING=true</code></td><td>gcloud</td></tr>
+              <tr><td><code>VAGRANT_CHECKPOINT_DISABLE=1</code></td><td>Vagrant (also turns off version checks)</td></tr>
+              <tr><td><code>GH_TELEMETRY=0</code></td><td>GitHub CLI</td></tr>
+              <tr><td><code>DISABLE_TELEMETRY=1</code></td><td>Claude Code</td></tr>
+              <tr><td><code>DISABLE_ERROR_REPORTING=1</code></td><td>Claude Code (error reports)</td></tr>
+              <tr><td><code>DENO_NO_UPDATE_CHECK=1</code></td><td>Deno (update check, not telemetry)</td></tr>
+              <tr><td><code>HF_HUB_DISABLE_TELEMETRY=1</code></td><td>Hugging Face Hub</td></tr>
+              <tr><td><code>GRADIO_ANALYTICS_ENABLED=False</code></td><td>Gradio</td></tr>
+              <tr><td><code>STREAMLIT_BROWSER_GATHER_USAGE_STATS=false</code></td><td>Streamlit</td></tr>
+              <tr><td><code>WANDB_ERROR_REPORTING=false</code></td><td>Weights &amp; Biases</td></tr>
+              <tr><td><code>SF_DISABLE_TELEMETRY=true</code></td><td>Salesforce CLI</td></tr>
+              <tr><td><code>SLS_TELEMETRY_DISABLED=1</code></td><td>Serverless Framework v3</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <section id="options">
+          <h2>Options</h2>
+          <p><code>run</code> and <code>compare</code> share these. <code>report</code> and <code>diff</code> take the output ones.</p>
+          <dl class="opts">
+            <div><dt>--md &lt;file&gt;, --json &lt;file&gt;</dt><dd>Also write the report (for <code>compare</code> and <code>diff</code>, the diff) as Markdown or JSON. The Markdown has every field and full payload samples.</dd></div>
+            <div><dt>--samples &lt;n&gt;</dt><dd>Payload samples per endpoint (default 2).</dd></div>
+            <div><dt>-d, --duration &lt;s&gt;</dt><dd>Stop the app after this many seconds, together with the processes whatleaks tracked for it.</dd></div>
+            <div><dt>--linger &lt;s&gt;</dt><dd>After the app exits, wait up to this long for processes it left running (default 10).</dd></div>
+            <div><dt>--grace &lt;s&gt;</dt><dd>After the app exits, keep recording at least this long (default 1), for helpers that start sending a moment later.</dd></div>
+            <div><dt>--passthrough &lt;host&gt;</dt><dd>Tunnel a host without decrypting it, e.g. <code>*.mybank.com</code>. It is still counted. Repeatable.</dd></div>
+            <div><dt>-e, --env &lt;KEY=VALUE&gt;</dt><dd>Extra environment variable for the app. Repeatable.</dd></div>
+            <div><dt>-l, --label &lt;name&gt;</dt><dd><code>run</code>: name for this capture (default <code>run</code>), used in the HAR file name.</dd></div>
+            <div><dt>-o, --out &lt;file&gt;</dt><dd><code>run</code>: where to write the HAR capture.</dd></div>
+            <div><dt>--opt-out</dt><dd><code>run</code>: set every documented opt-out variable.</dd></div>
+            <div><dt>--off-env &lt;KEY=VALUE&gt;</dt><dd><code>compare</code>: an extra variable that opts out, for the second run. Repeatable.</dd></div>
+            <div><dt>--no-known-opt-outs</dt><dd><code>compare</code>: use only <code>--off-env</code>, not the documented list.</dd></div>
+            <div><dt>--out-dir &lt;dir&gt;</dt><dd><code>compare</code>: where to write both HAR captures (default <code>.</code>).</dd></div>
+            <div><dt>--strict</dt><dd><code>compare</code> and <code>diff</code>: exit 1 if a known telemetry endpoint from the catalog is still contacted in the second run, or if the second run did not exit cleanly.</dd></div>
+            <div><dt>--raw</dt><dd>Turn off redaction (see below).</dd></div>
+            <div><dt>--no-watch</dt><dd>Do not look for connections that bypass the proxy.</dd></div>
+            <div><dt>--no-preload</dt><dd>Do not load the Node, Python and Ruby hooks into the app.</dd></div>
+            <div><dt>--no-color</dt><dd>Plain output.</dd></div>
+          </dl>
+        </section>
+
+        <section id="reading">
+          <h2>Reading a report</h2>
+          <p>The terminal report opens with a summary line, an activity strip over the run's duration, then:</p>
+          <ul>
+            <li><strong>What it sent about you.</strong> This machine's identifiers found in any payload, how they were encoded and where they appeared, and ids repeated across requests.</li>
+            <li><strong>Where it went.</strong> Each destination with its category, request count and bytes sent.</li>
+            <li><strong>Endpoints.</strong> Requests grouped by endpoint, with path ids templated (<code>/users/123</code> → <code>/users/:id</code>), timing, status, every field and redacted samples.</li>
+            <li><strong>Not visible.</strong> Hosts that refused the CA, counted by name, and connections that bypassed the proxy, by address and process.</li>
+          </ul>
+          <p>Endpoints are classified from a catalog of 69 known telemetry hosts, each with a source link. Anything else gets a URL keyword guess, always marked <code>?</code>. Headlines and <code>--strict</code> count only catalog hosts; guesses are listed separately, as "possibly telemetry".</p>
+          <p>When a payload carries something about you, the report says what, how it was encoded and where. This line is from the test suite's synthetic capture:</p>
+          <div class="code"><pre>  ● A MAC address of this machine as sha256 — 3 requests to api.segment.io
+      in batch[].context.device.id</pre></div>
+        </section>
+
+        <section id="redaction">
+          <h2>Redaction and HAR files</h2>
+          <p>Reports are meant to be shared, so by default:</p>
+          <ul>
+            <li>this machine's identifiers become labels (<code>‹home›</code>, <code>‹sha256(mac)›</code>, …);</li>
+            <li>secret-looking headers, fields and query parameters become <code>‹redacted›</code>;</li>
+            <li>emails become <code>‹email›</code>;</li>
+            <li>id-shaped values (install ids, session ids, tokens) become per-report aliases (<code>‹id-1›</code>). The same value always gets the same alias, so you can still follow it;</li>
+            <li>control characters are neutralised, so a payload cannot inject terminal escapes.</li>
+          </ul>
+          <p><code>--raw</code> turns this off. Redaction is pattern-based, so read a report before you post it.</p>
+          <div class="callout"><p><strong>Share the report, not the HAR.</strong> Every run saves its capture as a HAR file that only you can read. It holds the raw traffic and is never redacted.</p></div>
+        </section>
+
+        <section id="how">
+          <h2>How it works</h2>
+          <h3>A CA for one run</h3>
+          <p>Each run generates a fresh certificate authority. Its private key stays in memory. Its certificate is written to a private temp folder that is deleted when the run ends.</p>
+          <h3>A loopback proxy</h3>
+          <p>The proxy is built on mockttp and listens on <code>127.0.0.1</code> only. mockttp would listen on every interface by default; whatleaks forces loopback, and a test checks it.</p>
+          <h3>Standard environment variables, plus hooks</h3>
+          <ul>
+            <li>Proxy: <code>HTTP_PROXY</code> and <code>HTTPS_PROXY</code> in both cases, and <code>NODE_USE_ENV_PROXY=1</code>.</li>
+            <li>CA: <code>NODE_EXTRA_CA_CERTS</code>, <code>SSL_CERT_FILE</code>, <code>REQUESTS_CA_BUNDLE</code>, <code>CURL_CA_BUNDLE</code>, <code>GIT_SSL_CAINFO</code>, <code>DENO_CERT</code>.</li>
+            <li>Java: <code>JAVA_TOOL_OPTIONS</code> with the proxy and a truststore file whatleaks writes itself; the JVM ignores the variables above.</li>
+            <li>Node: a small preload (<code>NODE_OPTIONS=--require</code>). On Node older than 22.21 it routes <code>http</code>, <code>https</code> and <code>fetch</code> through the proxy. On newer Node it gives agents the app creates itself the proxy settings. On every Node it tunnels <code>node:http2</code>, which reads no proxy variables.</li>
+            <li>Python (<code>PYTHONPATH</code>) and Ruby (<code>RUBYOPT</code>): small hooks for builds that ignore <code>SSL_CERT_FILE</code>, such as Apple's <code>/usr/bin/python3</code> and the macOS system Ruby. The Python hook also makes aiohttp honour the proxy variables.</li>
+            <li>All three hooks report each direct TCP connection and UDP destination as it opens. <code>--no-preload</code> turns them off.</li>
+          </ul>
+          <p>Trust reaches only the app's own process tree. <strong>Nothing is installed in your system's trust store, and no system proxy settings change.</strong></p>
+          <h3>The process tree</h3>
+          <p>whatleaks follows the processes the app starts, identified by pid and start time. It also adopts any process connected to the proxy, which catches detached helpers whose parent already exited. A process re-parented to launchd that started during the run, in the app's folder, is treated as a likely helper: whatleaks waits for it but never signals it unless it connects to the proxy. Everything stops on <code>--duration</code>, on Ctrl-C, or when the wait ends.</p>
+          <h3>Traffic that is not visible</h3>
+          <p>An app that refuses the CA, such as one that pins certificates, fails that request. whatleaks lists the host by name, with a count. It does not try to get around pinning. Connections that ignore the proxy are listed by address and process:</p>
+          <ul>
+            <li><strong>macOS:</strong> <code>netstat -anvW</code> every 20 ms while the app is busy and every 100 ms when it idles, plus a closing sweep for connections that already closed.</li>
+            <li><strong>Linux:</strong> <code>/proc</code> at the same rates, so no <code>ps</code>, <code>lsof</code> or <code>netstat</code> is needed.</li>
+            <li><strong>Node, Python and Ruby</strong> report each direct socket themselves as it opens, with the hostname the app asked for.</li>
+          </ul>
+          <h3>Analysis</h3>
+          <p>JSON, NDJSON, form and binary bodies are decoded and every field is inventoried. Payloads are searched for this machine's identifiers, raw and as md5, sha1 and sha256 hex and base64. The local values are read into memory only and never written.</p>
+        </section>
+
+        <section id="limits">
+          <h2>Platforms and limits</h2>
+          <p>Measured limits are in the <a href="/benchmark/">benchmark</a>.</p>
+          <ul>
+            <li><strong>Platforms.</strong> macOS and Linux are benchmarked; Linux is also checked in a slim container with no <code>ps</code>, <code>lsof</code> or <code>netstat</code>. Windows is untested and has no process-watching backend.</li>
+            <li><strong>Only processes you launch through whatleaks.</strong> GUI apps, Electron apps, browsers and system daemons were not tested.</li>
+            <li><strong>Apps that refuse the CA can be named, not read.</strong> Go programs on macOS (they read only the system keychain) and pinned clients refuse it.</li>
+            <li><strong>Connections that bypass the proxy are named, not read.</strong> From Node, Python and Ruby each one is reported as it opens, including UDP sent with <code>sendto()</code>. From Go, Rust or C they are found by polling: one reset within about 10 ms is often missed (Go in the lab: caught 10 to 30% of the time), and UDP sent with <code>sendto()</code> is never seen. On Linux a closed socket has no owner, so only open ones count.</li>
+            <li><strong>Not covered by the Node preload:</strong> the <code>undici</code> npm package with its own dispatcher, and <code>node:http2</code> over plain-text <code>http:</code> (h2c). Their connections are named as direct connections.</li>
+            <li><strong>Late helpers outside the project folder.</strong> One that runs from <code>/</code> or your home folder and first connects more than <code>--grace</code> seconds after the app exits is missed. Raise <code>--grace</code> for tools like that.</li>
+            <li><strong>Node 22 prints a warning</strong> (<code>UNDICI-EHPA</code>) when the app starts: that is Node's built-in proxy support, which whatleaks turns on.</li>
+            <li><strong>Uploads over 8 MiB</strong> are counted and marked cut off. The first MiB is kept and scanned.</li>
+            <li><strong>Exact matching only.</strong> Identity matching cannot see salted hashes. Redaction and classification are pattern-based.</li>
+            <li><strong>Next.js on Node 24 and 26.</strong> Next.js 16.4.2's telemetry fails inside the process on Node 24.22 and 26.0, with or without whatleaks, so you will see none there.</li>
+          </ul>
+        </section>
+
+        <section id="exit-codes">
+          <h2>Exit codes</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Command</th><th>Exit code</th></tr></thead>
+            <tbody>
+              <tr><td><code>run</code></td><td>The app's own exit code; 0 when <code>--duration</code> stopped it.</td></tr>
+              <tr><td><code>compare</code>, <code>diff</code></td><td>0, or 1 with <code>--strict</code> when a known telemetry endpoint is still contacted in the second run or that run did not exit cleanly.</td></tr>
+              <tr><td>any</td><td>2 for a usage or input error, 1 for a system error such as a full disk.</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <section id="develop">
+          <h2>From source</h2>
+          <div class="code"><pre><span class="p">$ </span>git clone https://github.com/devanshranjan10/whatleaks &amp;&amp; cd whatleaks
+<span class="p">$ </span>npm ci &amp;&amp; npm run build
+<span class="p">$ </span>node dist/cli.js --help
+<span class="p">$ </span>npm run check     <span class="c"># typecheck, lint, tests (offline; integration tests use local servers only)</span></pre></div>
+          <p>CI builds and tests every commit on Ubuntu and macOS with Node 22.12.0, 22, 24 and 26, then installs the packed package into an empty project and captures a real request. Design notes, the decision log and progress notes are in <a href="https://github.com/devanshranjan10/whatleaks/tree/main/docs">docs/</a>.</p>
+        </section>
+      </div>
+    </div>
+  </section>
+</main>
+<!-- @footer -->
+</body>
+</html>

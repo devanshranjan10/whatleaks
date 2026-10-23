@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ · whatleaks</title>
+<meta name="description" content="How to see what telemetry a CLI tool sends, whether DO_NOT_TRACK works, how to test an opt-out, what Next.js telemetry sends, whether whatleaks is safe, and how it compares with mitmproxy and HTTP Toolkit.">
+<link rel="canonical" href="https://whatleaks.me/faq/">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="whatleaks">
+<meta property="og:url" content="https://whatleaks.me/faq/">
+<meta property="og:title" content="whatleaks FAQ: telemetry, opt-outs and what your tools send">
+<meta property="og:description" content="Direct answers: how to see what a CLI sends, whether DO_NOT_TRACK works, how to test an opt-out, and how whatleaks compares with mitmproxy.">
+<meta property="og:image" content="https://whatleaks.me/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://whatleaks.me/og.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script defer src="/assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<!-- @nav -->
+<main id="main">
+  <section class="page-head band" style="border-top:0">
+    <div class="wrap">
+      <span class="eyebrow">FAQ</span>
+      <h1 class="h1" style="margin-top:18px">Questions, answered <em>directly</em>.</h1>
+      <p class="lede">About telemetry, opt-outs, and what whatleaks can and can't see. Every number links back to a measurement.</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="prose" style="margin:0 auto">
+      <section class="qa" id="what-is-whatleaks">
+        <h2>What is whatleaks?</h2>
+        <div class="a">
+          <p>whatleaks is a free, open-source command-line tool (npm package <code>whatleaks</code>, MIT licensed, by Devansh Ranjan) that runs a command through a local, single-run proxy and reports where its traffic went, how often, which fields each payload carried, and whether any of it is about you. <code>whatleaks compare</code> runs the command twice, with defaults and then opted out of telemetry, and shows what is still sent. It runs on macOS and Linux with Node 22.12 or later. Source: <a href="https://github.com/devanshranjan10/whatleaks">github.com/devanshranjan10/whatleaks</a>.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="see-telemetry">
+        <h2>How do I see what telemetry a CLI tool sends?</h2>
+        <div class="a">
+          <p>Run it through whatleaks: <code>npx whatleaks run -- &lt;command&gt;</code>, for example <code>npx whatleaks run -- npm run build</code>. When the command exits, whatleaks prints every destination, request counts, every payload field with redacted samples, and anything that identifies you or your machine. Known telemetry endpoints are labelled from a catalog of 69 hosts, each with a source link. The raw capture is saved as a HAR file only you can read.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="test-opt-out">
+        <h2>How do I check whether a tool's telemetry opt-out actually works?</h2>
+        <div class="a">
+          <p>Use <code>npx whatleaks compare -- &lt;command&gt;</code>. It runs the command twice in fresh processes: first with defaults (every known opt-out variable removed), then with all 32 documented opt-out variables set. It shows what was still sent, what stopped, and which ids stayed the same between runs. To test one switch: <code>whatleaks compare --no-known-opt-outs --off-env DO_NOT_TRACK=1 -- &lt;command&gt;</code>. Add <code>--strict</code> to exit 1 in CI when a known telemetry endpoint is still contacted.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="do-not-track">
+        <h2>Does DO_NOT_TRACK=1 turn off telemetry?</h2>
+        <div class="a">
+          <p>Only in tools that implement it. In whatleaks's real-tool runs, Turborepo 2.11 and Wrangler 4.151 honoured <code>DO_NOT_TRACK=1</code>; Next.js 16.4.2 and Astro 7.4.1 kept sending, which matches their documentation, since neither documents <code>DO_NOT_TRACK</code> support. Next.js sent 8 telemetry requests with it set; its documented switch, <code>NEXT_TELEMETRY_DISABLED=1</code>, took that to 0. Set the tool's own variable, and check it with <code>whatleaks compare</code>.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="nextjs-telemetry">
+        <h2>What does Next.js telemetry send?</h2>
+        <div class="a">
+          <p>In a <code>next build</code> of a two-file app with Next.js 16.4.2 on Node 22.23, whatleaks captured 8 POST requests to <code>telemetry.nextjs.org/api/v1/record</code> carrying 22 events with 91 distinct fields. Each request carried three ids (<code>anonymousId</code> and <code>projectId</code> were identical in a second run; <code>sessionId</code> changed), the OS, CPU model, CPU count and speed, memory size, CI, Docker and WSL flags, the Next.js version, build configuration flags, and <code>meta.agentName</code>, the AI coding agent that ran the build. It sent none of the machine's own identifiers (username, hostname, home path, MAC address, machine id or git email). Full transcript: <a href="https://github.com/devanshranjan10/whatleaks/tree/main/docs/e2e">docs/e2e</a>.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="about-me">
+        <h2>Can it tell whether an app sends my username, email or machine ID?</h2>
+        <div class="a">
+          <p>Yes. whatleaks reads this machine's username, hostname, home path, MAC address, machine id and git email into memory, and searches every payload for them raw and as md5, sha1 and sha256 hex and base64. The report says what was found, how it was encoded and where it appeared. In the benchmark, all 8 planted identifiers were found in every run and none of the 4 decoys was flagged. It cannot recognise salted hashes.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="safe">
+        <h2>Is it safe? Does it install a certificate or change proxy settings?</h2>
+        <div class="a">
+          <p>No to both. Each run generates a fresh certificate authority whose private key stays in memory; its certificate is written to a private temp folder that is deleted when the run ends. The proxy listens on 127.0.0.1 only. Trust and proxy settings reach only the app's own process tree, through standard environment variables and small runtime hooks. Nothing is installed in the system trust store and no system proxy setting changes.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="data">
+        <h2>Does whatleaks send my data anywhere?</h2>
+        <div class="a">
+          <p>No. whatleaks has no account, no telemetry and no update check. The only traffic leaving your machine is the app's own, forwarded by the proxy as it would have gone anyway. Captures stay on your disk as HAR files readable only by you, and the identifiers it searches for are read into memory and never written.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="vs-mitmproxy">
+        <h2>How is it different from mitmproxy or HTTP Toolkit?</h2>
+        <div class="a">
+          <p>Those are general-purpose interception proxies. whatleaks is built to answer "what does this command send, and does opting out work": it follows the app's whole process tree, hooks Node, Python and Ruby clients that ignore proxy settings, names connections that bypass the proxy, searches payloads for your identifiers, and diffs runs with and without opt-outs. In a lab with exact ground truth, it silently missed 3.4% of attempts on macOS, against 38% for mitmproxy 12.2.3 given the same environment and 67% for HTTP Toolkit server 1.27.3 with its own interception. On real tools it matched 5 of 5 against their debug output; HTTP Toolkit 4, mitmproxy 3. Details: <a href="/benchmark/">the benchmark</a>.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="pinning">
+        <h2>Can it read traffic from apps that pin certificates?</h2>
+        <div class="a">
+          <p>No, by design. An app that refuses the run's CA, such as one that pins certificates, fails that request. whatleaks lists the host by name with a count, under "not visible", and does not try to get around pinning. Go programs on macOS also refuse it, because they read only the system keychain.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="native">
+        <h2>Does it work with Go, Rust or other native programs?</h2>
+        <div class="a">
+          <p>Their HTTP traffic is captured when they honour the standard proxy variables and trust the CA (Go on Linux reads <code>SSL_CERT_FILE</code>; Go on macOS refuses the CA and is named, not read). Connections that bypass the proxy are found by polling the process's sockets: <code>netstat</code> on macOS, <code>/proc</code> on Linux. Very short ones can be missed: a Go connection reset within about 10 ms was caught 10 to 30% of the time in the lab, and UDP sent with <code>sendto()</code> is never seen. These are the only misses in the benchmark.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="windows">
+        <h2>Does it work on Windows?</h2>
+        <div class="a">
+          <p>Not yet. Windows has no process-watching backend and is untested. macOS and Linux are benchmarked, and Linux also works in slim containers with no <code>ps</code>, <code>lsof</code> or <code>netstat</code>.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="har">
+        <h2>Can I analyse a HAR file from another tool?</h2>
+        <div class="a">
+          <p>Yes: <code>whatleaks report capture.har</code>, and <code>whatleaks diff before.har after.har</code> to compare two. The reader handles browser-devtools-style and mitmproxy-style HAR, including WebSocket messages. It was tested with hand-made samples, not real exports from Proxyman, Charles or HTTP Toolkit.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="share">
+        <h2>Is it safe to share a whatleaks report?</h2>
+        <div class="a">
+          <p>Reports are redacted by default: your identifiers become labels such as <code>‹home›</code>, secret-looking values become <code>‹redacted›</code>, emails become <code>‹email›</code>, and ids become per-report aliases such as <code>‹id-1›</code>. Redaction is pattern-based, so read a report before you post it. Share the report, never the HAR file: that holds the raw traffic and is never redacted.</p>
+        </div>
+      </section>
+
+      <section class="qa" id="ci">
+        <h2>Can I use it in CI?</h2>
+        <div class="a">
+          <p>Yes. <code>whatleaks compare --strict -- &lt;command&gt;</code> exits 1 when a known telemetry endpoint is still contacted after opting out, or when the second run did not exit cleanly, so a build fails if a tool stops honouring its switch. <code>--md</code> and <code>--json</code> write the result to a file for the job's artifacts.</p>
+        </div>
+      </section>
+      </div>
+    </div>
+  </section>
+</main>
+<!-- @footer -->
+</body>
+</html>
