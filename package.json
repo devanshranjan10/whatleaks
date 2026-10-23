@@ -1,6 +1,6 @@
 {
   "name": "whatleaks",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "See what an app you run sends home: where, how often, which fields, with payload samples, and what it still sends after you opt out of telemetry.",
   "type": "module",
   "license": "MIT",

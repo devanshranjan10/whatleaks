@@ -1,10 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 (2026-10-24)
 
-- The README opens with a demo GIF, and whatleaks.me has a 55-second video. Both replay
-  real output of 0.1.0 from npm, recorded on 2026-10-24 (`docs/e2e/README.md` §5).
-- `SECURITY.md`, `CONTRIBUTING.md` and issue forms.
+No changes to the command-line tool. This release brings the npm page up to date:
+- The README opens with a demo GIF, links https://whatleaks.me and gives the Homebrew
+  install: `brew install devanshranjan10/tap/whatleaks`. The GIF and the site's
+  55-second video replay real output of 0.1.0 from npm, recorded on 2026-10-24
+  (`docs/e2e/README.md` §5).
+- The package's homepage is https://whatleaks.me.
+
+Also new in the repo: `SECURITY.md`, `CONTRIBUTING.md` and issue forms.
 
 ## 0.1.0 (2026-10-23)
 
