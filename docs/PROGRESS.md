@@ -121,8 +121,25 @@ runs of the published 0.1.0 (`docs/e2e/README.md` §5: `next build` 9 requests, 
 The README opens with the GIF, linked to the video; the home page links the video and
 carries og:video tags. Also new: `SECURITY.md` (and private vulnerability reporting is on
 for the repo), `CONTRIBUTING.md`, `CHANGELOG.md`, issue forms, and a 400 px square logo
-for directory listings (`docs/media/whatleaks-logo-400.png`). The npm page still shows
-0.1.0's README until the next release.
+for directory listings (`docs/media/whatleaks-logo-400.png`).
+
+**0.1.1 (2026-10-24).** No CLI changes. It puts the current README on npm (the GIF,
+whatleaks.me, the Homebrew install) and makes whatleaks.me the package homepage. The first
+bump (`6720592`) failed CI: the golden Markdown report and diff embedded the running
+version. They now say `whatleaks <version>` (`63bf5b1`), so a release no longer changes
+them. Tag `v0.1.1` points at `63bf5b1`:
+- `release.yml` published it through npm trusted publishing, the first tokenless release:
+  `_npmUser` is "GitHub Actions", with provenance (sigstore log index 3424755003).
+- The GitHub release "whatleaks 0.1.1" mirrored it to GitHub Packages
+  (`@devanshranjan10/whatleaks@0.1.1`).
+- Installed from npm with `npx`, it printed 0.1.1 and captured a request.
+- Homebrew: `brew install devanshranjan10/tap/whatleaks` installs 0.1.1. The formula
+  passes `brew test`, `brew audit --strict` and `brew style`.
+
+**Next release:** `npm version x.y.z --no-git-tag-version`, a CHANGELOG section, push main
+and wait for CI; push a `vx.y.z` tag (`release.yml` publishes to npm); `gh release create
+vx.y.z` (mirrors to GitHub Packages); then update `url` and `sha256` in the tap's
+`Formula/whatleaks.rb`.
 
 ---
 
