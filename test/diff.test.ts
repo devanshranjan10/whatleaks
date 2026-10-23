@@ -10,6 +10,7 @@ import { buildReport } from '../src/analyze/report.js';
 import { parseHar } from '../src/har/read.js';
 import type { Har } from '../src/har/types.js';
 import { renderDiffMarkdown, renderDiffTerminal } from '../src/render/diff.js';
+import { VERSION } from '../src/version.js';
 import { ANON_ID, FAKE_IDS, TEST_RULES, chattyHar } from './helpers/fixtures.js';
 import { harText, makeHar } from './helpers/har.js';
 
@@ -106,7 +107,8 @@ describe('buildDiff', () => {
 describe('diff rendering', () => {
   it('renders terminal and markdown', async () => {
     await expect(renderDiffTerminal(diff)).toMatchFileSnapshot('golden/diff.txt');
-    await expect(renderDiffMarkdown(diff)).toMatchFileSnapshot('golden/diff.md');
+    // The footer names the running version; the golden file says <version>, so a release doesn't change it.
+    await expect(renderDiffMarkdown(diff).replace(`whatleaks ${VERSION}.`, 'whatleaks <version>.')).toMatchFileSnapshot('golden/diff.md');
   });
 });
 

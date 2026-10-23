@@ -5,6 +5,7 @@ import { parseHar } from '../src/har/read.js';
 import { bytes, commandLine, duration, sparkline, table, visibleLength } from '../src/render/format.js';
 import { renderMarkdown } from '../src/render/markdown.js';
 import { renderTerminal } from '../src/render/terminal.js';
+import { VERSION } from '../src/version.js';
 import { FAKE_IDS, TEST_RULES, chattyHar } from './helpers/fixtures.js';
 import { harText, makeHar } from './helpers/har.js';
 
@@ -41,7 +42,8 @@ describe('renderers', () => {
   });
 
   it('renders the Markdown report', async () => {
-    await expect(renderMarkdown(report)).toMatchFileSnapshot('golden/report.md');
+    // The footer names the running version; the golden file says <version>, so a release doesn't change it.
+    await expect(renderMarkdown(report).replace(`whatleaks ${VERSION}.`, 'whatleaks <version>.')).toMatchFileSnapshot('golden/report.md');
   });
 
   it('colors only when asked', () => {
