@@ -39,10 +39,13 @@ passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It ret
 npm's real exit code; an earlier `| grep` pipe hid two lint failures, which were
 amended.
 
-The gate passes on macOS with Node 22.12.0, 22.23.4, 24.22.1 and 26.12.0, the versions CI
-covers. CI (`.github/workflows/ci.yml`) runs it on Ubuntu and macOS, then installs the
-packed package in an empty directory and captures a real request. The suite has not run
-on Linux yet (Docker was paused), so the first CI run is its first Linux run.
+The gate passes on macOS with Node 22.12.0, 22.23.4, 24.22.1 and 26.12.0. CI
+(`.github/workflows/ci.yml`) runs it on Ubuntu and macOS with Node 22.12.0, 22, 24 and
+26, then installs the packed package in an empty directory and captures a real request.
+Its first run, the suite's first on Linux, found one bug: Node 24 names its main thread
+"MainThread" (Node 26: "node-MainThread"), and on Linux that is the process's name, so a
+Node app's connections were attributed to "MainThread". The /proc backend now names such
+a process after its executable, as macOS does.
 
 ## Launch prep (2026-10-23)
 

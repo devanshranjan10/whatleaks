@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { type ProcSocket, bootEpoch, parseHexAddr, parseNetTable, parseStat, procSocketSource } from '../src/capture/procfs.js';
+import { type ProcSocket, bootEpoch, parseHexAddr, parseNetTable, parseStat, procSocketSource, processName } from '../src/capture/procfs.js';
 
 describe('/proc parsers (Linux backend)', () => {
   it('reads pid, comm with spaces and parentheses, ppid and start ticks from /proc/<pid>/stat', () => {
     const stat = '4242 (node (worker) x) S 4100 4242 4100 34816 4242 4194304 1 0 0 0 5 1 0 0 20 0 11 0 987654 1234 56 18446744073709551615';
     expect(parseStat(stat)).toEqual({ pid: 4242, comm: 'node (worker) x', state: 'S', ppid: 4100, startTicks: 987654 });
     expect(parseStat('garbage')).toBeUndefined();
+  });
+
+  it('names Node after its executable, not after the main thread name Node 24 and 26 give it', async () => {
+    const links: Record<string, string> = { '/proc/7/exe': '/opt/hostedtoolcache/node/24.21.0/x64/bin/node', '/proc/8/exe': '/usr/bin/nodejs (deleted)' };
+    const link = async (path: string): Promise<string> => links[path] ?? Promise.reject(new Error('ENOENT'));
+    expect(await processName(7, 'MainThread', link)).toBe('node');
+    expect(await processName(8, 'node-MainThread', link)).toBe('nodejs');
+    expect(await processName(9, 'MainThread', link)).toBe('MainThread'); // exited, or not ours to read
+    expect(await processName(7, 'python3', link)).toBe('python3');
   });
 
   it('takes the boot time from the uptime (precise to 10 ms), not the whole-second btime', () => {

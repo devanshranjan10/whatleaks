@@ -1,4 +1,5 @@
 import { readFile, readdir, readlink } from 'node:fs/promises';
+import { basename } from 'node:path';
 import type { SockRow } from './netstat.js';
 import type { ProcRow } from './proctree.js';
 
@@ -39,6 +40,21 @@ export function parseStat(text: string): { pid: number; comm: string; state: str
 }
 
 /**
+ * Node names its main thread ("MainThread" on Node 24, "node-MainThread" on 26), and on
+ * Linux a process's comm is its main thread's name. Such a process is named after its
+ * executable instead, as ps names it on macOS. The exe link ends in " (deleted)" once the
+ * file was replaced, by an upgrade while the process runs.
+ */
+export async function processName(pid: number, comm: string, link: (path: string) => Promise<string> = (p) => readlink(p)): Promise<string> {
+  if (!/^(node-)?MainThread$/.test(comm)) return comm;
+  try {
+    return basename((await link(`/proc/${pid}/exe`)).replace(/ \(deleted\)$/, ''));
+  } catch {
+    return comm; // exited, or not ours to read
+  }
+}
+
+/**
  * Boot time as epoch seconds: now minus /proc/uptime. /proc/stat's `btime` is whole
  * seconds and drifts from the wall clock (a VM that slept), which put processes started
  * during the run a second before it began.
@@ -76,7 +92,8 @@ async function stats(pids: number[]): Promise<ProcRow[]> {
       try {
         const s = parseStat(await readFile(`/proc/${pid}/stat`, 'utf8'));
         // Zombies have exited; a container init that never reaps them would keep them forever.
-        return s && s.state !== 'Z' && s.state !== 'X' ? row(s, bootAt) : undefined;
+        if (!s || s.state === 'Z' || s.state === 'X') return undefined;
+        return row({ ...s, comm: await processName(pid, s.comm) }, bootAt);
       } catch {
         return undefined; // exited, or not ours to read
       }
