@@ -31,8 +31,8 @@ independent code review.
 | Independent review: 20 findings fixed | df98763, 259df1e |
 
 | Benchmark (lab, real tools, perf, Linux) and the gaps it found | 7cbc5bd … 4f937c5; see `docs/BENCHMARK.md` §7 |
-| HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | 0a5dc4d … 1c804f4 |
-| Socket reports from the hooks, mockttp upload fix, loopback probe fix | c99c699, 3af5e25 |
+| HTTP Toolkit baseline, Linux lab, Python/Ruby hooks, `node:http2`, TLS context sharing | 0a5dc4d … 9ce8a02 |
+| Socket reports from the hooks, mockttp upload fix, loopback probe fix | b2b2051, 27df68c |
 
 **Gate on the last commit:** `npm ci`, typecheck, lint, **242 offline tests**, build. It
 passes on a fresh `git clone`. Run `./scripts/gate.sh` before committing. It returns
@@ -52,8 +52,11 @@ modelled on landmine's; commit emails rewritten to the GitHub noreply address (b
 `../.git-backups/whatleaks-before-email-rewrite.bundle`; every tree unchanged, and the
 doc citations follow the new hashes). `npm publish --dry-run` passes.
 
-Left for the owner: create github.com/devanshranjan10/whatleaks and push `main`; add the
-`NPM_TOKEN` secret and push the tag `v0.1.0` (or run `npm publish` once by hand).
+The Python hook's bytecode cache had been committed (from `69b87eb` on), and it recorded
+the absolute path of the machine it was compiled on. It is out of every commit now
+(backup in `../.git-backups/whatleaks-before-pycache-rewrite.bundle`): the trees differ
+only by that file, commit messages and doc citations follow the new hashes, and no blob in
+the history holds the machine's username or a personal email.
 
 ---
 
@@ -74,10 +77,10 @@ The owner asked for every remaining gap to be fixed.
 - **CPU:** fast polling only while a process without a hook is alive (D-36). An empty
   run went from 1.5 s to about 1.05 s of CPU, and each perf workload is about 20 %
   lower.
-- **Both platforms on `961b84e`.** The first Linux rerun stopped when the Mac's disk
+- **Both platforms on `22d85d3`.** The first Linux rerun stopped when the Mac's disk
   filled up; it was rerun after clearing Docker's build cache.
 - **Found by the Linux lab:** the loopback probe refused to run when another listener
-  held the proxy's port number on a LAN address (`3af5e25`).
+  held the proxy's port number on a LAN address (`27df68c`).
 - **Kept by design:** bodies over 8 MiB are cut off (bounded memory), and whatleaks
   uses the most CPU of the three proxies (the polling watcher).
 

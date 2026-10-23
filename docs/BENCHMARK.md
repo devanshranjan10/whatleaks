@@ -21,7 +21,7 @@ Every number comes from a script in `bench/` and a result file in `bench/results
 design is in `docs/superpowers/specs/2026-10-21-whatleaks-bench-design.md` (D-24).
 
 "Before" is the build at the start of this work (`7460cb5`). "After" is:
-`961b84e` for every lab row on both platforms and for the cost runs.
+`22d85d3` for every lab row on both platforms and for the cost runs.
 
 ## 1. Headline
 
@@ -327,13 +327,13 @@ decision entries give the reasoning.
 | Java ignores proxy variables: 0 % | `JAVA_TOOL_OPTIONS` and a JKS truststore written in-process (D-26) | `61bcbae` |
 | Node < 22.21 bypassed the proxy: 0 % | `NODE_OPTIONS` preload with CONNECT tunnels (D-25) | `509c6b9` |
 | An app's own `https.Agent` bypassed the proxy on new Node: 0 % | the preload gives app-made agents `proxyEnv` (D-29) | `d233414` |
-| Apple's Python and the system Ruby refused the CA; aiohttp ignored the proxy: host only, 50 to 90 % | Python and Ruby hooks (D-31), found by the HTTP Toolkit baseline | `8343fa6` |
-| `node:http2` ignores the proxy on every Node: host only, 60 to 100 % | the preload tunnels it (D-32) | `3e5e016` |
-| A new TLS connection cost about 6 ms of CPU in the proxy | shared upstream TLS contexts (D-33) | `1c804f4` |
-| Direct sockets closed within ~10 ms: 10 to 20 % on macOS, 20 to 60 % on Linux; UDP via `sendto()`: 0 % | runtime hooks report each socket as it opens (D-34) | `c99c699` |
-| 4 MiB uploads at 79 MiB/s | mockttp's body-data batching fixed when it loads (D-35) | `c99c699` |
-| Fast polling in every run: an app that does nothing cost 1.5 s of CPU | hooked processes announce themselves; fast polling only while one without a hook is alive (D-36) | `961b84e` |
-| A run could refuse to start ("proxy reachable") when another program held the proxy's port number on a LAN address, or Linux connected the probe to itself (found in the Linux lab) | the probe counts only connections the proxy accepted | `3af5e25` |
+| Apple's Python and the system Ruby refused the CA; aiohttp ignored the proxy: host only, 50 to 90 % | Python and Ruby hooks (D-31), found by the HTTP Toolkit baseline | `69b87eb` |
+| `node:http2` ignores the proxy on every Node: host only, 60 to 100 % | the preload tunnels it (D-32) | `d4fb5b0` |
+| A new TLS connection cost about 6 ms of CPU in the proxy | shared upstream TLS contexts (D-33) | `9ce8a02` |
+| Direct sockets closed within ~10 ms: 10 to 20 % on macOS, 20 to 60 % on Linux; UDP via `sendto()`: 0 % | runtime hooks report each socket as it opens (D-34) | `b2b2051` |
+| 4 MiB uploads at 79 MiB/s | mockttp's body-data batching fixed when it loads (D-35) | `b2b2051` |
+| Fast polling in every run: an app that does nothing cost 1.5 s of CPU | hooked processes announce themselves; fast polling only while one without a hook is alive (D-36) | `22d85d3` |
+| A run could refuse to start ("proxy reachable") when another program held the proxy's port number on a LAN address, or Linux connected the probe to itself (found in the Linux lab) | the probe counts only connections the proxy accepted | `27df68c` |
 | One-datagram UDP at 30 % after polling UDP every 4th time | UDP read every 2nd poll | `99861e1` |
 | `whatleaks run -- x \| tail` waited the full linger for `tail` (found while measuring startup) | only real subreapers and higher pids | `e837d62` |
 | Short direct connections missed: 0 to 20 % | macOS `netstat` watcher plus a closing sweep (D-27); adaptive 20/100 ms polling (D-30) | `fb8a297`, `dd5a676` |
@@ -370,7 +370,7 @@ and the commits above. It covered:
 - **Same-machine lab.** The lab is on the same machine, so round trips take
   microseconds. That makes direct connections shorter than they would be over the
   internet: a hard case for whatleaks's polling watcher, not an easy one.
-- **Provenance.** Both lab platforms and the cost runs used `961b84e`. The Linux
+- **Provenance.** Both lab platforms and the cost runs used `22d85d3`. The Linux
   image was rebuilt for the final run and installed mitmproxy 12.3.0 (macOS ran
   12.2.3); its Linux totals were the same as with 12.2.3 on the previous build. The
   real-tool runs (section
