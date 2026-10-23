@@ -1,6 +1,7 @@
 // Renders scripts/video/demo.html with headless Chrome over the DevTools protocol (no dependencies): seeks the page frame
 // by frame and pipes the frames to ffmpeg. Needs Chrome (or CHROME=/path/to/chrome) and ffmpeg.
 //   node scripts/video/render.mjs                  the video, its poster and the README GIF
+//   node scripts/video/render.mjs --gif            the README GIF only
 //   node scripts/video/render.mjs --stills 2,28    PNG stills of the video at those seconds, in video-out/
 //   node scripts/video/render.mjs --gif --stills 0,9   the same for the GIF layout (seconds from its start)
 import { spawn } from 'node:child_process';
@@ -110,11 +111,16 @@ if (!gifOnly) {
 
 {
   // The README GIF: the two comparisons at 1200x800, 12 fps, one shared palette, no dithering (flat terminal colours).
+  // The loop is rotated to start on the DO_NOT_TRACK result, so the first frame (all that shows before the GIF plays,
+  // or with reduced motion) says something.
   const p = await open('?gif', 1200, 800);
   const [from, to] = await p.run('window.RANGE');
+  const cues = await p.run('window.CUES');
   const dir = mkdtempSync(join(tmpdir(), 'wl-gif-'));
   const fps = 12;
-  for (let i = 0, n = Math.round((to - from) * fps); i < n; i++) writeFileSync(join(dir, `f${String(i).padStart(4, '0')}.png`), await p.shot(from + i / fps));
+  const n = Math.round((to - from) * fps);
+  const first = Math.round((cues.dnt + 0.9 - from) * fps);
+  for (let i = 0; i < n; i++) writeFileSync(join(dir, `f${String(i).padStart(4, '0')}.png`), await p.shot(from + ((first + i) % n) / fps));
   await p.close();
   const frames = join(dir, 'f%04d.png');
   await ffmpeg(['-framerate', String(fps), '-i', frames, '-vf', 'palettegen=max_colors=128:stats_mode=full', join(dir, 'palette.png')]).done;
