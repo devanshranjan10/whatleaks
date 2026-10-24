@@ -11,7 +11,9 @@ import { gfm } from 'turndown-plugin-gfm';
 
 const ORIGIN = 'https://whatleaks.me';
 const REPO = 'https://github.com/devanshranjan10/whatleaks';
-const UPDATED = new Date().toISOString().slice(0, 10);
+// Today in the author's time zone, as in CHANGELOG.md and CITATION.cff (UTC's date can be a day behind).
+const now = new Date();
+const UPDATED = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
 const UPDATED_LONG = new Date(`${UPDATED}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const src = join(root, 'site');
